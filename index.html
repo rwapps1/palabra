@@ -2310,7 +2310,7 @@
     state.celebrateNext = nextScreen;
     state.screen = 'celebrate';
     render();
-    const hold = variant === 'perfect' ? 1900 : 1500;
+    const hold = variant === 'perfect' ? 2700 : 2200;
     state.celebrateTimer = setTimeout(advanceFromCelebration, hold);
   }
 
@@ -2650,8 +2650,13 @@
     saveProgress();
     state.taIsNewBest = isNewBest;
     state.resultMode = 'timeattack';
-    // No "perfect" concept for Time Attack — always the single Finished variant.
-    showCelebration('finished', 'result');
+    // Perfect here means no wrong answers in the round, however many were
+    // answered in the time — same score === total definition as the other
+    // modes, just without a fixed round length.
+    const score = state.results.filter(r => r.correct).length;
+    const total = state.results.length;
+    const perfect = total > 0 && score === total;
+    showCelebration(perfect ? 'perfect' : 'finished', 'result');
   }
 
   function backToMemorySetup() {
