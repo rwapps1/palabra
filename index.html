@@ -1343,13 +1343,16 @@
         const cred = await withTimeout(window.PalabraAuth.signUp(email, password), AUTH_TIMEOUT_MS);
         // First login for this account: carry the guest's local progress
         // forward as their starting point, rather than wiping it.
+        const signupMs = Date.now();
         await withTimeout(window.PalabraAuth.setUserDoc(cred.user.uid, {
           username: username || null,
           email,
           progress: state.progress,
+          updatedAtMs: signupMs,
           updatedAt: window.PalabraAuth.serverTimestamp()
         }), AUTH_TIMEOUT_MS);
         state.username = username;
+        state.lastSyncedMs = signupMs;
       } else {
         await withTimeout(window.PalabraAuth.signIn(email, password), AUTH_TIMEOUT_MS);
       }
@@ -1398,16 +1401,33 @@
     try {
       const snap = await window.PalabraAuth.getUserDoc(uid);
       if (snap.exists() && snap.data().progress) {
-        state.progress = mergeProgressShape(snap.data().progress);
-        state.username = snap.data().username || '';
-        saveProgress(); // keep localStorage as the fast local cache in sync too
+        const data = snap.data();
+        const remoteMs = data.updatedAtMs || 0;
+        if (remoteMs < state.lastSyncedMs) {
+          // This device has already pushed something newer than this
+          // snapshot — skip it so older cloud data can't clobber more
+          // recent local progress (e.g. a push from this device still
+          // landing, or a slow read racing a faster write elsewhere).
+          return;
+        }
+        state.progress = mergeProgressShape(data.progress);
+        state.username = data.username || '';
+        state.lastSyncedMs = remoteMs;
+        // Write straight to localStorage rather than via saveProgress(),
+        // which would also schedule another cloud push — a pull should
+        // never trigger a push right back, or two open tabs can end up
+        // volleying stale writes at each other.
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.progress)); } catch (e) {}
       } else {
         // Signed-in user with no cloud doc yet — create one from whatever's
         // local (shouldn't normally happen, since sign-up already writes one).
+        const ms = Date.now();
         await window.PalabraAuth.setUserDoc(uid, {
           progress: state.progress,
+          updatedAtMs: ms,
           updatedAt: window.PalabraAuth.serverTimestamp()
         });
+        state.lastSyncedMs = ms;
       }
     } catch (err) {
       // Offline or blocked — fall back silently to local progress.
@@ -1418,9 +1438,14 @@
   // answer — resets on every call, actually writes once things go quiet.
   function doCloudPush() {
     if (!state.user) return Promise.resolve();
+    const ms = Date.now();
     return window.PalabraAuth.setUserDoc(state.user.uid, {
       progress: state.progress,
+      username: state.username || null,
+      updatedAtMs: ms,
       updatedAt: window.PalabraAuth.serverTimestamp()
+    }).then(() => {
+      state.lastSyncedMs = ms;
     }).catch(() => {
       // Offline or blocked — local progress is still safe and will
       // retry next time saveProgress() runs.
@@ -1517,6 +1542,8 @@
     user: null,
     username: '',
     editingUsername: false,
+    needsCloudSync: false,
+    lastSyncedMs: 0,
     authMode: 'signin', // signin | signup
     authError: '',
     authBusy: false,
@@ -2937,6 +2964,10 @@
   }
 
   function renderStart() {
+    if (state.needsCloudSync && state.user) {
+      state.needsCloudSync = false;
+      flushCloudSync().then(() => pullCloudProgress(state.user.uid)).then(render);
+    }
     const app = document.getElementById('app');
     const settings = state.progress.settings;
     const streak = state.progress.streak;
@@ -4296,16 +4327,15 @@
     });
   }
 
-  // Re-sync progress when returning to the app after using it elsewhere
-  // (another tab, another device). Flushes any pending local write first
-  // so our own latest progress can't be overwritten by a stale cloud copy.
-  // Only fires on the hub screen, not mid-game, so an in-progress round
-  // never gets its state pulled out from under it.
+  // Flags that progress may be stale after using the app elsewhere (another
+  // tab, another device). If already on the hub, syncs immediately; if not,
+  // renderStart() picks the flag up as soon as the hub is next shown —
+  // covers both "switched tabs while on the hub" and "switched tabs, then
+  // navigated back to the hub afterward".
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && state.user && state.screen === 'start') {
-      flushCloudSync()
-        .then(() => pullCloudProgress(state.user.uid))
-        .then(render);
+    if (document.visibilityState === 'visible' && state.user) {
+      state.needsCloudSync = true;
+      if (state.screen === 'start') render();
     }
   });
 </script>

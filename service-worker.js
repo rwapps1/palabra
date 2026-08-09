@@ -23,7 +23,7 @@ const CATEGORY_FILES = [
   './categories-weather.xlsx',
 ];
 
-const CACHE_NAME = 'palabra-cache-v2';
+const CACHE_NAME = 'palabra-cache-v3';
 const ASSETS_TO_CACHE = [
   './',
   APP_HTML,
@@ -57,22 +57,22 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Cache-first for speed, falling back to network, and re-caching fresh copies
-// in the background so an update (e.g. a new words.xlsx) is picked up next load.
+// Network-first: always try to fetch the latest version when online, so a
+// deploy takes effect on the very next load rather than the one after that.
+// Falls back to the cached copy only when the network fails (offline), and
+// keeps the cache updated with whatever succeeded, for that fallback to stay
+// useful.
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const networkFetch = fetch(event.request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        })
-        .catch(() => cached);
-      return cached || networkFetch;
-    })
+    fetch(event.request)
+      .then((response) => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
