@@ -1259,6 +1259,16 @@
   const VERBS_FILE = 'verbs.xlsx';
   // ─────────────────────────────────────────────────────────
 
+  // ── Telegram signup notification. Token/chat ID live here in the client,
+  // a deliberate accepted risk: if this token ever leaks, someone could only
+  // ever send messages as this one bot to this one chat — no access to the
+  // app, Firestore, or any user data. If that ever happens, message
+  // @BotFather → /token → PalabraGameBot to instantly issue a new one.
+  // Leave TELEGRAM_CHAT_ID blank to disable — signup itself is unaffected. ──
+  const TELEGRAM_BOT_TOKEN = '8716717559:AAHri5ubB6e7bTMNDuvD-AUSg_8KE8EXmHs';
+  const TELEGRAM_CHAT_ID = '416291117';
+  // ─────────────────────────────────────────────────────────
+
   // The orb loader can otherwise finish faster than it's visible on a
   // quick local load — this floor guarantees at least one full
   // pulse/sweep cycle plays before it's dismissed.
@@ -1401,6 +1411,24 @@
     else window.addEventListener('palabra-firebase-ready', onReady, { once: true });
   }
 
+  // Fire-and-forget ping straight to the Telegram Bot API on a genuinely
+  // new account. Never awaited and never surfaces an error — a failed or
+  // disabled notification must never get in the way of someone actually
+  // signing up.
+  function notifyNewSignup(email, method) {
+    if (!TELEGRAM_CHAT_ID) return;
+    try {
+      fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: TELEGRAM_CHAT_ID,
+          text: `🎉 New Palabra signup\n${email || '(no email)'}\nvia ${method || 'email'}`
+        })
+      }).catch(() => {});
+    } catch (e) { /* ignore — notification is best-effort only */ }
+  }
+
   function friendlyAuthError(err) {
     const code = err && err.code;
     if (code === 'palabra/timeout') return "That's taking too long to respond. Check your connection and try again — if you're testing this file locally (a file:/// address) rather than through the live site or localhost, that will also cause this.";
@@ -1450,8 +1478,8 @@
       if (isSignup) {
         const username = document.getElementById('auth-username').value.trim();
         const cred = await withTimeout(window.PalabraAuth.signUp(email, password), AUTH_TIMEOUT_MS);
-        // First login for this account: carry the guest's local progress
-        // forward as their starting point, rather than wiping it.
+        // First login for this account: carry forward whatever local
+        // progress already exists on this device, rather than wiping it.
         const signupMs = Date.now();
         await withTimeout(window.PalabraAuth.setUserDoc(cred.user.uid, {
           username: username || null,
@@ -1462,6 +1490,7 @@
         }), AUTH_TIMEOUT_MS);
         state.username = username;
         state.lastSyncedMs = signupMs;
+        notifyNewSignup(email, 'email');
       } else {
         await withTimeout(window.PalabraAuth.signIn(email, password), AUTH_TIMEOUT_MS);
       }
@@ -1529,8 +1558,11 @@
         // volleying stale writes at each other.
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.progress)); } catch (e) {}
       } else {
-        // Signed-in user with no cloud doc yet — create one from whatever's
-        // local (shouldn't normally happen, since sign-up already writes one).
+        // Signed-in user with no cloud doc yet — this is a genuinely new
+        // account (email/password signups already write a doc in
+        // handleAuthSubmit before this ever runs, so in practice this only
+        // fires for a first-time Google sign-in, or the rare edge case
+        // that comment above already described).
         const ms = Date.now();
         await window.PalabraAuth.setUserDoc(uid, {
           progress: state.progress,
@@ -1538,6 +1570,8 @@
           updatedAt: window.PalabraAuth.serverTimestamp()
         });
         state.lastSyncedMs = ms;
+        const provider = (state.user && state.user.providerData && state.user.providerData[0] && state.user.providerData[0].providerId === 'google.com') ? 'google' : 'email';
+        notifyNewSignup(state.user && state.user.email, provider);
       }
     } catch (err) {
       // Offline or blocked — fall back silently to local progress.
@@ -3193,11 +3227,6 @@
               Continue with Google
             </button>
           </div>
-
-          <div style="text-align:center;">
-            <button class="link-btn" id="auth-guest-btn" type="button">Continue without an account</button>
-            <div class="settings-label" style="margin-top:-8px;">Progress saves to this device only</div>
-          </div>
         </div>
       </div>
     `;
@@ -3210,9 +3239,6 @@
     });
     document.getElementById('auth-submit-btn').addEventListener('click', handleAuthSubmit);
     document.getElementById('auth-google-btn').addEventListener('click', handleGoogleSignIn);
-    document.getElementById('auth-guest-btn').addEventListener('click', () => {
-      state.screen = 'start'; render();
-    });
   }
 
   function renderStart() {
