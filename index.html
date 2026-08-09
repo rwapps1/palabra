@@ -1416,18 +1416,30 @@
 
   // Debounced so a run of quick answers doesn't fire a Firestore write per
   // answer — resets on every call, actually writes once things go quiet.
+  function doCloudPush() {
+    if (!state.user) return Promise.resolve();
+    return window.PalabraAuth.setUserDoc(state.user.uid, {
+      progress: state.progress,
+      updatedAt: window.PalabraAuth.serverTimestamp()
+    }).catch(() => {
+      // Offline or blocked — local progress is still safe and will
+      // retry next time saveProgress() runs.
+    });
+  }
+
   function pushCloudProgressDebounced() {
     if (!state.user) return;
     clearTimeout(cloudSyncTimer);
-    cloudSyncTimer = setTimeout(() => {
-      window.PalabraAuth.setUserDoc(state.user.uid, {
-        progress: state.progress,
-        updatedAt: window.PalabraAuth.serverTimestamp()
-      }).catch(() => {
-        // Offline or blocked — local progress is still safe and will
-        // retry next time saveProgress() runs.
-      });
-    }, 2500);
+    cloudSyncTimer = setTimeout(doCloudPush, 2500);
+  }
+
+  // Pushes any not-yet-synced local change immediately (skipping the
+  // debounce wait), used before pulling fresh cloud data so our own latest
+  // progress can't get clobbered by an older cloud copy.
+  function flushCloudSync() {
+    clearTimeout(cloudSyncTimer);
+    cloudSyncTimer = null;
+    return doCloudPush();
   }
 
   function loadProgress() {
@@ -1504,6 +1516,7 @@
     screen: 'login', // login | start | quiz | result
     user: null,
     username: '',
+    editingUsername: false,
     authMode: 'signin', // signin | signup
     authError: '',
     authBusy: false,
@@ -2866,7 +2879,7 @@
           </div>
           <p class="sub">Your progress, wherever you play</p>
 
-          <div class="prompt-card card-flip-in">
+          <div class="prompt-card">
             <div class="auth-tabs">
               <button class="auth-tab ${!isSignup ? 'active' : ''}" id="tab-signin" type="button">Sign in</button>
               <button class="auth-tab ${isSignup ? 'active' : ''}" id="tab-signup" type="button">Create account</button>
@@ -2965,10 +2978,17 @@
             ? `<div class="menu-item" style="opacity:0.6; cursor:default;">${esc(state.user.email || 'Signed in')}</div>
                <div class="menu-item" style="display:flex; flex-direction:column; align-items:flex-start; gap:6px; cursor:default;">
                  <span>Username</span>
-                 <div style="display:flex; gap:6px; width:100%;">
-                   <input type="text" id="username-edit-input" value="${esc(state.username || '')}" placeholder="Pick a username" style="margin-bottom:0; flex:1; padding:8px 10px; font-size:14px;" />
-                   <button id="username-save-btn" class="btn-secondary" style="padding:8px 14px; width:auto;">Save</button>
-                 </div>
+                 ${(state.editingUsername || !state.username) ? `
+                   <div style="display:flex; gap:6px; width:100%;">
+                     <input type="text" id="username-edit-input" value="${esc(state.username || '')}" placeholder="Pick a username" style="margin-bottom:0; flex:1; padding:8px 10px; font-size:14px;" />
+                     <button id="username-save-btn" class="btn-secondary" style="padding:8px 14px; width:auto;">Save</button>
+                   </div>
+                 ` : `
+                   <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+                     <span style="font-weight:600;">${esc(state.username)}</span>
+                     <button id="username-edit-btn" class="link-btn" type="button">Edit</button>
+                   </div>
+                 `}
                </div>
                <button id="menu-signout-btn" class="menu-item">🚪 Sign out</button>`
             : `<button id="menu-signin-btn" class="menu-item">👤 Sign in / Create account</button>`}
@@ -3087,6 +3107,7 @@
           window.PalabraAuth.signOut().then(() => {
             state.user = null;
             state.username = '';
+            state.editingUsername = false;
             state.screen = 'login';
             render();
           });
@@ -3097,9 +3118,17 @@
         usernameSaveBtn.addEventListener('click', () => {
           const newUsername = document.getElementById('username-edit-input').value.trim();
           state.username = newUsername;
+          state.editingUsername = false;
           window.PalabraAuth.setUserDoc(state.user.uid, { username: newUsername || null }).catch(() => {
             // Offline or blocked — will still show locally; retries next save.
           });
+          render();
+        });
+      }
+      const usernameEditBtn = document.getElementById('username-edit-btn');
+      if (usernameEditBtn) {
+        usernameEditBtn.addEventListener('click', () => {
+          state.editingUsername = true;
           render();
         });
       }
@@ -4266,6 +4295,19 @@
       });
     });
   }
+
+  // Re-sync progress when returning to the app after using it elsewhere
+  // (another tab, another device). Flushes any pending local write first
+  // so our own latest progress can't be overwritten by a stale cloud copy.
+  // Only fires on the hub screen, not mid-game, so an in-progress round
+  // never gets its state pulled out from under it.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && state.user && state.screen === 'start') {
+      flushCloudSync()
+        .then(() => pullCloudProgress(state.user.uid))
+        .then(render);
+    }
+  });
 </script>
 </body>
 </html>
