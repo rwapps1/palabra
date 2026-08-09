@@ -1413,6 +1413,7 @@
         state.progress = mergeProgressShape(data.progress);
         state.username = data.username || '';
         state.lastSyncedMs = remoteMs;
+        state.progressDirty = false;
         // Write straight to localStorage rather than via saveProgress(),
         // which would also schedule another cloud push — a pull should
         // never trigger a push right back, or two open tabs can end up
@@ -1446,6 +1447,7 @@
       updatedAt: window.PalabraAuth.serverTimestamp()
     }).then(() => {
       state.lastSyncedMs = ms;
+      state.progressDirty = false;
     }).catch(() => {
       // Offline or blocked — local progress is still safe and will
       // retry next time saveProgress() runs.
@@ -1459,11 +1461,16 @@
   }
 
   // Pushes any not-yet-synced local change immediately (skipping the
-  // debounce wait), used before pulling fresh cloud data so our own latest
-  // progress can't get clobbered by an older cloud copy.
+  // debounce wait), used before pulling fresh cloud data so a genuine
+  // unsaved local change can't get clobbered by an older cloud copy. If
+  // nothing has actually changed locally since the last sync, this is a
+  // no-op — pushing a stale-but-unchanged copy just to "flush" would stamp
+  // it with a fresh timestamp and let it wrongly win over genuinely newer
+  // data from another device, which is exactly the bug this exists to avoid.
   function flushCloudSync() {
     clearTimeout(cloudSyncTimer);
     cloudSyncTimer = null;
+    if (!state.progressDirty) return Promise.resolve();
     return doCloudPush();
   }
 
@@ -1495,6 +1502,7 @@
     } catch (e) {
       // storage unavailable (private browsing etc.) - fail silently
     }
+    state.progressDirty = true;
     pushCloudProgressDebounced();
   }
 
@@ -1544,6 +1552,7 @@
     editingUsername: false,
     needsCloudSync: false,
     lastSyncedMs: 0,
+    progressDirty: false,
     authMode: 'signin', // signin | signup
     authError: '',
     authBusy: false,
