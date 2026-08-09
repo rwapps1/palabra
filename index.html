@@ -25,6 +25,54 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Palabra" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- Firebase: Authentication + Firestore. This runs as an ES module, so it
+     can't share scope directly with the classic app script further down —
+     instead it publishes what's needed onto window.PalabraAuth and fires a
+     'palabra-firebase-ready' event once that's done, since module scripts
+     load asynchronously and may not be ready before the classic script's
+     boot code runs. -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+  import {
+    getAuth, onAuthStateChanged,
+    createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    GoogleAuthProvider, signInWithRedirect, getRedirectResult,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+  import {
+    getFirestore, doc, getDoc, setDoc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBa47dn0gfyqYtF07i7EEsUCJtYIPZs5NM",
+    authDomain: "palabra-f8778.firebaseapp.com",
+    projectId: "palabra-f8778",
+    storageBucket: "palabra-f8778.firebasestorage.app",
+    messagingSenderId: "291018112525",
+    appId: "1:291018112525:web:2e53769bf8952131e19f44"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const googleProvider = new GoogleAuthProvider();
+
+  window.PalabraAuth = {
+    onAuthStateChanged: (cb) => onAuthStateChanged(auth, cb),
+    signUp: (email, password) => createUserWithEmailAndPassword(auth, email, password),
+    signIn: (email, password) => signInWithEmailAndPassword(auth, email, password),
+    signInWithGoogle: () => signInWithRedirect(auth, googleProvider),
+    getRedirectResult: () => getRedirectResult(auth),
+    signOut: () => signOut(auth),
+    getUserDoc: (uid) => getDoc(doc(db, 'users', uid)),
+    setUserDoc: (uid, data) => setDoc(doc(db, 'users', uid), data, { merge: true }),
+    serverTimestamp
+  };
+
+  window.dispatchEvent(new CustomEvent('palabra-firebase-ready'));
+</script>
+
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -103,6 +151,45 @@
       radial-gradient(circle at 85% 75%, rgba(247,243,237,0.14), transparent 50%),
       linear-gradient(160deg, #1A1530 0%, #140F26 60%, #100A1E 100%);
   }
+  .bg-login {
+    background:
+      radial-gradient(circle at 50% 12%, rgba(198,11,30,0.38), transparent 45%),
+      radial-gradient(circle at 80% 82%, rgba(139,92,246,0.28), transparent 50%),
+      linear-gradient(160deg, #1B1030 0%, #150C26 60%, #100A1E 100%);
+  }
+
+  .wordmark-accent { color: #FFFFFF; }
+
+  .auth-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+  .auth-tab {
+    flex: 1;
+    padding: 10px 0;
+    border-radius: 16px;
+    border: 1px solid var(--outline);
+    background: rgba(255,255,255,0.06);
+    color: var(--cream-dim);
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .auth-tab.active { background: var(--ochre); color: #241608; border-color: var(--ochre); }
+
+  .login-screen .prompt-card { padding: 24px 20px; text-align: left; }
+  .login-screen .btn-secondary { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; }
+
+  .auth-divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 16px 0; color: var(--cream-dim); font-size: 12px;
+  }
+  .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--outline); }
+
+  #confirm-field, #username-field {
+    max-height: 0; overflow: hidden; opacity: 0; margin-bottom: 0;
+    transition: max-height 0.25s ease, opacity 0.2s ease, margin-bottom 0.25s ease;
+  }
+  #confirm-field.shown, #username-field.shown { max-height: 90px; opacity: 1; margin-bottom: 12px; }
 
   .wrap { width: 100%; max-width: 420px; perspective: 700px; position: relative; }
 
@@ -720,7 +807,7 @@
     50% { box-shadow: 0 0 0 8px rgba(201,168,255,0); }
   }
 
-  input[type="text"] {
+  input[type="text"], input[type="email"], input[type="password"] {
     width: 100%;
     padding: 14px 16px;
     border-radius: 16px;
@@ -731,6 +818,9 @@
     margin-bottom: 12px;
     outline: none;
     font-family: 'Inter', sans-serif;
+  }
+  input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focus {
+    border-color: var(--ochre);
   }
 
   .option-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
@@ -1172,6 +1262,174 @@
     return wordStats;
   }
 
+  // --- Auth ---------------------------------------------------------
+
+  let cloudSyncTimer = null;
+
+  function initAuth() {
+    function onReady() {
+      // Picks up the result of a Google sign-in redirect, if this load is
+      // the browser returning from one. No-op otherwise.
+      window.PalabraAuth.getRedirectResult().catch((err) => {
+        state.authError = friendlyAuthError(err);
+        state.authBusy = false;
+        render();
+      });
+
+      window.PalabraAuth.onAuthStateChanged(async (user) => {
+        state.user = user;
+        state.authBusy = false;
+
+        if (user) {
+          await pullCloudProgress(user.uid);
+          if (state.screen === 'login') state.screen = 'start';
+        }
+        render();
+      });
+    }
+
+    if (window.PalabraAuth) onReady();
+    else window.addEventListener('palabra-firebase-ready', onReady, { once: true });
+  }
+
+  function friendlyAuthError(err) {
+    const code = err && err.code;
+    if (code === 'palabra/timeout') return "That's taking too long to respond. Check your connection and try again — if you're testing this file locally (a file:/// address) rather than through the live site or localhost, that will also cause this.";
+    if (code === 'auth/email-already-in-use') return 'That email already has an account — try signing in instead.';
+    if (code === 'auth/invalid-email') return "That doesn't look like a valid email address.";
+    if (code === 'auth/weak-password') return 'Password should be at least 6 characters.';
+    if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') return "We couldn't sign you in with that email and password. Double-check for typos, or tap \"Create account\" if you're new here.";
+    if (code === 'auth/user-not-found') return 'No account found for that email — try creating one instead.';
+    if (code === 'auth/too-many-requests') return 'Too many attempts — wait a moment and try again.';
+    return "Something went wrong. Check your details and try again.";
+  }
+
+  // Wraps a Firebase call so a stuck network request fails after AUTH_TIMEOUT_MS
+  // instead of leaving the "Please wait…" button stuck forever.
+  const AUTH_TIMEOUT_MS = 15000;
+  function withTimeout(promise, ms) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject({ code: 'palabra/timeout' }), ms))
+    ]);
+  }
+
+  async function handleAuthSubmit() {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const isSignup = state.authMode === 'signup';
+
+    if (!email || !password) {
+      state.authError = 'Enter an email and password to continue.';
+      render();
+      return;
+    }
+    if (isSignup) {
+      const confirm = document.getElementById('auth-confirm').value;
+      if (password !== confirm) {
+        state.authError = "Passwords don't match.";
+        render();
+        return;
+      }
+    }
+
+    state.authBusy = true;
+    state.authError = '';
+    render();
+
+    try {
+      if (isSignup) {
+        const username = document.getElementById('auth-username').value.trim();
+        const cred = await withTimeout(window.PalabraAuth.signUp(email, password), AUTH_TIMEOUT_MS);
+        // First login for this account: carry the guest's local progress
+        // forward as their starting point, rather than wiping it.
+        await withTimeout(window.PalabraAuth.setUserDoc(cred.user.uid, {
+          username: username || null,
+          email,
+          progress: state.progress,
+          updatedAt: window.PalabraAuth.serverTimestamp()
+        }), AUTH_TIMEOUT_MS);
+        state.username = username;
+      } else {
+        await withTimeout(window.PalabraAuth.signIn(email, password), AUTH_TIMEOUT_MS);
+      }
+      // onAuthStateChanged (in initAuth) takes it from here.
+    } catch (err) {
+      state.authBusy = false;
+      state.authError = friendlyAuthError(err);
+      render();
+    }
+  }
+
+  function handleGoogleSignIn() {
+    state.authBusy = true;
+    state.authError = '';
+    render();
+    withTimeout(window.PalabraAuth.signInWithGoogle(), AUTH_TIMEOUT_MS).catch((err) => {
+      state.authBusy = false;
+      state.authError = friendlyAuthError(err);
+      render();
+    });
+    // On success the page navigates away and back; getRedirectResult()
+    // in initAuth() picks up the outcome on reload.
+  }
+
+  // --- Cloud progress sync -------------------------------------------
+
+  // Same defensive shape-merge as loadProgress()/importProgress() below,
+  // applied to whatever's stored in Firestore so a malformed or
+  // partial cloud doc can't corrupt local state.
+  function mergeProgressShape(parsed) {
+    const merged = defaultProgress();
+    merged.wordStats = normalizeWordStats(parsed.wordStats || {});
+    merged.verbStats = normalizeWordStats(parsed.verbStats || {});
+    merged.streak = Object.assign(merged.streak, parsed.streak || {});
+    merged.conjugateStreak = Object.assign(merged.conjugateStreak, parsed.conjugateStreak || {});
+    merged.lifetime = Object.assign(merged.lifetime, parsed.lifetime || {});
+    merged.conjugateLifetime = Object.assign(merged.conjugateLifetime, parsed.conjugateLifetime || {});
+    merged.timeAttackBest = typeof parsed.timeAttackBest === 'number' ? parsed.timeAttackBest : 0;
+    merged.memoryBest = Object.assign({}, parsed.memoryBest || {});
+    merged.settings = Object.assign(merged.settings, parsed.settings || {});
+    merged.achievements = Object.assign({}, parsed.achievements || {});
+    return merged;
+  }
+
+  async function pullCloudProgress(uid) {
+    try {
+      const snap = await window.PalabraAuth.getUserDoc(uid);
+      if (snap.exists() && snap.data().progress) {
+        state.progress = mergeProgressShape(snap.data().progress);
+        state.username = snap.data().username || '';
+        saveProgress(); // keep localStorage as the fast local cache in sync too
+      } else {
+        // Signed-in user with no cloud doc yet — create one from whatever's
+        // local (shouldn't normally happen, since sign-up already writes one).
+        await window.PalabraAuth.setUserDoc(uid, {
+          progress: state.progress,
+          updatedAt: window.PalabraAuth.serverTimestamp()
+        });
+      }
+    } catch (err) {
+      // Offline or blocked — fall back silently to local progress.
+    }
+  }
+
+  // Debounced so a run of quick answers doesn't fire a Firestore write per
+  // answer — resets on every call, actually writes once things go quiet.
+  function pushCloudProgressDebounced() {
+    if (!state.user) return;
+    clearTimeout(cloudSyncTimer);
+    cloudSyncTimer = setTimeout(() => {
+      window.PalabraAuth.setUserDoc(state.user.uid, {
+        progress: state.progress,
+        updatedAt: window.PalabraAuth.serverTimestamp()
+      }).catch(() => {
+        // Offline or blocked — local progress is still safe and will
+        // retry next time saveProgress() runs.
+      });
+    }, 2500);
+  }
+
   function loadProgress() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -1200,6 +1458,7 @@
     } catch (e) {
       // storage unavailable (private browsing etc.) - fail silently
     }
+    pushCloudProgressDebounced();
   }
 
   function exportProgress() {
@@ -1242,7 +1501,12 @@
   }
 
   const state = {
-    screen: 'start', // start | quiz | result
+    screen: 'login', // login | start | quiz | result
+    user: null,
+    username: '',
+    authMode: 'signin', // signin | signup
+    authError: '',
+    authBusy: false,
     loading: true,
     fetchFailed: false,
     showUpload: false,
@@ -2589,6 +2853,76 @@
     return out;
   }
 
+  function renderLogin() {
+    const app = document.getElementById('app');
+    const isSignup = state.authMode === 'signup';
+
+    app.innerHTML = `
+      <div class="screen login-screen bg-login">
+        <div class="wrap">
+          <div class="header-row">
+            <span class="badge"></span>
+            <h1>Pal<span class="wordmark-accent">a</span>bra</h1>
+          </div>
+          <p class="sub">Your progress, wherever you play</p>
+
+          <div class="prompt-card card-flip-in">
+            <div class="auth-tabs">
+              <button class="auth-tab ${!isSignup ? 'active' : ''}" id="tab-signin" type="button">Sign in</button>
+              <button class="auth-tab ${isSignup ? 'active' : ''}" id="tab-signup" type="button">Create account</button>
+            </div>
+
+            ${state.authError ? `<div class="msg-error">${esc(state.authError)}</div>` : ''}
+
+            <label class="settings-label" for="auth-email">Email</label>
+            <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email" />
+
+            <div id="username-field" class="${isSignup ? 'shown' : ''}">
+              <label class="settings-label" for="auth-username">Username</label>
+              <input type="text" id="auth-username" placeholder="How friends will find you" autocomplete="off" />
+            </div>
+
+            <label class="settings-label" for="auth-password">Password</label>
+            <input type="password" id="auth-password" placeholder="••••••••" autocomplete="${isSignup ? 'new-password' : 'current-password'}" />
+
+            <div id="confirm-field" class="${isSignup ? 'shown' : ''}">
+              <label class="settings-label" for="auth-confirm">Confirm password</label>
+              <input type="password" id="auth-confirm" placeholder="••••••••" />
+            </div>
+
+            <button class="btn-primary" id="auth-submit-btn" ${state.authBusy ? 'disabled' : ''} type="button">
+              ${state.authBusy ? 'Please wait…' : (isSignup ? 'Create account' : 'Sign in')}
+            </button>
+
+            <div class="auth-divider">or</div>
+
+            <button class="btn-secondary" id="auth-google-btn" ${state.authBusy ? 'disabled' : ''} type="button">
+              <svg width="16" height="16" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.56 2.7-3.87 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.83.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.94v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.94A9 9 0 0 0 0 9c0 1.45.35 2.83.94 4.03l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.46 3.44 1.35l2.58-2.58C13.46.89 11.42 0 9 0A9 9 0 0 0 .94 4.97l3.01 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+              Continue with Google
+            </button>
+          </div>
+
+          <div style="text-align:center;">
+            <button class="link-btn" id="auth-guest-btn" type="button">Continue without an account</button>
+            <div class="settings-label" style="margin-top:-8px;">Progress saves to this device only</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('tab-signin').addEventListener('click', () => {
+      state.authMode = 'signin'; state.authError = ''; render();
+    });
+    document.getElementById('tab-signup').addEventListener('click', () => {
+      state.authMode = 'signup'; state.authError = ''; render();
+    });
+    document.getElementById('auth-submit-btn').addEventListener('click', handleAuthSubmit);
+    document.getElementById('auth-google-btn').addEventListener('click', handleGoogleSignIn);
+    document.getElementById('auth-guest-btn').addEventListener('click', () => {
+      state.screen = 'start'; render();
+    });
+  }
+
   function renderStart() {
     const app = document.getElementById('app');
     const settings = state.progress.settings;
@@ -2627,6 +2961,17 @@
           <button id="menu-reload-btn" class="menu-item">🔄 Reload word list</button>
           <button id="menu-export-btn" class="menu-item">⬇ Download progress</button>
           <button id="menu-import-btn" class="menu-item">⬆ Upload progress</button>
+          ${state.user
+            ? `<div class="menu-item" style="opacity:0.6; cursor:default;">${esc(state.user.email || 'Signed in')}</div>
+               <div class="menu-item" style="display:flex; flex-direction:column; align-items:flex-start; gap:6px; cursor:default;">
+                 <span>Username</span>
+                 <div style="display:flex; gap:6px; width:100%;">
+                   <input type="text" id="username-edit-input" value="${esc(state.username || '')}" placeholder="Pick a username" style="margin-bottom:0; flex:1; padding:8px 10px; font-size:14px;" />
+                   <button id="username-save-btn" class="btn-secondary" style="padding:8px 14px; width:auto;">Save</button>
+                 </div>
+               </div>
+               <button id="menu-signout-btn" class="menu-item">🚪 Sign out</button>`
+            : `<button id="menu-signin-btn" class="menu-item">👤 Sign in / Create account</button>`}
         </div>
       `;
     }
@@ -2735,6 +3080,37 @@
       document.getElementById('menu-import-btn').addEventListener('click', () => {
         document.getElementById('import-file').click();
       });
+      const signoutBtn = document.getElementById('menu-signout-btn');
+      if (signoutBtn) {
+        signoutBtn.addEventListener('click', () => {
+          state.showMenu = false;
+          window.PalabraAuth.signOut().then(() => {
+            state.user = null;
+            state.username = '';
+            state.screen = 'login';
+            render();
+          });
+        });
+      }
+      const usernameSaveBtn = document.getElementById('username-save-btn');
+      if (usernameSaveBtn) {
+        usernameSaveBtn.addEventListener('click', () => {
+          const newUsername = document.getElementById('username-edit-input').value.trim();
+          state.username = newUsername;
+          window.PalabraAuth.setUserDoc(state.user.uid, { username: newUsername || null }).catch(() => {
+            // Offline or blocked — will still show locally; retries next save.
+          });
+          render();
+        });
+      }
+      const signinBtn = document.getElementById('menu-signin-btn');
+      if (signinBtn) {
+        signinBtn.addEventListener('click', () => {
+          state.showMenu = false;
+          state.screen = 'login';
+          render();
+        });
+      }
     }
 
     if (state.showUpload) {
@@ -3834,7 +4210,8 @@
     const isNewScreen = state.screen !== lastScreen;
     lastScreen = state.screen;
 
-    if (state.screen === 'start') renderStart();
+    if (state.screen === 'login') renderLogin();
+    else if (state.screen === 'start') renderStart();
     else if (state.screen === 'quiz-setup') renderQuizSetup();
     else if (state.screen === 'categories') renderCategories();
     else if (state.screen === 'category-setup') renderCategorySetup();
@@ -3868,6 +4245,11 @@
       nextConjugateQuestion();
     }
   });
+
+  // Checks for an existing signed-in session and decides login vs hub.
+  // Independent of the word/verb list loading below — vocab data isn't
+  // user-specific, so both can happen in parallel.
+  initAuth();
 
   loadFromRepo();
 
