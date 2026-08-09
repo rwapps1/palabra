@@ -1477,9 +1477,13 @@
     try {
       if (isSignup) {
         const username = document.getElementById('auth-username').value.trim();
+        // Every new account starts from a completely clean slate. Never
+        // carry forward whatever's currently in memory/localStorage — it
+        // may well belong to a different account previously used on this
+        // device, not this brand new one.
+        state.progress = defaultProgress();
+        state.lastSyncedMs = 0;
         const cred = await withTimeout(window.PalabraAuth.signUp(email, password), AUTH_TIMEOUT_MS);
-        // First login for this account: carry forward whatever local
-        // progress already exists on this device, rather than wiping it.
         const signupMs = Date.now();
         await withTimeout(window.PalabraAuth.setUserDoc(cred.user.uid, {
           username: username || null,
@@ -1488,13 +1492,19 @@
           updatedAtMs: signupMs,
           updatedAt: window.PalabraAuth.serverTimestamp()
         }), AUTH_TIMEOUT_MS);
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.progress)); } catch (e) {}
         state.username = username;
         state.lastSyncedMs = signupMs;
         notifyNewSignup(email, 'email');
+        // Don't rely solely on onAuthStateChanged's own render() here — it
+        // can fire (and already render) before this point, racing ahead of
+        // the username actually being set, which is why it wasn't reliably
+        // showing up in the menu after signup.
+        render();
       } else {
         await withTimeout(window.PalabraAuth.signIn(email, password), AUTH_TIMEOUT_MS);
       }
-      // onAuthStateChanged (in initAuth) takes it from here.
+      // onAuthStateChanged (in initAuth) takes it from here for sign-in.
     } catch (err) {
       state.authBusy = false;
       state.authError = friendlyAuthError(err);
@@ -1562,7 +1572,10 @@
         // account (email/password signups already write a doc in
         // handleAuthSubmit before this ever runs, so in practice this only
         // fires for a first-time Google sign-in, or the rare edge case
-        // that comment above already described).
+        // that comment above already described). Same rule as email
+        // signup: never carry forward whatever's currently local — it may
+        // belong to a different account previously used on this device.
+        state.progress = defaultProgress();
         const ms = Date.now();
         await window.PalabraAuth.setUserDoc(uid, {
           progress: state.progress,
@@ -1570,6 +1583,7 @@
           updatedAt: window.PalabraAuth.serverTimestamp()
         });
         state.lastSyncedMs = ms;
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.progress)); } catch (e) {}
         const provider = (state.user && state.user.providerData && state.user.providerData[0] && state.user.providerData[0].providerId === 'google.com') ? 'google' : 'email';
         notifyNewSignup(state.user && state.user.email, provider);
       }
@@ -3417,6 +3431,13 @@
             state.user = null;
             state.username = '';
             state.editingUsername = false;
+            // Leave the device genuinely clean — nothing from this account
+            // should linger to leak into whatever signs in or registers
+            // here next.
+            state.progress = defaultProgress();
+            state.lastSyncedMs = 0;
+            state.progressDirty = false;
+            try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
             state.screen = 'login';
             render();
           });
