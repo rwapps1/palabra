@@ -1044,6 +1044,106 @@
   .toast-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--label); }
   .toast-name { font-weight: 700; font-size: 15px; }
 
+  /* --- Round-end celebration screen (Perfect / Finished) --- */
+  .celebrate-screen { justify-content: center; cursor: pointer; }
+  .celebrate-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    position: relative;
+    z-index: 3;
+  }
+  .celebrate-badge-ring {
+    width: 148px;
+    height: 148px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 26px;
+  }
+  .celebrate-badge-ring::before {
+    content: '';
+    position: absolute;
+    inset: -22px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--cream-dim) 0%, transparent 70%);
+    opacity: 0.4;
+    filter: blur(2px);
+    animation: badgeGlowPulse 1.8s ease-in-out infinite;
+  }
+  .celebrate-badge-ring.perfect::before { background: radial-gradient(circle, var(--ochre) 0%, transparent 70%); }
+  .celebrate-badge-disc {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--bg-card-alt);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1.5px solid var(--outline);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 62px;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 0 0 6px rgba(255,255,255,0.04), 0 12px 40px rgba(0,0,0,0.35);
+    animation: badgePopIn 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  }
+  @keyframes badgePopIn {
+    0%   { transform: scale(0.4); opacity: 0; }
+    60%  { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes badgeGlowPulse {
+    0%, 100% { opacity: 0.4; transform: scale(0.96); }
+    50%      { opacity: 0.7; transform: scale(1.08); }
+  }
+  .celebrate-headline {
+    font-family: 'Sora', sans-serif;
+    font-weight: 800;
+    font-size: 34px;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+    opacity: 0;
+    animation: celebrateTextIn 0.5s ease-out 0.15s forwards;
+  }
+  .celebrate-headline.perfect { color: var(--ochre); }
+  .celebrate-headline.finished { color: var(--cream); }
+  .celebrate-subline {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    color: var(--cream-dim);
+    margin: 0;
+    opacity: 0;
+    animation: celebrateTextIn 0.5s ease-out 0.26s forwards;
+  }
+  @keyframes celebrateTextIn {
+    0%   { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .celebrate-screen .tap-hint {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    color: var(--cream-dim);
+    opacity: 0;
+    animation: hintFadeIn 0.6s ease-out 0.9s forwards, hintPulse 2s ease-in-out 1.5s infinite;
+    z-index: 3;
+  }
+  @keyframes hintFadeIn { to { opacity: 0.55; } }
+  @keyframes hintPulse {
+    0%, 100% { opacity: 0.35; }
+    50%      { opacity: 0.7; }
+  }
+
   /* --- App loading screen: shown while loadFromRepo() fetches the word list --- */
   #app-loading {
     position: fixed;
@@ -1131,6 +1231,15 @@
     #app-loading .loader-orb-inner,
     #app-loading .loader-sweep,
     #app-loading .loader-caption .dots span { animation: none !important; }
+    .celebrate-badge-ring::before,
+    .celebrate-badge-disc,
+    .celebrate-headline,
+    .celebrate-subline,
+    .celebrate-screen .tap-hint {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
   }
 </style>
 </head>
@@ -1577,6 +1686,10 @@
     currentOptions: null,
     selectedOption: null,
     autoAdvanceTimer: null,
+    celebrateTimer: null,
+    celebrateVariant: null, // 'perfect' | 'finished'
+    celebrateNext: null,    // which screen to land on once the celebration ends
+    queuedAchievementToasts: [],
     lastFlippedIndex: -1,
     lastWasTypo: false,
     resultMode: 'round', // 'round' | 'timeattack'
@@ -1885,18 +1998,48 @@
     return audioCtx;
   }
 
-  function playNote(ctx, freq, startTime, duration, type) {
+  function playNote(ctx, freq, startTime, duration, type, peakGain) {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = type;
     osc.frequency.value = freq;
     gain.gain.setValueAtTime(0.0001, startTime);
-    gain.gain.exponentialRampToValueAtTime(0.22, startTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(peakGain || 0.22, startTime + 0.02);
     gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start(startTime);
     osc.stop(startTime + duration + 0.05);
+  }
+
+  // Brassier note for the "perfect round" fanfare: sawtooth + triangle
+  // layered through a lowpass filter, rounding the sawtooth's harsh edge
+  // into something closer to a horn than a chime.
+  function playBrassNote(ctx, freq, startTime, duration, peakGain) {
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 3200;
+    filter.Q.value = 0.7;
+    filter.connect(ctx.destination);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.exponentialRampToValueAtTime(peakGain, startTime + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+    gain.connect(filter);
+
+    const osc1 = ctx.createOscillator();
+    osc1.type = 'sawtooth';
+    osc1.frequency.value = freq;
+    osc1.connect(gain);
+
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'triangle';
+    osc2.frequency.value = freq;
+    osc2.connect(gain);
+
+    osc1.start(startTime); osc1.stop(startTime + duration + 0.05);
+    osc2.start(startTime); osc2.stop(startTime + duration + 0.05);
   }
 
   function playCorrectSound() {
@@ -1926,6 +2069,37 @@
     playNote(ctx, 783.99, now + 0.2, 0.2, 'triangle');
   }
 
+  // Round-end celebration sounds. Same gating convention as the other
+  // sound effects (respects the Sound effects setting).
+  function playPerfectFanfare() {
+    if (!state.progress.settings.soundEffects) return;
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    // low thump under the badge pop-in, for weight
+    playNote(ctx, 110, now, 0.2, 'sine', 0.2);
+    // ascending bugle-call fanfare (sol-do-mi-sol-do): short-short-short-
+    // short then a longer sustained landing note
+    const notes = [392.00, 523.25, 659.25, 783.99, 1046.50];
+    const step = 0.11;
+    notes.forEach((freq, i) => {
+      const isLast = i === notes.length - 1;
+      playBrassNote(ctx, freq, now + 0.05 + i * step, isLast ? 0.5 : 0.12, isLast ? 0.24 : 0.17);
+    });
+  }
+
+  function playFinishedChime() {
+    if (!state.progress.settings.soundEffects) return;
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    playNote(ctx, 110, now, 0.18, 'sine', 0.18);
+    playNote(ctx, 523.25, now + 0.05, 0.16, 'triangle');
+    playNote(ctx, 659.25, now + 0.15, 0.16, 'triangle');
+    playNote(ctx, 783.99, now + 0.25, 0.18, 'triangle');
+    playNote(ctx, 1046.5, now + 0.36, 0.32, 'triangle', 0.18);
+  }
+
   function showAchievementToast(id) {
     const def = ACHIEVEMENTS[id];
     if (!def) return;
@@ -1952,15 +2126,39 @@
     }, 2000);
   }
 
+  // While true, unlockAchievement() queues its toast/sound instead of
+  // firing immediately — used around round-end achievement checks so an
+  // achievement toast doesn't pop up on top of the full-screen celebration.
+  // The unlock itself (and saveProgress) still happens right away either way.
+  let suppressAchievementFX = false;
+
   function unlockAchievement(id) {
     if (!ACHIEVEMENTS[id]) return false;
     if (!state.progress.achievements) state.progress.achievements = {};
     if (state.progress.achievements[id] && state.progress.achievements[id].unlocked) return false;
     state.progress.achievements[id] = { unlocked: true, unlockedAt: Date.now() };
     saveProgress();
-    playAchievementSound();
-    showAchievementToast(id);
+    if (suppressAchievementFX) {
+      state.queuedAchievementToasts.push(id);
+    } else {
+      playAchievementSound();
+      showAchievementToast(id);
+    }
     return true;
+  }
+
+  // Shows any achievement toasts that were queued during a round-end
+  // celebration, once that celebration has finished or been skipped.
+  function flushQueuedAchievementToasts() {
+    if (!state.queuedAchievementToasts.length) return;
+    const ids = state.queuedAchievementToasts;
+    state.queuedAchievementToasts = [];
+    playAchievementSound();
+    let delay = 0;
+    ids.forEach((id) => {
+      setTimeout(() => showAchievementToast(id), delay);
+      delay += 250;
+    });
   }
 
   function evaluateRoundAchievements() {
@@ -1973,6 +2171,7 @@
   }
 
   function launchConfetti() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const container = document.createElement('div');
     container.className = 'confetti-container';
     document.body.appendChild(container);
@@ -2095,6 +2294,36 @@
     }
   }
 
+  function clearCelebrateTimer() {
+    if (state.celebrateTimer) {
+      clearTimeout(state.celebrateTimer);
+      state.celebrateTimer = null;
+    }
+  }
+
+  // Shows the round-end celebration screen, then automatically continues
+  // to nextScreen after a short hold (or immediately on tap — see the
+  // click listener in renderCelebrate).
+  function showCelebration(variant, nextScreen) {
+    clearCelebrateTimer();
+    state.celebrateVariant = variant;
+    state.celebrateNext = nextScreen;
+    state.screen = 'celebrate';
+    render();
+    const hold = variant === 'perfect' ? 1900 : 1500;
+    state.celebrateTimer = setTimeout(advanceFromCelebration, hold);
+  }
+
+  function advanceFromCelebration() {
+    clearCelebrateTimer();
+    const next = state.celebrateNext;
+    state.celebrateNext = null;
+    state.celebrateVariant = null;
+    state.screen = next;
+    render();
+    flushQueuedAchievementToasts();
+  }
+
   function prepareQuestion() {
     clearAutoAdvanceTimer();
     state.selectedOption = null;
@@ -2211,14 +2440,19 @@
   function nextQuestion() {
     clearAutoAdvanceTimer();
     if (state.index + 1 >= state.questions.length) {
-      state.screen = 'result';
+      const score = state.results.filter(r => r.correct).length;
+      const total = state.results.length;
+      const perfect = total > 0 && score === total;
+      suppressAchievementFX = true;
       evaluateRoundAchievements();
-    } else {
-      state.index += 1;
-      state.input = '';
-      state.checked = false;
-      prepareQuestion();
+      suppressAchievementFX = false;
+      showCelebration(perfect ? 'perfect' : 'finished', 'result');
+      return;
     }
+    state.index += 1;
+    state.input = '';
+    state.checked = false;
+    prepareQuestion();
     render();
   }
 
@@ -2416,9 +2650,8 @@
     saveProgress();
     state.taIsNewBest = isNewBest;
     state.resultMode = 'timeattack';
-    state.screen = 'result';
-    render();
-    if (isNewBest || state.taScore >= 25) launchConfetti();
+    // No "perfect" concept for Time Attack — always the single Finished variant.
+    showCelebration('finished', 'result');
   }
 
   function backToMemorySetup() {
@@ -2570,14 +2803,14 @@
     saveProgress();
     state.memoryIsNewBest = isNewBest;
 
+    const perfect = state.memoryMoves === state.memoryTotalPairs;
+    suppressAchievementFX = true;
     unlockAchievement('memoryFirstWin');
-    if (state.memoryMoves === state.memoryTotalPairs) unlockAchievement('memoryPerfect');
+    if (perfect) unlockAchievement('memoryPerfect');
     if (state.memoryTotalPairs === 12 && state.memorySeconds < 90) unlockAchievement('memoryFast');
+    suppressAchievementFX = false;
 
-    state.screen = 'memory-result';
-    render();
-
-    launchConfetti();
+    showCelebration(perfect ? 'perfect' : 'finished', 'memory-result');
   }
 
   function quitMemoryMatch() {
@@ -2810,14 +3043,19 @@
   function nextConjugateQuestion() {
     clearAutoAdvanceTimer();
     if (state.conjugateIndex + 1 >= state.conjugateQuestions.length) {
-      state.screen = 'conjugate-result';
+      const score = state.conjugateResults.filter(r => r.correct).length;
+      const total = state.conjugateResults.length;
+      const perfect = total > 0 && score === total;
+      suppressAchievementFX = true;
       evaluateConjugateRoundAchievements();
-    } else {
-      state.conjugateIndex += 1;
-      state.conjugateInput = '';
-      state.conjugateChecked = false;
-      prepareConjugateQuestion();
+      suppressAchievementFX = false;
+      showCelebration(perfect ? 'perfect' : 'finished', 'conjugate-result');
+      return;
     }
+    state.conjugateIndex += 1;
+    state.conjugateInput = '';
+    state.conjugateChecked = false;
+    prepareConjugateQuestion();
     render();
   }
 
@@ -3623,11 +3861,6 @@
     document.getElementById('back-btn').addEventListener('click', goHome);
     document.getElementById('again-btn').addEventListener('click', startConjugateRound);
     document.getElementById('settings-btn').addEventListener('click', backToConjugateSetup);
-
-    const strongScore = total > 0 && (score / total) >= 0.8;
-    if (strongScore || state.conjugateNewBestStreak) {
-      launchConfetti();
-    }
   }
 
   function renderTimeAttackSetup() {
@@ -3917,6 +4150,41 @@
     document.getElementById('quiz-quit-btn').addEventListener('click', quitQuiz);
   }
 
+  // Brief celebratory interstitial shown between a round ending and its
+  // results screen. Two variants (perfect / finished) shared across every
+  // game mode; the background glow is picked from whichever results screen
+  // it's about to hand off to, so it reads as a continuation, not a detour.
+  function renderCelebrate() {
+    const app = document.getElementById('app');
+    const isPerfect = state.celebrateVariant === 'perfect';
+
+    let bgClass = 'bg-quiz';
+    if (state.celebrateNext === 'memory-result') bgClass = 'bg-memory';
+    else if (state.celebrateNext === 'conjugate-result') bgClass = 'bg-conjugate';
+    else if (state.celebrateNext === 'result') bgClass = state.resultMode === 'timeattack' ? 'bg-timeattack' : 'bg-quiz';
+
+    app.innerHTML = `
+      <div class="screen ${bgClass} celebrate-screen" id="celebrate-screen-el">
+        <div class="celebrate-wrap">
+          <div class="celebrate-badge-ring ${isPerfect ? 'perfect' : ''}">
+            <div class="celebrate-badge-disc">${isPerfect ? '💯' : '🙌'}</div>
+          </div>
+          <div class="celebrate-headline ${isPerfect ? 'perfect' : 'finished'}">${isPerfect ? '¡Perfecto!' : '¡Ronda completa!'}</div>
+          <p class="celebrate-subline">${isPerfect ? 'Not a single mistake.' : 'Round complete.'}</p>
+        </div>
+        <div class="tap-hint">Tap to continue</div>
+      </div>
+    `;
+    document.getElementById('celebrate-screen-el').addEventListener('click', advanceFromCelebration);
+
+    if (isPerfect) {
+      launchConfetti();
+      playPerfectFanfare();
+    } else {
+      playFinishedChime();
+    }
+  }
+
   function renderResult() {
     const app = document.getElementById('app');
     const score = state.results.filter(r => r.correct).length;
@@ -3970,11 +4238,6 @@
     document.getElementById('back-btn').addEventListener('click', goHome);
     document.getElementById('again-btn').addEventListener('click', startQuiz);
     document.getElementById('settings-btn').addEventListener('click', backToQuizSetup);
-
-    const strongScore = total > 0 && (score / total) >= 0.8;
-    if (strongScore || state.newBestThisRound) {
-      launchConfetti();
-    }
   }
 
   function renderAchievements() {
@@ -4293,6 +4556,7 @@
     else if (state.screen === 'memory-setup') renderMemorySetup();
     else if (state.screen === 'memory-play') renderMemoryPlay();
     else if (state.screen === 'memory-result') renderMemoryResult();
+    else if (state.screen === 'celebrate') renderCelebrate();
     else if (state.screen === 'result') {
       if (state.resultMode === 'timeattack') renderTimeAttackResult();
       else renderResult();
