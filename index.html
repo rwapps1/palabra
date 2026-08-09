@@ -1455,6 +1455,10 @@
     const email = document.getElementById('auth-email').value.trim();
     const password = document.getElementById('auth-password').value;
     const isSignup = state.authMode === 'signup';
+    // Captured now, before the render() below regenerates the form (and
+    // with it, a brand new empty username input) — reading it later from
+    // the DOM would read back nothing, which is exactly what was happening.
+    const username = isSignup ? document.getElementById('auth-username').value.trim() : '';
 
     if (!email || !password) {
       state.authError = 'Enter an email and password to continue.';
@@ -1476,7 +1480,6 @@
 
     try {
       if (isSignup) {
-        const username = document.getElementById('auth-username').value.trim();
         // Every new account starts from a completely clean slate. Never
         // carry forward whatever's currently in memory/localStorage — it
         // may well belong to a different account previously used on this
@@ -1496,10 +1499,9 @@
         state.username = username;
         state.lastSyncedMs = signupMs;
         notifyNewSignup(email, 'email');
-        // Don't rely solely on onAuthStateChanged's own render() here — it
-        // can fire (and already render) before this point, racing ahead of
-        // the username actually being set, which is why it wasn't reliably
-        // showing up in the menu after signup.
+        // Explicit render so the menu reflects the username immediately —
+        // don't rely solely on onAuthStateChanged's own render(), since its
+        // timing relative to this point isn't guaranteed.
         render();
       } else {
         await withTimeout(window.PalabraAuth.signIn(email, password), AUTH_TIMEOUT_MS);
