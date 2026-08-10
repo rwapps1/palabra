@@ -340,8 +340,29 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  const DAY_MS = 24 * 60 * 60 * 1000;
   const ACCENTS = ['#FFC163', '#FF4D6D', '#2DD4BF', '#C9A8FF'];
+
+  // Calendar boundaries in the viewer's local time (not rolling windows).
+  function startOfToday(now) {
+    const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  }
+  function startOfWeek(now) {
+    // Monday 00:00 of the current week. getDay(): 0=Sun,1=Mon,...,6=Sat.
+    const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    const day = d.getDay();
+    const daysSinceMonday = (day === 0) ? 6 : day - 1;
+    d.setDate(d.getDate() - daysSinceMonday);
+    return d.getTime();
+  }
+  function startOfMonth(now) {
+    const d = new Date(now);
+    d.setDate(1);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  }
 
   const views = {
     loading: document.getElementById('view-loading'),
@@ -363,6 +384,7 @@
     if (user) {
       loadDashboard(user);
     } else {
+      clearInterval(syncedTickHandle);
       syncedIndicator.classList.add('hidden');
       showView('login');
     }
@@ -410,11 +432,14 @@
   // --- dashboard data ----------------------------------------------------
 
   let lastLoadedUser = null;
+  let lastSyncMs = 0;
+  let syncedTickHandle = null;
 
   async function loadDashboard(user) {
     lastLoadedUser = user;
     showView('loading');
     syncedIndicator.classList.add('hidden');
+    clearInterval(syncedTickHandle);
     try {
       const snap = await getDocs(collection(db, 'users'));
       const now = Date.now();
@@ -452,17 +477,35 @@
     return 0;
   }
 
+  // Shows how long ago the data was actually pulled — not a static "just
+  // now" claim — and ticks itself forward every 30s so it stays honest the
+  // longer the page sits open without a refresh. The indicator itself is a
+  // button (see loginNote/HTML) wired below to trigger a manual reload.
   function showSyncedOk() {
+    lastSyncMs = Date.now();
     syncedIndicator.classList.remove('hidden', 'err');
-    syncedText.textContent = 'synced just now';
+    updateSyncedText();
+    clearInterval(syncedTickHandle);
+    syncedTickHandle = setInterval(updateSyncedText, 30000);
   }
+
+  function updateSyncedText() {
+    syncedText.textContent = `synced ${relativeTime(lastSyncMs, Date.now())}`;
+  }
+
+  syncedIndicator.addEventListener('click', () => {
+    if (auth.currentUser) loadDashboard(auth.currentUser);
+  });
 
   function renderDashboard(users, now) {
     const total = users.length;
-    const newWeek = users.filter(u => u.createdAtMs >= now - 7 * DAY_MS).length;
-    const activeToday = users.filter(u => u.lastActiveAtMs >= now - DAY_MS).length;
-    const activeWeek = users.filter(u => u.lastActiveAtMs >= now - 7 * DAY_MS).length;
-    const activeMonth = users.filter(u => u.lastActiveAtMs >= now - 30 * DAY_MS).length;
+    const todayStart = startOfToday(now);
+    const weekStart = startOfWeek(now);
+    const monthStart = startOfMonth(now);
+    const newWeek = users.filter(u => u.createdAtMs >= weekStart).length;
+    const activeToday = users.filter(u => u.lastActiveAtMs >= todayStart).length;
+    const activeWeek = users.filter(u => u.lastActiveAtMs >= weekStart).length;
+    const activeMonth = users.filter(u => u.lastActiveAtMs >= monthStart).length;
 
     const byCreated = users.slice().sort((a, b) => b.createdAtMs - a.createdAtMs);
     const mostRecent = byCreated[0];
