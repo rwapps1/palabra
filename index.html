@@ -2372,12 +2372,6 @@
     reader.readAsArrayBuffer(file);
   }
 
-  function toggleHeader() {
-    state.hasHeader = !state.hasHeader;
-    if (state.rawRows) parseRows(state.rawRows, state.hasHeader);
-    else render();
-  }
-
   function clearAutoAdvanceTimer() {
     if (state.autoAdvanceTimer) {
       clearTimeout(state.autoAdvanceTimer);
@@ -3336,9 +3330,6 @@
         <div class="menu-dropdown">
           <label class="menu-item" style="cursor:pointer;">Speak words aloud <input type="checkbox" id="autospeak-toggle" ${settings.autoSpeak ? 'checked' : ''} /></label>
           <label class="menu-item" style="cursor:pointer;">Sound effects <input type="checkbox" id="soundfx-toggle" ${settings.soundEffects ? 'checked' : ''} /></label>
-          ${!state.loading && !state.showUpload ? `<button id="menu-uselist-btn" class="menu-item">📄 Use a different word list</button>` : ''}
-          ${!state.loading ? `<label class="menu-item" style="cursor:pointer;">First row is a header <input type="checkbox" id="header-toggle" ${state.hasHeader ? 'checked' : ''} /></label>` : ''}
-          <button id="menu-reload-btn" class="menu-item">🔄 Reload word list</button>
           <button id="menu-export-btn" class="menu-item">⬇ Download progress</button>
           <button id="menu-import-btn" class="menu-item">⬆ Upload progress</button>
           ${state.user
@@ -3444,20 +3435,6 @@
       document.getElementById('soundfx-toggle').addEventListener('change', (e) => {
         state.progress.settings.soundEffects = e.target.checked;
         saveProgress();
-      });
-      const uselistBtn = document.getElementById('menu-uselist-btn');
-      if (uselistBtn) {
-        uselistBtn.addEventListener('click', () => {
-          state.showMenu = false;
-          state.showUpload = true;
-          render();
-        });
-      }
-      const headerToggle = document.getElementById('header-toggle');
-      if (headerToggle) headerToggle.addEventListener('change', toggleHeader);
-      document.getElementById('menu-reload-btn').addEventListener('click', () => {
-        state.showMenu = false;
-        loadFromRepo();
       });
       document.getElementById('menu-export-btn').addEventListener('click', () => {
         state.showMenu = false;
