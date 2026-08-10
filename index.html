@@ -310,8 +310,8 @@
   }
   .tg-icon svg { display: block; }
   .dev-contact-logo-sm {
-    width: 28px;
-    height: 28px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     flex-shrink: 0;
   }
@@ -1346,7 +1346,10 @@
       lifetime: { totalAnswered: 0, totalCorrect: 0 },
       conjugateLifetime: { totalAnswered: 0, totalCorrect: 0 },
       timeAttackBest: 0,
+      taLifetime: { totalAnswered: 0, totalCorrect: 0 },
       memoryBest: {},
+      memoryLifetime: { boardsCleared: 0 },
+      memoryClearedSizes: {},
       settings: { direction: 'mixed', roundLength: '10', autoSpeak: true, answerMode: 'choice', soundEffects: true, memoryGridSize: '8' },
       achievements: {},
     };
@@ -1366,8 +1369,19 @@
     timeAttack50: { name: 'Lightning Round',desc: 'Score 50 in a single Time Attack round',  icon: '🌪️' },
     timeAttack100:{ name: 'Blur',           desc: 'Score 100 in a single Time Attack round', icon: '👑' },
     memoryFirstWin: { name: 'Board Cleared', desc: 'Complete your first Memory Match board',        icon: '🧩' },
-    memoryPerfect:  { name: 'Perfect Recall',desc: 'Clear a board in the minimum possible moves',   icon: '🧠' },
+    memoryPerfect:  { name: 'Perfect Recall',desc: 'Beat your own best on a grid size you\u2019ve played before',   icon: '🧠' },
     memoryFast:     { name: 'Quick Fingers', desc: 'Clear a 12-pair board in under 90 seconds',     icon: '💨' },
+    timeAttackNewBest:    { name: 'Personal Best',  desc: 'Beat your own Time Attack high score',            icon: '🏅' },
+    timeAttackFlawless:   { name: 'Flawless',       desc: 'No wrong answers in a Time Attack round',         icon: '✨' },
+    timeAttackStreak15:   { name: 'Dialed In',      desc: '15 correct in a row in a Time Attack round',      icon: '🔆' },
+    timeAttackStreak30:   { name: 'In The Zone',    desc: '30 correct in a row in a Time Attack round',      icon: '🌊' },
+    timeAttackCorrect100: { name: 'Sharpshooter',   desc: '100 lifetime correct answers in Time Attack',     icon: '🎖️' },
+    timeAttackCorrect500: { name: 'Marksman',       desc: '500 lifetime correct answers in Time Attack',     icon: '🏆' },
+    memoryFast6:     { name: 'Swift Sweep',    desc: 'Clear a 6-pair board in under 30 seconds',    icon: '⏩' },
+    memoryFast8:     { name: 'Rapid Recall',   desc: 'Clear an 8-pair board in under 50 seconds',   icon: '🌀' },
+    memoryBoards10:  { name: 'Regular Player', desc: 'Clear 10 lifetime Memory Match boards',       icon: '🗂️' },
+    memoryBoards50:  { name: 'Memory Veteran', desc: 'Clear 50 lifetime Memory Match boards',       icon: '🎗️' },
+    memoryAllSizes:  { name: 'Full House',     desc: 'Clear a board on all three grid sizes',       icon: '🎲' },
     conjugateFirstRound: { name: 'Verb Novice',    desc: 'Complete your first Conjugate round',   icon: '🌱' },
     conjugateStreak5:    { name: 'Getting Started', desc: 'Reach a 5-answer Conjugate streak',    icon: '🌿' },
     conjugateCorrect50:  { name: 'Verb Builder',    desc: '50 lifetime correct conjugations',      icon: '🧱' },
@@ -1630,7 +1644,10 @@
     merged.lifetime = Object.assign(merged.lifetime, parsed.lifetime || {});
     merged.conjugateLifetime = Object.assign(merged.conjugateLifetime, parsed.conjugateLifetime || {});
     merged.timeAttackBest = typeof parsed.timeAttackBest === 'number' ? parsed.timeAttackBest : 0;
+    merged.taLifetime = Object.assign(merged.taLifetime, parsed.taLifetime || {});
     merged.memoryBest = Object.assign({}, parsed.memoryBest || {});
+    merged.memoryLifetime = Object.assign(merged.memoryLifetime, parsed.memoryLifetime || {});
+    merged.memoryClearedSizes = Object.assign({}, parsed.memoryClearedSizes || {});
     merged.settings = Object.assign(merged.settings, parsed.settings || {});
     merged.achievements = Object.assign({}, parsed.achievements || {});
     return merged;
@@ -1738,7 +1755,10 @@
       merged.lifetime = Object.assign(merged.lifetime, parsed.lifetime || {});
       merged.conjugateLifetime = Object.assign(merged.conjugateLifetime, parsed.conjugateLifetime || {});
       merged.timeAttackBest = typeof parsed.timeAttackBest === 'number' ? parsed.timeAttackBest : 0;
+      merged.taLifetime = Object.assign(merged.taLifetime, parsed.taLifetime || {});
       merged.memoryBest = Object.assign({}, parsed.memoryBest || {});
+      merged.memoryLifetime = Object.assign(merged.memoryLifetime, parsed.memoryLifetime || {});
+      merged.memoryClearedSizes = Object.assign({}, parsed.memoryClearedSizes || {});
       merged.settings = Object.assign(merged.settings, parsed.settings || {});
       merged.achievements = Object.assign({}, parsed.achievements || {});
       return merged;
@@ -1783,7 +1803,10 @@
         merged.lifetime = Object.assign(merged.lifetime, parsed.lifetime || {});
         merged.conjugateLifetime = Object.assign(merged.conjugateLifetime, parsed.conjugateLifetime || {});
         merged.timeAttackBest = typeof parsed.timeAttackBest === 'number' ? parsed.timeAttackBest : 0;
+        merged.taLifetime = Object.assign(merged.taLifetime, parsed.taLifetime || {});
         merged.memoryBest = Object.assign({}, parsed.memoryBest || {});
+        merged.memoryLifetime = Object.assign(merged.memoryLifetime, parsed.memoryLifetime || {});
+        merged.memoryClearedSizes = Object.assign({}, parsed.memoryClearedSizes || {});
         merged.settings = Object.assign(merged.settings, parsed.settings || {});
         merged.achievements = Object.assign({}, parsed.achievements || {});
         state.progress = merged;
@@ -1837,6 +1860,7 @@
     resultMode: 'round', // 'round' | 'timeattack'
     taActive: false,
     taScore: 0,
+    taStreak: 0,
     taTimeLeft: 60,
     taEndTime: 0,
     taTimerHandle: null,
@@ -2684,6 +2708,10 @@
     if (state.taScore >= 25) unlockAchievement('timeAttack25');
     if (state.taScore >= 50) unlockAchievement('timeAttack50');
     if (state.taScore >= 100) unlockAchievement('timeAttack100');
+    if (state.taStreak >= 15) unlockAchievement('timeAttackStreak15');
+    if (state.taStreak >= 30) unlockAchievement('timeAttackStreak30');
+    if (state.progress.taLifetime.totalCorrect >= 100) unlockAchievement('timeAttackCorrect100');
+    if (state.progress.taLifetime.totalCorrect >= 500) unlockAchievement('timeAttackCorrect500');
   }
 
   function loadNextTimeAttackQuestion() {
@@ -2710,6 +2738,7 @@
     const settings = state.progress.settings;
     state.results = [];
     state.taScore = 0;
+    state.taStreak = 0;
     state.taActive = true;
     state.taIsNewBest = false;
     state.taEndTime = Date.now() + 60000;
@@ -2739,10 +2768,18 @@
   function taSubmit(correct, displayValue) {
     if (!state.taActive) return;
     const current = state.taCurrentQuestion;
+    // Update before recordAnswer() so its saveProgress() call persists
+    // these alongside everything else in one write, rather than needing
+    // a second save here.
+    state.progress.taLifetime.totalAnswered += 1;
+    if (correct) state.progress.taLifetime.totalCorrect += 1;
     recordAnswer(current, correct, displayValue);
     if (correct) {
       state.taScore++;
+      state.taStreak++;
       checkTimeAttackAchievements();
+    } else {
+      state.taStreak = 0;
     }
     const scoreEl = document.getElementById('ta-score');
     if (scoreEl) scoreEl.textContent = state.taScore;
@@ -2780,7 +2817,8 @@
     state.taActive = false;
     clearTaTimerInterval();
     clearTaFlashTimer();
-    const isNewBest = state.taScore > (state.progress.timeAttackBest || 0);
+    const prevBest = state.progress.timeAttackBest || 0;
+    const isNewBest = state.taScore > prevBest;
     if (isNewBest) {
       state.progress.timeAttackBest = state.taScore;
     }
@@ -2793,6 +2831,12 @@
     const score = state.results.filter(r => r.correct).length;
     const total = state.results.length;
     const perfect = total > 0 && score === total;
+    suppressAchievementFX = true;
+    // Same "not first-ever" guard as Memory Match's perfect redefinition —
+    // prevBest > 0 means there was an actual previous best to beat.
+    if (isNewBest && prevBest > 0) unlockAchievement('timeAttackNewBest');
+    if (perfect) unlockAchievement('timeAttackFlawless');
+    suppressAchievementFX = false;
     showCelebration(perfect ? 'perfect' : 'finished', 'result');
   }
 
@@ -2942,14 +2986,27 @@
     if (isNewBest) {
       state.progress.memoryBest[gridSize] = state.memoryMoves;
     }
+    state.progress.memoryLifetime.boardsCleared += 1;
+    state.progress.memoryClearedSizes[gridSize] = true;
     saveProgress();
     state.memoryIsNewBest = isNewBest;
 
-    const perfect = state.memoryMoves === state.memoryTotalPairs;
+    // "Perfect" used to mean zero mismatches, which is essentially a fluke
+    // on anything but the smallest board. It now means a genuine new best
+    // for this grid size — and only counts if there was a previous best to
+    // beat, so a first-ever play on a grid size (which is always
+    // technically "new best") never triggers it.
+    const perfect = isNewBest && !!prevBest;
+    const allSizesCleared = ['6', '8', '12'].every(size => state.progress.memoryClearedSizes[size]);
     suppressAchievementFX = true;
     unlockAchievement('memoryFirstWin');
     if (perfect) unlockAchievement('memoryPerfect');
+    if (state.memoryTotalPairs === 6 && state.memorySeconds < 30) unlockAchievement('memoryFast6');
+    if (state.memoryTotalPairs === 8 && state.memorySeconds < 50) unlockAchievement('memoryFast8');
     if (state.memoryTotalPairs === 12 && state.memorySeconds < 90) unlockAchievement('memoryFast');
+    if (state.progress.memoryLifetime.boardsCleared >= 10) unlockAchievement('memoryBoards10');
+    if (state.progress.memoryLifetime.boardsCleared >= 50) unlockAchievement('memoryBoards50');
+    if (allSizesCleared) unlockAchievement('memoryAllSizes');
     suppressAchievementFX = false;
 
     showCelebration(perfect ? 'perfect' : 'finished', 'memory-result');
