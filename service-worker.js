@@ -64,6 +64,11 @@ self.addEventListener('activate', (event) => {
 // useful.
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  // Only handle requests for our own origin. Without this check, taps on
+  // external links (e.g. the Telegram contact link) get swallowed here too
+  // — the SW tries to fetch/cache a cross-origin navigation, that silently
+  // fails, and the link appears to do nothing.
+  if (new URL(event.request.url).origin !== self.location.origin) return;
   event.respondWith(
     fetch(event.request)
       .then((response) => {
