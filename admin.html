@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palabra — Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #100A1E;
+    --bg-card: rgba(255,255,255,0.07);
+    --bg-card-alt: rgba(255,255,255,0.12);
+    --ochre: #FFC163;
+    --terracotta: #FF4D6D;
+    --green: #2DD4BF;
+    --label: #C9A8FF;
+    --cream: #F7F3ED;
+    --cream-dim: #B8AFC9;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 28px 18px 60px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .fade-in { animation: fadeIn 0.5s ease-out both; }
+    .fade-in:nth-child(1) { animation-delay: 0.02s; }
+    .fade-in:nth-child(2) { animation-delay: 0.07s; }
+    .fade-in:nth-child(3) { animation-delay: 0.12s; }
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .wrap { max-width: 560px; margin: 0 auto; }
+  .hidden { display: none !important; }
+
+  /* ---------- header ---------- */
+  .topbar {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 22px;
+  }
+  .topbar .brand { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 17px; }
+  .topbar .brand .tag {
+    font-family: 'Inter', sans-serif; font-weight: 600; font-size: 10.5px;
+    color: var(--label); letter-spacing: 0.06em; text-transform: uppercase;
+    margin-left: 8px; padding: 3px 8px; border-radius: 999px;
+    background: rgba(201,168,255,0.14); vertical-align: middle;
+  }
+  .topbar .synced {
+    font-size: 11.5px; color: var(--cream-dim); display: flex; align-items: center; gap: 6px;
+    background: none; border: none; font-family: 'Inter', sans-serif; cursor: pointer;
+  }
+  .topbar .synced .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+  }
+  .topbar .synced.err .dot { background: var(--terracotta); box-shadow: 0 0 8px var(--terracotta); }
+
+  /* ---------- generic panel/card shell ---------- */
+  .panel {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 20px 20px 16px;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 14px;
+  }
+  .panel .panel-title {
+    font-family: 'Sora', sans-serif; font-weight: 600; font-size: 15px; margin-bottom: 3px;
+  }
+  .panel .panel-sub { font-size: 12px; color: var(--cream-dim); margin-bottom: 16px; }
+
+  /* ---------- login ---------- */
+  #view-login .panel { margin-top: 40px; padding-bottom: 22px; }
+  .field { margin-bottom: 12px; }
+  .field label {
+    display: block; font-size: 12px; color: var(--cream-dim); margin-bottom: 6px; font-weight: 600;
+  }
+  .field input {
+    width: 100%; padding: 12px 14px; border-radius: 12px;
+    background: var(--bg-card-alt); border: 1px solid rgba(255,255,255,0.1);
+    color: var(--cream); font-family: 'Inter', sans-serif; font-size: 14px;
+  }
+  .field input:focus { outline: 2px solid var(--ochre); outline-offset: 1px; }
+  .btn {
+    width: 100%; padding: 13px; border-radius: 999px; border: none;
+    background: var(--ochre); color: #241608; font-family: 'Inter', sans-serif;
+    font-weight: 700; font-size: 14px; cursor: pointer; margin-top: 6px;
+  }
+  .btn:disabled { opacity: 0.6; cursor: default; }
+  .btn:focus-visible { outline: 2px solid var(--cream); outline-offset: 2px; }
+  .btn-ghost {
+    background: transparent; color: var(--cream-dim); border: 1px solid rgba(255,255,255,0.12);
+    font-weight: 600;
+  }
+  .auth-error {
+    color: var(--terracotta); font-size: 12.5px; margin-top: 10px; text-align: center;
+  }
+  .login-note {
+    text-align: center; font-size: 11.5px; color: var(--cream-dim); margin-top: 16px; opacity: 0.75;
+  }
+
+  /* ---------- denied / loading ---------- */
+  .center-panel {
+    text-align: center; padding: 40px 24px; margin-top: 30px;
+  }
+  .center-panel .glyph { font-size: 30px; margin-bottom: 12px; }
+  .center-panel h2 {
+    font-family: 'Sora', sans-serif; font-size: 17px; margin-bottom: 8px;
+  }
+  .center-panel p { color: var(--cream-dim); font-size: 13px; line-height: 1.5; margin-bottom: 18px; }
+
+  /* ---------- hero stat ---------- */
+  .hero-stat {
+    background: var(--bg-card);
+    border-radius: 22px;
+    padding: 24px 22px;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-stat::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 85% -10%, rgba(255,193,99,0.20), transparent 55%);
+    pointer-events: none;
+  }
+  .hero-stat .label {
+    font-size: 12.5px; color: var(--cream-dim); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .hero-stat .num {
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 46px;
+    line-height: 1.1; margin-top: 6px;
+  }
+  .hero-stat .sub {
+    display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; flex-wrap: wrap;
+  }
+  .hero-stat .delta {
+    color: var(--green); font-weight: 600; background: rgba(45,212,191,0.14);
+    padding: 3px 9px; border-radius: 999px; font-size: 12px;
+  }
+  .hero-stat .sub .since { color: var(--cream-dim); }
+
+  /* ---------- stat grid ---------- */
+  .stat-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 16px 16px 15px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.06);
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: ''; position: absolute; inset: 0; opacity: 0.16;
+    background: radial-gradient(circle at 100% 0%, var(--accent), transparent 60%);
+    pointer-events: none;
+  }
+  .stat-card .icon-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    margin-bottom: 10px;
+  }
+  .stat-card .num { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 24px; }
+  .stat-card .label { font-size: 12px; color: var(--cream-dim); margin-top: 3px; }
+
+  .stat-card.c-today { --accent: var(--terracotta); }
+  .stat-card.c-week  { --accent: var(--green); }
+  .stat-card.c-month { --accent: var(--ochre); }
+  .stat-card.c-new   { --accent: var(--label); }
+
+  /* ---------- recent signups ---------- */
+  .signup-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .signup-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .signup-row .avatar {
+    width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 13px; color: #241608;
+  }
+  .signup-row .who { flex: 1; min-width: 0; }
+  .signup-row .who .name { font-weight: 600; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .signup-row .who .name .u { color: var(--cream-dim); font-weight: 400; }
+  .signup-row .meta { text-align: right; flex-shrink: 0; }
+  .signup-row .meta .when { font-size: 12px; color: var(--cream-dim); }
+  .signup-row .platform {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase;
+    margin-top: 3px; color: var(--label);
+  }
+
+  .empty-note { color: var(--cream-dim); font-size: 13px; text-align: center; padding: 10px 0; }
+
+  .footnote {
+    text-align: center; font-size: 11.5px; color: var(--cream-dim);
+    margin-top: 18px; opacity: 0.7;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">Palabra<span class="tag">Admin</span></div>
+    <button id="syncedIndicator" class="synced hidden" type="button"><span class="dot"></span><span id="syncedText">synced just now</span></button>
+  </div>
+
+  <!-- loading -->
+  <div id="view-loading">
+    <div class="panel center-panel">
+      <div class="glyph">⏳</div>
+      <h2>Checking session…</h2>
+    </div>
+  </div>
+
+  <!-- login -->
+  <div id="view-login" class="hidden">
+    <div class="panel">
+      <div class="panel-title">Sign in</div>
+      <div class="panel-sub">Use your Palabra account</div>
+      <form id="loginForm">
+        <div class="field">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn" id="loginBtn">Sign in</button>
+        <div id="loginError" class="auth-error hidden"></div>
+      </form>
+    </div>
+    <div class="login-note">This page reads aggregate account data only. It's gated by Firestore rules, not just by this form.</div>
+  </div>
+
+  <!-- not authorized -->
+  <div id="view-denied" class="hidden">
+    <div class="panel center-panel">
+      <div class="glyph">🔒</div>
+      <h2>Not authorized</h2>
+      <p id="deniedText">This account can sign in, but Firestore rules haven't granted it admin read access.</p>
+      <button class="btn btn-ghost" id="signOutFromDenied" type="button">Sign out</button>
+    </div>
+  </div>
+
+  <!-- error -->
+  <div id="view-error" class="hidden">
+    <div class="panel center-panel">
+      <div class="glyph">⚠️</div>
+      <h2>Couldn't load data</h2>
+      <p id="errorText">Something went wrong talking to Firestore.</p>
+      <button class="btn btn-ghost" id="retryBtn" type="button">Retry</button>
+    </div>
+  </div>
+
+  <!-- dashboard -->
+  <div id="view-dashboard" class="hidden">
+
+    <div class="hero-stat fade-in">
+      <div class="label">Total registrations</div>
+      <div class="num" id="statTotal">—</div>
+      <div class="sub">
+        <span class="delta" id="statDelta">—</span>
+        <span class="since" id="statRecent">—</span>
+      </div>
+    </div>
+
+    <div class="stat-grid fade-in">
+      <div class="stat-card c-today">
+        <div class="icon-dot"></div>
+        <div class="num" id="statToday">—</div>
+        <div class="label">Active today</div>
+      </div>
+      <div class="stat-card c-week">
+        <div class="icon-dot"></div>
+        <div class="num" id="statWeek">—</div>
+        <div class="label">Active this week</div>
+      </div>
+      <div class="stat-card c-month">
+        <div class="icon-dot"></div>
+        <div class="num" id="statMonth">—</div>
+        <div class="label">Active this month</div>
+      </div>
+      <div class="stat-card c-new">
+        <div class="icon-dot"></div>
+        <div class="num" id="statNew">—</div>
+        <div class="label">New this week</div>
+      </div>
+    </div>
+
+    <div class="panel fade-in">
+      <div class="panel-title">Recent signups</div>
+      <div class="panel-sub">Newest first</div>
+      <div id="signupList"></div>
+    </div>
+
+    <div class="footnote">Signed in as <span id="whoami"></span> · <button class="btn-ghost" style="width:auto;display:inline;padding:4px 10px;border-radius:999px;font-size:11px;margin-top:8px;" id="signOutBtn" type="button">Sign out</button></div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+  import {
+    getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut
+  } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+  import {
+    getFirestore, collection, getDocs
+  } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+
+  // Same project as the main app — this config is not a secret; access is
+  // enforced entirely by Firestore Security Rules, not by hiding this object.
+  const firebaseConfig = {
+    apiKey: "AIzaSyBa47dn0gfyqYtF07i7EEsUCJtYIPZs5NM",
+    authDomain: "palabra-f8778.firebaseapp.com",
+    projectId: "palabra-f8778",
+    storageBucket: "palabra-f8778.firebasestorage.app",
+    messagingSenderId: "291018112525",
+    appId: "1:291018112525:web:2e53769bf8952131e19f44"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const ACCENTS = ['#FFC163', '#FF4D6D', '#2DD4BF', '#C9A8FF'];
+
+  const views = {
+    loading: document.getElementById('view-loading'),
+    login: document.getElementById('view-login'),
+    denied: document.getElementById('view-denied'),
+    error: document.getElementById('view-error'),
+    dashboard: document.getElementById('view-dashboard')
+  };
+  function showView(name) {
+    Object.keys(views).forEach(k => views[k].classList.toggle('hidden', k !== name));
+  }
+
+  const syncedIndicator = document.getElementById('syncedIndicator');
+  const syncedText = document.getElementById('syncedText');
+
+  // --- auth wiring -----------------------------------------------------
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      loadDashboard(user);
+    } else {
+      syncedIndicator.classList.add('hidden');
+      showView('login');
+    }
+  });
+
+  const loginForm = document.getElementById('loginForm');
+  const loginBtn = document.getElementById('loginBtn');
+  const loginError = document.getElementById('loginError');
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    loginError.classList.add('hidden');
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Signing in…';
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // onAuthStateChanged picks it up from here.
+    } catch (err) {
+      loginError.textContent = friendlyAuthError(err);
+      loginError.classList.remove('hidden');
+    } finally {
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Sign in';
+    }
+  });
+
+  function friendlyAuthError(err) {
+    const code = err && err.code;
+    if (code === 'auth/invalid-email') return 'That email address doesn\u2019t look right.';
+    if (code === 'auth/user-not-found' || code === 'auth/invalid-credential') return 'No account matches that email and password.';
+    if (code === 'auth/wrong-password') return 'Wrong password.';
+    if (code === 'auth/too-many-requests') return 'Too many attempts — wait a bit and try again.';
+    if (code === 'auth/network-request-failed') return 'Network error — check your connection.';
+    return 'Couldn\u2019t sign in. Please try again.';
+  }
+
+  document.getElementById('signOutFromDenied').addEventListener('click', () => signOut(auth));
+  document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth));
+  document.getElementById('retryBtn').addEventListener('click', () => {
+    if (auth.currentUser) loadDashboard(auth.currentUser);
+  });
+
+  // --- dashboard data ----------------------------------------------------
+
+  let lastLoadedUser = null;
+
+  async function loadDashboard(user) {
+    lastLoadedUser = user;
+    showView('loading');
+    syncedIndicator.classList.add('hidden');
+    try {
+      const snap = await getDocs(collection(db, 'users'));
+      const now = Date.now();
+      const users = [];
+      snap.forEach((docSnap) => {
+        const data = docSnap.data() || {};
+        users.push({
+          uid: docSnap.id,
+          username: data.username || null,
+          email: data.email || null,
+          platform: data.platform || null,
+          createdAtMs: getMs(data.createdAtMs, data.createdAt),
+          lastActiveAtMs: getMs(data.lastActiveAtMs, data.lastActiveAt)
+        });
+      });
+
+      renderDashboard(users, now);
+      document.getElementById('whoami').textContent = user.email || user.uid;
+      showView('dashboard');
+      showSyncedOk();
+    } catch (err) {
+      if (err && err.code === 'permission-denied') {
+        showView('denied');
+      } else {
+        document.getElementById('errorText').textContent =
+          (err && err.message) ? err.message : 'Something went wrong talking to Firestore.';
+        showView('error');
+      }
+    }
+  }
+
+  function getMs(msField, tsField) {
+    if (typeof msField === 'number' && msField > 0) return msField;
+    if (tsField && typeof tsField.toMillis === 'function') return tsField.toMillis();
+    return 0;
+  }
+
+  function showSyncedOk() {
+    syncedIndicator.classList.remove('hidden', 'err');
+    syncedText.textContent = 'synced just now';
+  }
+
+  function renderDashboard(users, now) {
+    const total = users.length;
+    const newWeek = users.filter(u => u.createdAtMs >= now - 7 * DAY_MS).length;
+    const activeToday = users.filter(u => u.lastActiveAtMs >= now - DAY_MS).length;
+    const activeWeek = users.filter(u => u.lastActiveAtMs >= now - 7 * DAY_MS).length;
+    const activeMonth = users.filter(u => u.lastActiveAtMs >= now - 30 * DAY_MS).length;
+
+    const byCreated = users.slice().sort((a, b) => b.createdAtMs - a.createdAtMs);
+    const mostRecent = byCreated[0];
+
+    document.getElementById('statTotal').textContent = total.toLocaleString();
+    document.getElementById('statDelta').textContent = `+${newWeek} this week`;
+    document.getElementById('statRecent').textContent = mostRecent && mostRecent.createdAtMs
+      ? `most recent \u00b7 ${relativeTime(mostRecent.createdAtMs, now)}`
+      : 'no signups yet';
+
+    document.getElementById('statToday').textContent = activeToday.toLocaleString();
+    document.getElementById('statWeek').textContent = activeWeek.toLocaleString();
+    document.getElementById('statMonth').textContent = activeMonth.toLocaleString();
+    document.getElementById('statNew').textContent = newWeek.toLocaleString();
+
+    const list = document.getElementById('signupList');
+    list.innerHTML = '';
+    const recent = byCreated.slice(0, 10);
+    if (recent.length === 0) {
+      list.innerHTML = '<div class="empty-note">No signups yet.</div>';
+      return;
+    }
+    recent.forEach((u, i) => {
+      const displayName = u.username || (u.email ? u.email.split('@')[0] : u.uid.slice(0, 8));
+      const initials = displayName.slice(0, 2).toUpperCase();
+      const color = ACCENTS[i % ACCENTS.length];
+      const row = document.createElement('div');
+      row.className = 'signup-row';
+      row.innerHTML = `
+        <div class="avatar" style="background:${color}">${escapeHtml(initials)}</div>
+        <div class="who"><div class="name">${escapeHtml(displayName)}${u.email ? ` <span class="u">\u00b7 ${escapeHtml(u.email)}</span>` : ''}</div></div>
+        <div class="meta">
+          <div class="when">${u.createdAtMs ? relativeTime(u.createdAtMs, now) : 'unknown'}</div>
+          <div class="platform">${escapeHtml(u.platform || '\u2014')}</div>
+        </div>`;
+      list.appendChild(row);
+    });
+  }
+
+  function relativeTime(ms, now) {
+    const diff = Math.max(0, now - ms);
+    const min = Math.floor(diff / 60000);
+    if (min < 1) return 'just now';
+    if (min < 60) return `${min} min ago`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr} hr ago`;
+    const day = Math.floor(hr / 24);
+    if (day === 1) return 'yesterday';
+    if (day < 7) return `${day} days ago`;
+    return new Date(ms).toLocaleDateString();
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+</script>
+</body>
+</html>
