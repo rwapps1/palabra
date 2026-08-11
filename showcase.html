@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Palabra — Learn Spanish Vocabulary, One Word at a Time</title>
+<meta name="description" content="Palabra is a free, installable web app for reinforcing Spanish vocabulary and verb conjugation through five game modes, spaced repetition, and visual progress tracking — a companion to your other learning resources." />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+
+  :root {
+    --bg: #100A1E;
+    --bg-card: rgba(255,255,255,0.07);
+    --bg-card-alt: rgba(255,255,255,0.12);
+    --ochre: #FFC163;
+    --terracotta: #FF4D6D;
+    --cream: #F7F3ED;
+    --cream-dim: #B8AFC9;
+    --green: #2DD4BF;
+    --red: #FF4D6D;
+    --outline: rgba(255,255,255,0.16);
+    --label: #C9A8FF;
+    --memory: #E879F9;
+    --conjugate: #34D399;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: #06040C;
+    color: var(--cream);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  img, svg { max-width: 100%; display: block; }
+  a { color: inherit; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* ============ shared app-chrome components (used in hero demo + screenshots) ============ */
+  .badge {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(180deg, #C60B1E 0 25%, #FFC400 25% 75%, #C60B1E 75% 100%);
+    box-shadow: 0 0 14px rgba(255,196,0,0.45), inset 0 2px 3px rgba(255,255,255,0.45), inset 0 -3px 6px rgba(0,0,0,0.3);
+    position: relative; flex-shrink: 0;
+  }
+  .badge::after {
+    content: ''; position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(circle at 33% 25%, rgba(255,255,255,0.6), transparent 55%);
+  }
+  h1.applogo { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 21px; margin: 0; color: var(--cream); }
+  .menu-dot { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--outline); background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; color: var(--cream); font-weight: 700; font-size: 13px; }
+  .streak-line { font-size: 12px; color: var(--cream-dim); margin: 9px 0 12px; font-variant-numeric: tabular-nums; }
+  .streak-line b { color: var(--cream); }
+
+  .card {
+    background: var(--bg-card);
+    border-radius: 18px;
+    padding: 13px;
+    border: 1px solid var(--outline);
+    backdrop-filter: blur(14px);
+  }
+
+  .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .game-tile {
+    background: var(--bg-card);
+    border: 1px solid var(--outline);
+    border-radius: 16px;
+    padding: 11px;
+    display: flex; flex-direction: column; gap: 3px;
+    position: relative;
+  }
+  .game-tile.locked { opacity: 0.4; }
+  .tile-icon-wrap { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; margin-bottom: 1px; }
+  .tile-name { font-weight: 700; font-size: 12.5px; color: var(--cream); font-family: 'Inter', sans-serif; }
+  .tile-meta { font-size: 10px; color: var(--cream-dim); }
+  .tile-soon { position: absolute; top: 8px; right: 8px; font-size: 8px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--label); background: rgba(255,255,255,0.08); border-radius: 5px; padding: 2px 5px; }
+
+  .banner { flex-direction: row; align-items: center; gap: 10px; width: 100%; margin-top: 8px; padding: 10px 12px; display: flex; }
+  .banner .tile-icon-wrap { margin-bottom: 0; }
+  .banner-name { font-weight: 700; font-size: 12.5px; color: var(--cream); }
+  .banner-meta { font-size: 10.5px; color: var(--cream-dim); margin-top: 1px; }
+  .achievements-banner { border-color: rgba(255,193,99,0.35); }
+  .progress-banner { border-color: rgba(201,168,255,0.35); }
+
+  .eyebrow { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 10px; letter-spacing: 2px; color: var(--label); text-transform: uppercase; text-align: center; }
+
+  .back-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .back-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--outline); background: rgba(255,255,255,0.06); color: var(--cream); font-size: 13px; display: flex; align-items: center; justify-content: center; }
+  .screen-title { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 18px; color: var(--cream); }
+
+  .tiles { display: grid; gap: 3px; margin-bottom: 20px; }
+  .tile-dot { height: 6px; border-radius: 50%; background: var(--outline); }
+
+  .prompt-card {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 30px 18px;
+    text-align: center;
+    border: 1px solid var(--outline);
+    margin-bottom: 14px;
+    backdrop-filter: blur(14px);
+    position: relative;
+  }
+  .prompt-word { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 26px; color: var(--cream); }
+  .prompt-sub { font-size: 11px; color: var(--cream-dim); margin-top: 6px; letter-spacing: 0.5px; }
+
+  .option-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 10px; }
+  .option-btn {
+    width: 100%; padding: 11px 14px; border-radius: 13px; border: 1px solid var(--outline);
+    background: var(--bg-card-alt); color: var(--cream); font-size: 13.5px; font-weight: 600;
+    text-align: left; font-family: 'Inter', sans-serif;
+  }
+  .option-btn.correct-choice { background: rgba(45,212,191,0.22); border-color: var(--green); color: #B8FFF3; }
+  .option-btn.dim { opacity: 0.45; }
+
+  .feedback { padding: 12px 14px; border-radius: 14px; }
+  .feedback.correct { background: rgba(45,212,191,0.14); border: 1px solid var(--green); }
+  .feedback .fb-title { font-weight: 700; font-size: 13.5px; color: var(--cream); }
+  .feedback.conj-correct { background: rgba(52,211,153,0.16); border: 1px solid var(--conjugate); }
+
+  .tap-dot {
+    position: absolute; width: 30px; height: 30px; margin-left: -15px; margin-top: -15px;
+    border-radius: 50%; background: rgba(255,255,255,0.35); border: 2px solid rgba(255,255,255,0.85);
+    opacity: 0; z-index: 50; pointer-events: none;
+  }
+  .tap-a { animation: tapPulse 0.7s ease 1750ms; }
+  .tap-c { animation: tapPulse 0.7s ease 700ms; }
+  .tap-d { animation: tapPulse 0.7s ease 2900ms; }
+  .tap-e { animation: tapPulse 0.7s ease 3150ms; }
+  .tap-hub { animation: tapPulse 0.7s ease 3150ms; }
+  .tap-conj { animation: tapPulse 0.7s ease 1900ms; }
+  @keyframes tapPulse { 0% { transform: scale(0.3); opacity: 0; } 35% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.5); opacity: 0; } }
+
+  .hub-tile-press { animation: pressIt 0.35s ease 3200ms; }
+  @keyframes pressIt { 0% { transform: scale(1); border-color: var(--outline); } 50% { transform: scale(0.94); border-color: var(--terracotta); } 100% { transform: scale(1); border-color: var(--outline); } }
+
+  .option-btn.pending-correct { animation: growCorrect 0.35s ease 2000ms forwards; position: relative; }
+  @keyframes growCorrect { to { background: rgba(45,212,191,0.22); border-color: var(--green); color: #B8FFF3; transform: scale(1.02); } }
+  .option-btn.dim-late { animation: dimIt 0.35s ease 2000ms forwards; }
+  .option-btn.dim-late2 { animation: dimIt 0.35s ease 2200ms forwards; }
+  @keyframes dimIt { to { opacity: 0.4; } }
+  .fb-hidden { opacity: 0; }
+  .fb-appear { animation: fbIn 0.4s ease 2250ms forwards; }
+  .fb-appear2 { animation: fbIn 0.4s ease 2450ms forwards; }
+  @keyframes fbIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .ta-header { margin-bottom: 18px; }
+  .ta-timer-track { height: 6px; background: var(--outline); border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+  .ta-timer-fill { height: 100%; background: var(--ochre); border-radius: 4px; width: 100%; }
+  .ta-stats-row { display: flex; justify-content: space-between; font-weight: 600; font-size: 12px; color: var(--cream-dim); font-variant-numeric: tabular-nums; }
+  .ta-stats-row span { color: var(--ochre); font-weight: 700; }
+  .ta-word.swap-1 { animation: swapText 0.3s ease 1600ms; }
+  .ta-word.swap-2 { animation: swapText 0.3s ease 3300ms; }
+  @keyframes swapText { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+  .memory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; margin-top: 6px; }
+  .memory-tile {
+    aspect-ratio: 1; border-radius: 12px; border: 1px solid var(--outline);
+    background: var(--bg-card-alt); color: var(--cream-dim); display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 600;
+  }
+  .memory-tile.matched { background: rgba(45,212,191,0.22); border-color: var(--green); color: #B8FFF3; }
+  .mt-match-1, .mt-match-2 { animation: memFlip 0.5s ease 700ms forwards, memMatch 0.3s ease 1250ms forwards; }
+  .mt-match-3, .mt-match-4 { animation: memFlip 0.5s ease 2500ms forwards, memMatch 0.3s ease 3050ms forwards; }
+  @keyframes memFlip { from { transform: rotateY(-90deg); opacity: 0.4; } to { transform: rotateY(0); opacity: 1; } }
+  @keyframes memMatch { to { background: rgba(45,212,191,0.22); border-color: var(--green); color: #B8FFF3; } }
+  .memory-stats-row { display: flex; justify-content: space-between; font-weight: 600; font-size: 12px; color: var(--cream-dim); margin-bottom: 4px; }
+  .memory-stats-row span { color: var(--memory); font-weight: 700; }
+
+  .pronoun-pill { display: inline-block; margin-top: 8px; padding: 3px 10px; border-radius: 999px; background: rgba(52,211,153,0.16); color: var(--conjugate); font-size: 11.5px; font-weight: 700; }
+  .fake-input { width: 100%; padding: 11px 13px; border-radius: 13px; border: 1px solid var(--outline); background: var(--bg-card-alt); color: var(--cream); font-size: 14px; margin-bottom: 9px; min-height: 18px; }
+  .type-caret { display: inline-block; width: 2px; height: 13px; background: var(--conjugate); margin-left: 1px; vertical-align: middle; animation: caretBlink 0.6s steps(1) infinite; }
+  @keyframes caretBlink { 50% { opacity: 0; } }
+  .conj-btn { width: 100%; padding: 10px 0; border-radius: 13px; border: none; font-weight: 700; font-size: 13.5px; background: var(--ochre); color: #241608; font-family: 'Inter', sans-serif; }
+
+  .progress-summary-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .progress-summary-eyebrow { font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--label); margin-bottom: 6px; }
+  .progress-summary-card.conjugate .progress-summary-eyebrow { color: var(--conjugate); }
+  .progress-summary-big { font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 700; color: var(--cream); line-height: 1; }
+  .progress-summary-big-label { font-size: 9.5px; color: var(--cream-dim); margin: 3px 0; }
+  .progress-section-title { font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 700; color: var(--cream); margin-bottom: 8px; }
+  .progress-bars { display: flex; align-items: flex-end; gap: 6px; height: 62px; }
+  .progress-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .progress-bar { width: 100%; border-radius: 5px 5px 2px 2px; background: linear-gradient(180deg, var(--label), rgba(201,168,255,0.25)); height: 0%; }
+  .progress-bar-label { font-size: 8.5px; color: var(--cream-dim); }
+  .grow-bar { animation: growBar 0.6s ease forwards; }
+  @keyframes growBar { from { height: 0%; } }
+
+  .achievement-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--outline); }
+  .achievement-row:last-child { border-bottom: none; }
+  .ach-icon-sm { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .ach-name-sm { font-weight: 700; font-size: 12.5px; color: var(--cream); }
+  .ach-desc-sm { font-size: 10.5px; color: var(--cream-dim); margin-top: 1px; }
+
+  .ach-wrap { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; opacity: 0; animation: fbIn 0.45s ease 150ms forwards; }
+  .ach-badge {
+    width: 68px; height: 68px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #FFF3D6, #FFC163 55%, #B4750C 100%);
+    box-shadow: 0 0 30px rgba(255,193,99,0.6);
+    display: flex; align-items: center; justify-content: center; font-size: 30px; margin-bottom: 14px;
+  }
+  .ach-eyebrow { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--ochre); font-weight: 700; margin-bottom: 6px; }
+  .ach-title { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 700; color: var(--cream); margin-bottom: 4px; }
+  .ach-desc { font-size: 12px; color: var(--cream-dim); }
+  .confetti-piece { position: absolute; top: -10px; width: 6px; height: 11px; opacity: 0.9; animation-name: confettiFall; animation-timing-function: ease-in; animation-fill-mode: forwards; }
+  @keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(560px) rotate(360deg); opacity: 0; } }
+
+  /* per-scene ambient backgrounds (as used inside the app) */
+  .bg-quiz { background: radial-gradient(circle at 25% 10%, rgba(255,107,74,0.42), transparent 45%), radial-gradient(circle at 85% 70%, rgba(139,92,246,0.32), transparent 50%), linear-gradient(160deg, #1B1030 0%, #150C26 60%, #100A1E 100%); }
+  .bg-timeattack { background: radial-gradient(circle at 20% 15%, rgba(45,212,191,0.4), transparent 45%), radial-gradient(circle at 85% 75%, rgba(56,120,255,0.3), transparent 50%), linear-gradient(160deg, #0D1B30 0%, #0B1626 60%, #0A121E 100%); }
+  .bg-memory { background: radial-gradient(circle at 22% 14%, rgba(217,70,239,0.38), transparent 45%), radial-gradient(circle at 85% 72%, rgba(99,102,241,0.3), transparent 50%), linear-gradient(160deg, #240F35 0%, #180B28 60%, #100A1E 100%); }
+  .bg-conjugate { background: radial-gradient(circle at 22% 14%, rgba(52,211,153,0.36), transparent 45%), radial-gradient(circle at 85% 72%, rgba(217,119,6,0.26), transparent 50%), linear-gradient(160deg, #0E2A22 0%, #0B1F1A 60%, #0A1512 100%); }
+  .bg-progress { background: radial-gradient(circle at 20% 12%, rgba(201,168,255,0.32), transparent 45%), radial-gradient(circle at 85% 70%, rgba(247,243,237,0.14), transparent 50%), linear-gradient(160deg, #1A1530 0%, #140F26 60%, #100A1E 100%); }
+  .bg-achievements { background: radial-gradient(circle at 25% 15%, rgba(255,193,99,0.4), transparent 45%), radial-gradient(circle at 85% 70%, rgba(255,107,74,0.25), transparent 50%), linear-gradient(160deg, #241631 0%, #1A1026 60%, #120B1C 100%); }
+
+  /* ============ phone chrome ============ */
+  .phone-shell {
+    width: 300px; height: 624px; background: linear-gradient(160deg, #2a2a32, #0a0a0d);
+    border-radius: 52px; padding: 12px; position: relative; flex-shrink: 0;
+    box-shadow: 0 40px 90px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.06) inset, 0 2px 0 rgba(255,255,255,0.08) inset;
+  }
+  .phone-screen { width: 100%; height: 100%; background: var(--bg); border-radius: 40px; overflow: hidden; position: relative; }
+  .notch { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 90px; height: 22px; background: #05040a; border-radius: 14px; z-index: 40; }
+  .home-indicator { position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%); width: 108px; height: 4px; border-radius: 3px; background: rgba(255,255,255,0.55); z-index: 40; }
+  .status-bar { position: relative; z-index: 30; display: flex; align-items: center; justify-content: space-between; padding: 14px 22px 2px; font-weight: 600; font-size: 12.5px; color: var(--cream); }
+  .status-icons { display: flex; align-items: center; gap: 4px; }
+  .story-bar { position: relative; z-index: 30; display: flex; gap: 4px; padding: 8px 14px 0; }
+  .story-seg { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.22); overflow: hidden; }
+  .story-seg-fill { height: 100%; width: 0%; background: var(--cream); border-radius: 2px; }
+  .screen-content-wrap { position: absolute; top: 60px; left: 0; right: 0; bottom: 0; overflow: hidden; }
+  .screen-content { height: 100%; width: 100%; padding: 16px 18px 18px; opacity: 1; transition: opacity 0.22s ease; position: relative; }
+  .screen-content-static { top: 34px; padding: 16px 18px 18px; }
+
+  /* ============ marketing chrome ============ */
+  .wrapper { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+
+  .site-nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(6,4,12,0.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .site-nav .wrapper { display: flex; align-items: center; justify-content: space-between; height: 66px; }
+  .nav-left { display: flex; align-items: center; gap: 10px; }
+  .nav-left .badge { width: 26px; height: 26px; }
+  .nav-left span { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 17px; }
+  .nav-links { display: flex; align-items: center; gap: 26px; font-size: 13.5px; font-weight: 600; color: var(--cream-dim); }
+  .nav-links a { text-decoration: none; }
+  .nav-links a:hover { color: var(--cream); }
+  .nav-cta {
+    display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 999px;
+    background: var(--ochre); color: #241608; font-weight: 700; font-size: 13px; text-decoration: none;
+    white-space: nowrap;
+  }
+  @media (max-width: 720px) { .nav-links { display: none; } }
+
+  section { position: relative; overflow: hidden; }
+
+  /* ---- hero ---- */
+  .hero { padding: 76px 0 90px; }
+  .hero::before {
+    content: ''; position: absolute; inset: 0; z-index: 0;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(255,107,74,0.20), transparent 42%),
+      radial-gradient(circle at 92% 30%, rgba(139,92,246,0.20), transparent 45%),
+      linear-gradient(180deg, #100A1E 0%, #0A0714 60%, #06040C 100%);
+  }
+  .hero .wrapper { position: relative; z-index: 1; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
+  .hero-eyebrow-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 22px; flex-wrap: wrap; }
+  .hero-pill {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--label); background: rgba(201,168,255,0.12); border: 1px solid rgba(201,168,255,0.3);
+    border-radius: 999px; padding: 6px 12px;
+  }
+  .hero-copy h1 {
+    font-family: 'Sora', sans-serif; font-weight: 800; color: var(--cream);
+    font-size: clamp(38px, 5vw, 58px); line-height: 1.04; margin: 0 0 20px; letter-spacing: -0.5px;
+  }
+  .hero-copy h1 em { font-style: normal; background: linear-gradient(95deg, var(--ochre), var(--terracotta)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p.lede { font-size: 17px; line-height: 1.6; color: var(--cream-dim); max-width: 480px; margin: 0 0 28px; }
+  .hero-stats { display: flex; gap: 26px; margin-bottom: 32px; flex-wrap: wrap; }
+  .hero-stat b { display: block; font-family: 'Sora', sans-serif; font-size: 22px; color: var(--cream); }
+  .hero-stat span { font-size: 11.5px; color: var(--cream-dim); }
+  .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn-play {
+    display: inline-flex; align-items: center; gap: 8px; padding: 15px 26px; border-radius: 14px;
+    background: var(--ochre); color: #241608; font-weight: 700; font-size: 15px; text-decoration: none;
+    box-shadow: 0 12px 30px rgba(255,193,99,0.28);
+  }
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 8px; padding: 15px 22px; border-radius: 14px;
+    border: 1px solid var(--outline); color: var(--cream); font-weight: 600; font-size: 14.5px; text-decoration: none;
+    background: rgba(255,255,255,0.04);
+  }
+
+  .hero-phone-col { display: flex; flex-direction: column; align-items: center; position: relative; }
+  .live-tag {
+    display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 700; letter-spacing: 1.4px;
+    text-transform: uppercase; color: var(--cream-dim); margin-bottom: 16px;
+  }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--terracotta); box-shadow: 0 0 0 0 rgba(255,77,109,0.6); animation: livePulse 1.6s ease-in-out infinite; }
+  @keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(255,77,109,0.55); } 70% { box-shadow: 0 0 0 9px rgba(255,77,109,0); } 100% { box-shadow: 0 0 0 0 rgba(255,77,109,0); } }
+  .phone-glow { position: absolute; width: 420px; height: 420px; border-radius: 50%; background: radial-gradient(circle, rgba(255,193,99,0.20), transparent 65%); filter: blur(10px); z-index: 0; pointer-events: none; }
+
+  /* ---- what-is-it ---- */
+  .about { padding: 8px 0 80px; }
+  .about .wrapper { max-width: 780px; text-align: center; }
+  .about p {
+    font-family: 'Sora', sans-serif; font-size: clamp(21px, 2.6vw, 28px); line-height: 1.5; font-weight: 600;
+    color: var(--cream); margin: 0;
+  }
+  .about p b { color: var(--ochre); font-weight: 700; }
+
+  /* ---- features ---- */
+  .features { padding: 20px 0 90px; }
+  .section-head { text-align: center; max-width: 620px; margin: 0 auto 46px; }
+  .section-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--label); margin-bottom: 12px; }
+  .section-title { font-family: 'Sora', sans-serif; font-weight: 800; font-size: clamp(26px, 3.4vw, 36px); color: var(--cream); margin: 0 0 12px; }
+  .section-sub { color: var(--cream-dim); font-size: 15px; line-height: 1.6; margin: 0; }
+
+  .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .feature-card {
+    background: rgba(255,255,255,0.045); border: 1px solid var(--outline); border-radius: 20px;
+    padding: 22px 20px; border-left: 3px solid var(--f-color, var(--ochre));
+  }
+  .feature-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 19px; margin-bottom: 14px; background: var(--f-bg, rgba(255,193,99,0.16)); }
+  .feature-card h3 { font-family: 'Sora', sans-serif; font-size: 16px; margin: 0 0 6px; color: var(--cream); }
+  .feature-card p { font-size: 13.5px; line-height: 1.55; color: var(--cream-dim); margin: 0; }
+  @media (max-width: 900px) { .feature-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .feature-grid { grid-template-columns: 1fr; } }
+
+  .under-hood {
+    margin-top: 30px; padding: 18px 22px; border-radius: 18px; border: 1px dashed var(--outline);
+    background: rgba(255,255,255,0.03); font-size: 13.5px; color: var(--cream-dim); line-height: 1.6; text-align: center;
+  }
+  .under-hood b { color: var(--cream); }
+
+  /* ---- screenshots ---- */
+  .gallery { padding: 20px 0 90px; }
+  .gallery::before {
+    content: ''; position: absolute; inset: 0; z-index: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(217,70,239,0.08), transparent 55%);
+  }
+  .gallery .wrapper { position: relative; z-index: 1; }
+  .gallery-scroll {
+    display: flex; gap: 22px; overflow-x: auto; padding: 10px 4px 22px;
+    scroll-snap-type: x proximity;
+  }
+  .gallery-scroll::-webkit-scrollbar { height: 6px; }
+  .gallery-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+  .gallery-item { flex-shrink: 0; width: 176px; scroll-snap-align: start; text-align: center; }
+  .gallery-frame { width: 176px; height: 367px; overflow: hidden; border-radius: 30px; position: relative; }
+  .gallery-frame .phone-shell { transform: scale(0.587); transform-origin: top left; }
+  .gallery-caption { margin-top: 12px; font-size: 12.5px; font-weight: 700; color: var(--cream-dim); }
+
+  /* ---- cta band ---- */
+  .cta-band { padding: 84px 0; text-align: center; }
+  .cta-band::before {
+    content: ''; position: absolute; inset: 0; z-index: 0;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255,193,99,0.22), transparent 50%),
+      radial-gradient(circle at 85% 80%, rgba(255,77,109,0.16), transparent 50%),
+      linear-gradient(160deg, #241631 0%, #170D22 60%, #0F0917 100%);
+  }
+  .cta-band .wrapper { position: relative; z-index: 1; }
+  .cta-band h2 { font-family: 'Sora', sans-serif; font-weight: 800; font-size: clamp(28px, 4vw, 42px); margin: 0 0 14px; color: var(--cream); }
+  .cta-band p { color: var(--cream-dim); font-size: 15px; margin: 0 0 30px; }
+  .cta-band .btn-play { font-size: 16px; padding: 17px 32px; }
+
+  /* ---- footer ---- */
+  .site-footer { padding: 34px 0 44px; border-top: 1px solid rgba(255,255,255,0.08); }
+  .site-footer .wrapper { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+  .footer-brand { display: flex; align-items: center; gap: 9px; }
+  .footer-brand .badge { width: 22px; height: 22px; }
+  .footer-brand span { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 14.5px; color: var(--cream); }
+  .footer-meta { font-size: 12.5px; color: var(--cream-dim); display: flex; align-items: center; gap: 7px; }
+  .footer-meta a { text-decoration: underline; text-decoration-color: rgba(255,255,255,0.25); }
+  .footer-meta a:hover { color: var(--cream); }
+  .dev-logo { width: 22px; height: 22px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+  /* scroll reveal */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .reveal.is-visible { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 900px) {
+    .hero .wrapper { grid-template-columns: 1fr; text-align: center; }
+    .hero p.lede { margin-left: auto; margin-right: auto; }
+    .hero-stats { justify-content: center; }
+    .hero-ctas { justify-content: center; }
+    .hero-phone-col { margin-top: 20px; }
+  }
+  @media (max-width: 380px) {
+    .phone-shell { width: 264px; height: 550px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrapper">
+    <div class="nav-left"><span class="badge"></span><span>Palabra</span></div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#screenshots">Screenshots</a>
+      <a href="#demo">Demo</a>
+    </div>
+    <a class="nav-cta" href="https://rwapps1.github.io/palabra/" target="_blank" rel="noopener">Play Palabra →</a>
+  </div>
+</nav>
+
+<header class="hero" id="demo">
+  <div class="wrapper">
+    <div class="hero-copy">
+      <div class="hero-eyebrow-row">
+        <span class="hero-pill">Free</span>
+        <span class="hero-pill">No install required</span>
+        <span class="hero-pill">Instant Registration Allows Progress To Be Saved</span>
+      </div>
+      <h1>Spanish vocabulary,<br><em>made to stick.</em></h1>
+      <p class="lede">Palabra is a browser-based Spanish vocabulary reinforcement app built around five game modes, quiet spaced repetition, and progress you can actually see. It's designed to complement your course, classes, or other learning resources — not replace them. Open a link, start playing, remember what you learn.</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><b>1,000+</b><span>words</span></div>
+        <div class="hero-stat"><b>16</b><span>categories</span></div>
+        <div class="hero-stat"><b>150</b><span>verbs</span></div>
+        <div class="hero-stat"><b>5</b><span>game modes</span></div>
+      </div>
+      <div class="hero-ctas">
+        <a class="btn-play" href="https://rwapps1.github.io/palabra/" target="_blank" rel="noopener">Play Palabra now →</a>
+        <a class="btn-ghost" href="#features">See what it does</a>
+      </div>
+    </div>
+    <div class="hero-phone-col">
+      <div class="phone-glow"></div>
+      <div class="live-tag"><span class="live-dot"></span> See it in action</div>
+      <div class="phone-shell" style="position:relative;">
+        <div class="phone-screen" id="phoneScreen">
+          <div class="notch"></div>
+          <div class="status-bar">
+            <span>9:41</span>
+            <span class="status-icons">
+              <svg width="15" height="10" viewBox="0 0 15 10" fill="none"><rect x="0" y="6" width="2.5" height="4" rx="0.5" fill="#F7F3ED"/><rect x="4" y="4" width="2.5" height="6" rx="0.5" fill="#F7F3ED"/><rect x="8" y="2" width="2.5" height="8" rx="0.5" fill="#F7F3ED"/><rect x="12" y="0" width="2.5" height="10" rx="0.5" fill="#F7F3ED"/></svg>
+              <svg width="15" height="11" viewBox="0 0 15 11" fill="none"><path d="M7.5 2.3C10 2.3 12.2 3.3 14 5.1L15 4C12.9 1.9 10.3 0.8 7.5 0.8C4.7 0.8 2.1 1.9 0 4L1 5.1C2.8 3.3 5 2.3 7.5 2.3Z" fill="#F7F3ED"/><path d="M7.5 5.4C9.1 5.4 10.6 6 11.7 7.1L7.5 11L3.3 7.1C4.4 6 5.9 5.4 7.5 5.4Z" fill="#F7F3ED"/></svg>
+              <svg width="24" height="11" viewBox="0 0 24 11" fill="none"><rect x="0.5" y="0.5" width="20" height="10" rx="2.5" stroke="#F7F3ED"/><rect x="2" y="2" width="16" height="7" rx="1.2" fill="#F7F3ED"/><rect x="21.5" y="3.3" width="1.6" height="4.4" rx="0.8" fill="#F7F3ED"/></svg>
+            </span>
+          </div>
+          <div class="story-bar" id="storyBar"></div>
+          <div class="screen-content-wrap">
+            <div class="screen-content bg-quiz" id="screenContent"></div>
+          </div>
+          <div class="home-indicator"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="about reveal">
+  <div class="wrapper">
+    <p>Palabra turns vocabulary reinforcement into something you actually want to open. Quiz yourself, race the clock, flip cards, conjugate verbs — while a <b>6-box spaced-repetition engine</b> quietly tracks what's sticking and resurfaces what isn't. Use it alongside your classes, textbook, or favorite language app to help new words stick.</p>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <div class="wrapper">
+    <div class="section-head reveal">
+      <div class="section-eyebrow">Different ways to learn</div>
+      <h2 class="section-title">One app, every angle</h2>
+      <p class="section-sub">Different modes suit different moods — and different words. Palabra gives you all of them in the same place.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card reveal" style="--f-color: var(--terracotta); --f-bg: rgba(255,107,74,0.16);">
+        <div class="feature-icon">🔤</div>
+        <h3>Quiz</h3>
+        <p>Type the translation or pick it from choices — Spanish to English and back again.</p>
+      </div>
+      <div class="feature-card reveal" style="--f-color: var(--green); --f-bg: rgba(45,212,191,0.16);">
+        <div class="feature-icon">⏱</div>
+        <h3>Time Attack</h3>
+        <p>60 seconds on the clock. Answer fast, chain correct answers, beat your best score.</p>
+      </div>
+      <div class="feature-card reveal" style="--f-color: var(--memory); --f-bg: rgba(217,70,239,0.16);">
+        <div class="feature-icon">🧩</div>
+        <h3>Memory Match</h3>
+        <p>Flip cards, find the pairs, and let visual recall do the heavy lifting.</p>
+      </div>
+      <div class="feature-card reveal" style="--f-color: var(--conjugate); --f-bg: rgba(52,211,153,0.16);">
+        <div class="feature-icon">📖</div>
+        <h3>Conjugate</h3>
+        <p>Practice present-tense verbs across every pronoun — reflexive verbs included.</p>
+      </div>
+      <div class="feature-card reveal" style="--f-color: var(--terracotta); --f-bg: rgba(255,107,74,0.16);">
+        <div class="feature-icon">🏷️</div>
+        <h3>Categories</h3>
+        <p>16 themed word lists — food, animals, family, weather, clothing, and more.</p>
+      </div>
+      <div class="feature-card reveal" style="--f-color: var(--ochre); --f-bg: rgba(255,193,99,0.16);">
+        <div class="feature-icon">🏆</div>
+        <h3>Achievements</h3>
+        <p>Unlock badges as your streaks, scores, and word counts add up over time.</p>
+      </div>
+      <div class="feature-card reveal" style="--f-color: var(--label); --f-bg: rgba(201,168,255,0.16);">
+        <div class="feature-icon">📊</div>
+        <h3>My Progress</h3>
+        <p>See exactly which words and verb combos are locked in — and which need review.</p>
+      </div>
+    </div>
+    <div class="under-hood reveal">
+      <b>Install it like an app.</b> Palabra is a Portable Web App — add it to your home screen and it opens like any other app, no store required.
+    </div>
+  </div>
+</section>
+
+<section class="gallery" id="screenshots">
+  <div class="wrapper">
+    <div class="section-head reveal">
+      <div class="section-eyebrow">A look inside</div>
+      <h2 class="section-title">Every screen, glass and glow</h2>
+      <p class="section-sub">Palabra's whole visual language — deep violet, warm ochre, per-mode color coding — carries through every screen.</p>
+    </div>
+
+    <div class="gallery-scroll reveal">
+
+      <!-- Home -->
+      <div class="gallery-item">
+        <div class="gallery-frame">
+          <div class="phone-shell">
+            <div class="phone-screen">
+              <div class="screen-content-static bg-quiz" style="position:absolute; inset:0; padding:16px 18px 18px;">
+                <div class="header-row" style="display:flex;align-items:center;justify-content:space-between;">
+                  <div style="display:flex;align-items:center;gap:9px;"><span class="badge"></span><h1 class="applogo">Palabra</h1></div>
+                  <div class="menu-dot">⋯</div>
+                </div>
+                <div class="streak-line">🔥 <b>12</b> · Best <b>34</b> · <b>248</b> words</div>
+                <div class="game-grid">
+                  <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(255,107,74,0.18);">🔤</div><div class="tile-name">Quiz</div><div class="tile-meta">Type or choose</div></div>
+                  <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(45,212,191,0.18);">⏱</div><div class="tile-name">Time Attack</div><div class="tile-meta">Best: 21</div></div>
+                  <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(217,70,239,0.18);">🧩</div><div class="tile-name">Memory Match</div><div class="tile-meta">Best: 14 moves</div></div>
+                  <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(52,211,153,0.18);">📖</div><div class="tile-name">Conjugate</div><div class="tile-meta">Present tense</div></div>
+                </div>
+                <div class="card banner achievements-banner"><div class="tile-icon-wrap" style="background:rgba(255,193,99,0.18);">🏆</div><div><div class="banner-name">Achievements</div><div class="banner-meta">18 of 30 unlocked</div></div></div>
+                <div class="card banner progress-banner"><div class="tile-icon-wrap" style="background:rgba(201,168,255,0.18);">📊</div><div><div class="banner-name">My Progress</div><div class="banner-meta">Box breakdown</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-caption">Home</div>
+      </div>
+
+      <!-- Quiz -->
+      <div class="gallery-item">
+        <div class="gallery-frame">
+          <div class="phone-shell">
+            <div class="phone-screen">
+              <div class="screen-content-static bg-quiz" style="position:absolute; inset:0; padding:16px 18px 18px;">
+                <div class="back-row"><div class="back-btn">←</div><div class="screen-title">Quiz</div></div>
+                <div class="tiles" style="grid-template-columns:repeat(10,1fr);">
+                  <div class="tile-dot" style="background:#2DD4BF;"></div><div class="tile-dot" style="background:#2DD4BF;"></div><div class="tile-dot" style="background:#2DD4BF;"></div><div class="tile-dot" style="background:#2DD4BF;"></div><div class="tile-dot" style="background:#FFC163;"></div><div class="tile-dot" style="background:rgba(255,255,255,0.16);"></div><div class="tile-dot" style="background:rgba(255,255,255,0.16);"></div><div class="tile-dot" style="background:rgba(255,255,255,0.16);"></div><div class="tile-dot" style="background:rgba(255,255,255,0.16);"></div><div class="tile-dot" style="background:rgba(255,255,255,0.16);"></div>
+                </div>
+                <div class="prompt-card">
+                  <div class="prompt-word">el perro</div>
+                  <div class="prompt-sub">🔊 tap to hear it</div>
+                </div>
+                <div class="option-list">
+                  <div class="option-btn dim">cat</div>
+                  <div class="option-btn correct-choice">dog</div>
+                  <div class="option-btn dim">bird</div>
+                  <div class="option-btn dim">horse</div>
+                </div>
+                <div class="feedback correct"><div class="fb-title">✅ Correct</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-caption">Quiz</div>
+      </div>
+
+      <!-- Time Attack -->
+      <div class="gallery-item">
+        <div class="gallery-frame">
+          <div class="phone-shell">
+            <div class="phone-screen">
+              <div class="screen-content-static bg-timeattack" style="position:absolute; inset:0; padding:16px 18px 18px;">
+                <div class="ta-header">
+                  <div class="ta-timer-track"><div class="ta-timer-fill" style="width:55%;"></div></div>
+                  <div class="ta-stats-row"><div>Score: <span>16</span></div><div>27s</div></div>
+                </div>
+                <div class="prompt-card"><div class="prompt-word">gato</div></div>
+                <div class="option-list">
+                  <div class="option-btn dim">house</div>
+                  <div class="option-btn correct-choice">cat</div>
+                  <div class="option-btn dim">blue</div>
+                  <div class="option-btn dim">book</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-caption">Time Attack</div>
+      </div>
+
+      <!-- Memory Match -->
+      <div class="gallery-item">
+        <div class="gallery-frame">
+          <div class="phone-shell">
+            <div class="phone-screen">
+              <div class="screen-content-static bg-memory" style="position:absolute; inset:0; padding:16px 18px 18px;">
+                <div class="back-row"><div class="back-btn">←</div><div class="screen-title">Memory Match</div></div>
+                <div class="memory-stats-row"><div>Moves: <span>9</span></div><div>Matched: <span>6 / 8</span></div></div>
+                <div class="memory-grid">
+                  <div class="memory-tile matched">gato</div>
+                  <div class="memory-tile">?</div>
+                  <div class="memory-tile matched">libro</div>
+                  <div class="memory-tile matched">book</div>
+                  <div class="memory-tile">?</div>
+                  <div class="memory-tile matched">cat</div>
+                  <div class="memory-tile matched">azul</div>
+                  <div class="memory-tile matched">blue</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-caption">Memory Match</div>
+      </div>
+
+      <!-- Conjugate -->
+      <div class="gallery-item">
+        <div class="gallery-frame">
+          <div class="phone-shell">
+            <div class="phone-screen">
+              <div class="screen-content-static bg-conjugate" style="position:absolute; inset:0; padding:16px 18px 18px;">
+                <div class="back-row"><div class="back-btn">←</div><div class="screen-title">Conjugate</div></div>
+                <div class="prompt-card">
+                  <div class="prompt-word">hablar</div>
+                  <div class="pronoun-pill">tú ___</div>
+                </div>
+                <div class="fake-input">hablas</div>
+                <button class="conj-btn">Check</button>
+                <div class="feedback conj-correct" style="margin-top:9px;"><div class="fb-title">✅ hablas — nice work</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-caption">Conjugate</div>
+      </div>
+
+      <!-- My Progress -->
+      <div class="gallery-item">
+        <div class="gallery-frame">
+          <div class="phone-shell">
+            <div class="phone-screen">
+              <div class="screen-content-static bg-progress" style="position:absolute; inset:0; padding:16px 18px 18px;">
+                <div class="back-row"><div class="back-btn">←</div><div class="screen-title">My Progress</div></div>
+                <div class="progress-summary-row">
+                  <div class="card progress-summary-card">
+                    <div class="progress-summary-eyebrow">Vocabulary</div>
+                    <div class="progress-summary-big">128</div>
+                    <div class="progress-summary-big-label">words tracked</div>
+                  </div>
+                  <div class="card progress-summary-card conjugate">
+                    <div class="progress-summary-eyebrow">Conjugation</div>
+                    <div class="progress-summary-big">84%</div>
+                    <div class="progress-summary-big-label">accuracy</div>
+                  </div>
+                </div>
+                <div class="card">
+                  <div class="progress-section-title">Box progress — Vocabulary</div>
+                  <div class="progress-bars">
+                    <div class="progress-bar-col"><div class="progress-bar" style="height:40%;"></div><div class="progress-bar-label">B1</div></div>
+                    <div class="progress-bar-col"><div class="progress-bar" style="height:55%;"></div><div class="progress-bar-label">B2</div></div>
+                    <div class="progress-bar-col"><div class="progress-bar" style="height:70%;"></div><div class="progress-bar-label">B3</div></div>
+                    <div class="progress-bar-col"><div class="progress-bar" style="height:50%;"></div><div class="progress-bar-label">B4</div></div>
+                    <div class="progress-bar-col"><div class="progress-bar" style="height:35%;"></div><div class="progress-bar-label">B5</div></div>
+                    <div class="progress-bar-col"><div class="progress-bar" style="height:85%;"></div><div class="progress-bar-label">B6</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-caption">My Progress</div>
+      </div>
+
+      <!-- Achievements -->
+      <div class="gallery-item">
+        <div class="gallery-frame">
+          <div class="phone-shell">
+            <div class="phone-screen">
+              <div class="screen-content-static bg-achievements" style="position:absolute; inset:0; padding:16px 18px 18px;">
+                <div class="back-row"><div class="back-btn">←</div><div class="screen-title">Achievements</div></div>
+                <div class="card">
+                  <div class="achievement-row"><div class="ach-icon-sm" style="background:rgba(255,193,99,0.18);">🏆</div><div><div class="ach-name-sm">Century Club</div><div class="ach-desc-sm">Learn 100 words</div></div></div>
+                  <div class="achievement-row"><div class="ach-icon-sm" style="background:rgba(45,212,191,0.18);">⚡</div><div><div class="ach-name-sm">Quick Draw</div><div class="ach-desc-sm">Score 20+ in Time Attack</div></div></div>
+                  <div class="achievement-row"><div class="ach-icon-sm" style="background:rgba(217,70,239,0.18);">🧩</div><div><div class="ach-name-sm">Perfect Pairs</div><div class="ach-desc-sm">Clear Memory Match, no mismatches</div></div></div>
+                  <div class="achievement-row"><div class="ach-icon-sm" style="background:rgba(52,211,153,0.18);">📖</div><div><div class="ach-name-sm">Conjugator</div><div class="ach-desc-sm">100 correct conjugations</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-caption">Achievements</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="cta-band reveal">
+  <div class="wrapper">
+    <h2>Ready to learn some palabras?</h2>
+    <p>No install required — or add it to your home screen for the full app feel.</p>
+    <a class="btn-play" href="https://rwapps1.github.io/palabra/" target="_blank" rel="noopener">Play Palabra now →</a>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrapper">
+    <div class="footer-brand"><span class="badge"></span><span>Palabra</span></div>
+    <div class="footer-meta"><img class="dev-logo" src="data:image/webp;base64,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" alt="Rwapps1 logo">Built for you by Rwapps1 · <a href="https://www.palabraword.uk/palabra" target="_blank" rel="noopener">www.palabraword.uk/palabra</a></div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // ---------- scroll reveal ----------
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  revealEls.forEach(el => io.observe(el));
+
+  // ---------- hero phone demo engine ----------
+  const contentEl = document.getElementById('screenContent');
+  const storyBar = document.getElementById('storyBar');
+  if (!contentEl || !storyBar) return;
+
+  function sceneHub() {
+    return {
+      bg: 'bg-quiz',
+      html: `
+        <div class="header-row" style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:9px;"><span class="badge"></span><h1 class="applogo">Palabra</h1></div>
+          <div class="menu-dot">⋯</div>
+        </div>
+        <div class="streak-line">🔥 <b>12</b> &nbsp;·&nbsp; Best <b>34</b> &nbsp;·&nbsp; <b>248</b> words</div>
+        <div class="game-grid">
+          <div class="game-tile hub-tile-press" style="position:relative;">
+            <div class="tile-icon-wrap" style="background:rgba(255,107,74,0.18);">🔤</div>
+            <div class="tile-name">Quiz</div><div class="tile-meta">Type or choose</div>
+            <div class="tap-dot tap-hub"></div>
+          </div>
+          <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(45,212,191,0.18);">⏱</div><div class="tile-name">Time Attack</div><div class="tile-meta">Best: 21</div></div>
+          <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(217,70,239,0.18);">🧩</div><div class="tile-name">Memory Match</div><div class="tile-meta">Best: 14 moves</div></div>
+          <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(52,211,153,0.18);">📖</div><div class="tile-name">Conjugate</div><div class="tile-meta">Present tense</div></div>
+          <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(255,107,74,0.18);">🏷️</div><div class="tile-name">Categories</div><div class="tile-meta">16 topics</div></div>
+          <div class="game-tile locked"><div class="tile-soon">Soon</div><div class="tile-icon-wrap" style="background:rgba(255,255,255,0.06);">❓</div><div class="tile-name">New Game</div><div class="tile-meta">Coming soon</div></div>
+        </div>
+        <div class="card banner achievements-banner"><div class="tile-icon-wrap" style="background:rgba(255,193,99,0.18);">🏆</div><div><div class="banner-name">Achievements</div><div class="banner-meta">18 of 30 unlocked</div></div></div>
+        <div class="card banner progress-banner"><div class="tile-icon-wrap" style="background:rgba(201,168,255,0.18);">📊</div><div><div class="banner-name">My Progress</div><div class="banner-meta">Box breakdown &amp; review list</div></div></div>
+      `
+    };
+  }
+
+  function sceneQuiz() {
+    return {
+      bg: 'bg-quiz',
+      html: `
+        <div class="back-row"><div class="back-btn">←</div><div class="screen-title">Quiz</div></div>
+        <div class="tiles" style="grid-template-columns:repeat(10,1fr);">
+          ${Array.from({length:10}).map((_,i)=>`<div class="tile-dot" style="background:${i<4?'#2DD4BF':(i===4?'#FFC163':'rgba(255,255,255,0.16)')}"></div>`).join('')}
+        </div>
+        <div class="prompt-card">
+          <div class="prompt-word">el perro</div>
+          <div class="prompt-sub">🔊 tap to hear it</div>
+        </div>
+        <div class="option-list">
+          <div class="option-btn dim-late">cat</div>
+          <div class="option-btn pending-correct">dog<div class="tap-dot tap-a"></div></div>
+          <div class="option-btn dim-late2">bird</div>
+          <div class="option-btn dim-late2">horse</div>
+        </div>
+        <div class="feedback correct fb-hidden fb-appear"><div class="fb-title">✅ Correct</div></div>
+      `
+    };
+  }
+
+  function sceneTimeAttack() {
+    return {
+      bg: 'bg-timeattack',
+      html: `
+        <div class="ta-header">
+          <div class="ta-timer-track"><div class="ta-timer-fill" id="taFill"></div></div>
+          <div class="ta-stats-row"><div>Score: <span id="taScore">7</span></div><div id="taTimer">44s</div></div>
+        </div>
+        <div class="prompt-card"><div class="prompt-word ta-word" id="taWord">gato</div></div>
+        <div class="option-list">
+          <div class="option-btn">house</div>
+          <div class="option-btn" style="position:relative;">cat<div class="tap-dot tap-c"></div></div>
+          <div class="option-btn">blue</div>
+          <div class="option-btn" style="position:relative;">book<div class="tap-dot tap-d"></div></div>
+        </div>
+      `,
+      mount: () => {
+        const fill = document.getElementById('taFill');
+        const scoreEl = document.getElementById('taScore');
+        const timerEl = document.getElementById('taTimer');
+        const wordEl = document.getElementById('taWord');
+        fill.style.width = '100%';
+        requestAnimationFrame(() => { fill.style.transition = 'width 4900ms linear'; fill.style.width = '18%'; });
+        let score = 7, t = 44;
+        const words = ['gato', 'casa', 'azul'];
+        addTimer(setInterval(() => { t = Math.max(0, t - 1); timerEl.textContent = t + 's'; }, 1000));
+        addTimer(setTimeout(() => { score += 2; scoreEl.textContent = score; wordEl.textContent = words[1]; }, 1750));
+        addTimer(setTimeout(() => { score += 3; scoreEl.textContent = score; wordEl.textContent = words[2]; }, 3450));
+        addTimer(setTimeout(() => { score += 2; scoreEl.textContent = score; }, 4700));
+      }
+    };
+  }
+
+  function sceneMemory() {
+    const revealMap = { 0: {cls:'mt-match-1', text:'gato'}, 5: {cls:'mt-match-2', text:'cat'}, 2: {cls:'mt-match-3', text:'libro'}, 6: {cls:'mt-match-4', text:'book'} };
+    let tilesHtml = '';
+    for (let i = 0; i < 8; i++) {
+      const r = revealMap[i];
+      tilesHtml += r ? `<div class="memory-tile ${r.cls}">${r.text}</div>` : `<div class="memory-tile">?</div>`;
+    }
+    return {
+      bg: 'bg-memory',
+      html: `
+        <div class="back-row"><div class="back-btn">←</div><div class="screen-title">Memory Match</div></div>
+        <div class="memory-stats-row"><div>Moves: <span>6</span></div><div>Matched: <span>3 / 8</span></div></div>
+        <div class="memory-grid" style="position:relative;">
+          ${tilesHtml}
+          <div class="tap-dot tap-c" style="left:12%;top:12%;"></div>
+          <div class="tap-dot tap-e" style="left:37%;top:62%;"></div>
+        </div>
+        <div class="card" style="margin-top:6px;"><div class="progress-section-title" style="margin-bottom:0;">Find every pair to clear the board</div></div>
+      `
+    };
+  }
+
+  function sceneConjugate() {
+    return {
+      bg: 'bg-conjugate',
+      html: `
+        <div class="back-row"><div class="back-btn">←</div><div class="screen-title">Conjugate</div></div>
+        <div class="prompt-card">
+          <div class="prompt-word">hablar</div>
+          <div class="pronoun-pill">tú ___</div>
+        </div>
+        <div class="fake-input" id="conjInput"><span class="type-caret"></span></div>
+        <button class="conj-btn" style="position:relative;">Check<div class="tap-dot tap-conj"></div></button>
+        <div class="feedback conj-correct fb-hidden fb-appear2" style="margin-top:9px;"><div class="fb-title">✅ hablas — nice work</div></div>
+      `,
+      mount: () => {
+        const el = document.getElementById('conjInput');
+        const word = 'hablas';
+        let i = 0;
+        const iv = setInterval(() => {
+          i++;
+          el.innerHTML = word.slice(0, i) + '<span class="type-caret"></span>';
+          if (i >= word.length) clearInterval(iv);
+        }, 160);
+        addTimer(iv);
+      }
+    };
+  }
+
+  function sceneProgress() {
+    const wordBoxes = [40, 55, 70, 50, 35, 85];
+    const bars = arr => arr.map((h, i) => `
+      <div class="progress-bar-col">
+        <div class="progress-bar grow-bar" style="animation-delay:${300 + i * 90}ms;" data-target="${h}"></div>
+        <div class="progress-bar-label">B${i + 1}</div>
+      </div>`).join('');
+    return {
+      bg: 'bg-progress',
+      html: `
+        <div class="back-row"><div class="back-btn">←</div><div class="screen-title">My Progress</div></div>
+        <div class="progress-summary-row">
+          <div class="card progress-summary-card">
+            <div class="progress-summary-eyebrow">Vocabulary</div>
+            <div class="progress-summary-big" id="pWords">0</div>
+            <div class="progress-summary-big-label">words tracked</div>
+          </div>
+          <div class="card progress-summary-card conjugate">
+            <div class="progress-summary-eyebrow">Conjugation</div>
+            <div class="progress-summary-big" id="pAcc">0%</div>
+            <div class="progress-summary-big-label">accuracy</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="progress-section-title">Box progress — Vocabulary</div>
+          <div class="progress-bars">${bars(wordBoxes)}</div>
+        </div>
+      `,
+      mount: () => {
+        document.querySelectorAll('.grow-bar').forEach(el => {
+          const target = el.dataset.target + '%';
+          const delay = parseFloat(el.style.animationDelay) || 0;
+          el.animate([{ height: '0%' }, { height: target }], { duration: 500, delay, easing: 'ease', fill: 'forwards' });
+        });
+        const wordsEl = document.getElementById('pWords');
+        const accEl = document.getElementById('pAcc');
+        let w = 0, a = 0;
+        addTimer(setInterval(() => { w = Math.min(128, w + 8); wordsEl.textContent = w; }, 60));
+        addTimer(setInterval(() => { a = Math.min(84, a + 6); accEl.textContent = a + '%'; }, 70));
+      }
+    };
+  }
+
+  function sceneAchievement() {
+    const colors = ['#FFC163', '#FF4D6D', '#2DD4BF', '#C9A8FF', '#E879F9'];
+    const confetti = Array.from({ length: 14 }).map((_, i) => {
+      const left = Math.random() * 100, delay = Math.random() * 400, dur = 1400 + Math.random() * 500;
+      return `<div class="confetti-piece" style="left:${left}%; background:${colors[i % colors.length]}; animation-duration:${dur}ms; animation-delay:${delay}ms;"></div>`;
+    }).join('');
+    return {
+      bg: 'bg-achievements',
+      html: `
+        ${confetti}
+        <div class="ach-wrap">
+          <div class="ach-badge">🏆</div>
+          <div class="ach-eyebrow">Achievement Unlocked</div>
+          <div class="ach-title">Century Club</div>
+          <div class="ach-desc">Learned 100 words</div>
+        </div>
+      `
+    };
+  }
+
+  const SCENES = [
+    { duration: 4000, build: sceneHub },
+    { duration: 5000, build: sceneQuiz },
+    { duration: 5000, build: sceneTimeAttack },
+    { duration: 4300, build: sceneMemory },
+    { duration: 4000, build: sceneConjugate },
+    { duration: 3400, build: sceneProgress },
+    { duration: 2400, build: sceneAchievement }
+  ];
+
+  SCENES.forEach(() => {
+    const seg = document.createElement('div');
+    seg.className = 'story-seg';
+    const fill = document.createElement('div');
+    fill.className = 'story-seg-fill';
+    seg.appendChild(fill);
+    storyBar.appendChild(seg);
+  });
+  const segFills = Array.from(storyBar.querySelectorAll('.story-seg-fill'));
+
+  let activeTimers = [];
+  function addTimer(id) { activeTimers.push(id); }
+  function clearActiveTimers() { activeTimers.forEach(id => { clearInterval(id); clearTimeout(id); }); activeTimers = []; }
+
+  function updateStoryBar(index, duration) {
+    segFills.forEach((f, i) => { f.style.transition = 'none'; f.style.width = i < index ? '100%' : '0%'; });
+    void storyBar.offsetWidth;
+    const current = segFills[index];
+    current.style.transition = `width ${duration}ms linear`;
+    requestAnimationFrame(() => { current.style.width = '100%'; });
+  }
+
+  function playScene(i) {
+    clearActiveTimers();
+    const scene = SCENES[i];
+    updateStoryBar(i, scene.duration);
+    contentEl.style.opacity = '0';
+    setTimeout(() => {
+      const built = scene.build();
+      contentEl.className = 'screen-content ' + built.bg;
+      contentEl.innerHTML = built.html;
+      contentEl.style.opacity = '1';
+      if (built.mount) built.mount();
+    }, 200);
+    setTimeout(() => { playScene((i + 1) % SCENES.length); }, scene.duration);
+  }
+
+  playScene(0);
+})();
+</script>
+
+</body>
+</html>
