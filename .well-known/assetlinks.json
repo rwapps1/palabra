@@ -1,8 +1,0 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "uk.palabraword.twa",
-        "sha256_cert_fingerprints": ["DD:55:9C:2A:47:23:7C:DD:6C:E4:2A:79:4A:E4:57:38:0B:91:68:E4:90:F1:DE:27:76:1B:46:DB:FD:AA:23:42"]
-      }
-    }]
