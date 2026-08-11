@@ -2,7 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "io.github.rwapps1.twa",
-        "sha256_cert_fingerprints": ["82:18:72:4C:4E:E7:30:77:20:37:82:FE:18:56:36:0A:BE:8B:1C:87:FB:A3:27:65:72:EC:93:4B:03:CC:E0:4A"]
+        "package_name": "uk.palabraword.www.twa",
+        "sha256_cert_fingerprints": ["E4:29:96:89:63:33:D1:26:3B:86:8B:5E:C4:2F:57:F4:23:C7:D1:1B:18:7D:1E:1B:33:DD:A1:B3:6A:52:B2:53"]
       }
     }]
