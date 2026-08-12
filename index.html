@@ -38,6 +38,7 @@
     getAuth, onAuthStateChanged,
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
     GoogleAuthProvider, signInWithRedirect, getRedirectResult,
+    sendPasswordResetEmail,
     signOut
   } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
   import {
@@ -62,6 +63,7 @@
     onAuthStateChanged: (cb) => onAuthStateChanged(auth, cb),
     signUp: (email, password) => createUserWithEmailAndPassword(auth, email, password),
     signIn: (email, password) => signInWithEmailAndPassword(auth, email, password),
+    resetPassword: (email) => sendPasswordResetEmail(auth, email),
     signInWithGoogle: () => signInWithRedirect(auth, googleProvider),
     getRedirectResult: () => getRedirectResult(auth),
     signOut: () => signOut(auth),
@@ -1576,6 +1578,7 @@
 
     state.authBusy = true;
     state.authError = '';
+    state.authInfo = '';
     render();
 
     try {
@@ -1617,9 +1620,34 @@
     }
   }
 
+  async function handleForgotPassword() {
+    const email = document.getElementById('auth-email').value.trim();
+    if (!email) {
+      state.authError = 'Enter your email above first, then tap "Forgot password?"';
+      state.authInfo = '';
+      render();
+      return;
+    }
+    state.authBusy = true;
+    state.authError = '';
+    state.authInfo = '';
+    render();
+    try {
+      await withTimeout(window.PalabraAuth.resetPassword(email), AUTH_TIMEOUT_MS);
+      state.authBusy = false;
+      state.authInfo = `Password reset email sent to ${email} — check your inbox.`;
+      render();
+    } catch (err) {
+      state.authBusy = false;
+      state.authError = friendlyAuthError(err);
+      render();
+    }
+  }
+
   function handleGoogleSignIn() {
     state.authBusy = true;
     state.authError = '';
+    state.authInfo = '';
     render();
     withTimeout(window.PalabraAuth.signInWithGoogle(), AUTH_TIMEOUT_MS).catch((err) => {
       state.authBusy = false;
@@ -1829,6 +1857,7 @@
     progressDirty: false,
     authMode: 'signin', // signin | signup
     authError: '',
+    authInfo: '',
     authBusy: false,
     loading: true,
     fetchFailed: false,
@@ -3359,6 +3388,7 @@
             </div>
 
             ${state.authError ? `<div class="msg-error">${esc(state.authError)}</div>` : ''}
+            ${state.authInfo ? `<div class="msg-ok">${esc(state.authInfo)}</div>` : ''}
 
             <label class="settings-label" for="auth-email">Email</label>
             <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email" />
@@ -3370,6 +3400,8 @@
 
             <label class="settings-label" for="auth-password">Password</label>
             <input type="password" id="auth-password" placeholder="••••••••" autocomplete="${isSignup ? 'new-password' : 'current-password'}" />
+
+            ${!isSignup ? `<button class="link-btn" id="forgot-password-btn" type="button">Forgot password?</button>` : ''}
 
             <div id="confirm-field" class="${isSignup ? 'shown' : ''}">
               <label class="settings-label" for="auth-confirm">Confirm password</label>
@@ -3400,13 +3432,15 @@
     `;
 
     document.getElementById('tab-signin').addEventListener('click', () => {
-      state.authMode = 'signin'; state.authError = ''; render();
+      state.authMode = 'signin'; state.authError = ''; state.authInfo = ''; render();
     });
     document.getElementById('tab-signup').addEventListener('click', () => {
-      state.authMode = 'signup'; state.authError = ''; render();
+      state.authMode = 'signup'; state.authError = ''; state.authInfo = ''; render();
     });
     document.getElementById('auth-submit-btn').addEventListener('click', handleAuthSubmit);
     document.getElementById('auth-google-btn').addEventListener('click', handleGoogleSignIn);
+    const forgotBtn = document.getElementById('forgot-password-btn');
+    if (forgotBtn) forgotBtn.addEventListener('click', handleForgotPassword);
   }
 
   function renderStart() {
