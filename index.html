@@ -495,6 +495,58 @@
   .progress-banner .banner-meta { font-size: 12px; color: var(--cream-dim); margin-top: 2px; }
   .progress-banner .banner-arrow { color: var(--label); font-size: 18px; flex-shrink: 0; }
 
+  /* Level banner — third in the stack, below Achievements and My Progress.
+     Self-contained for the same reason as the two above it. */
+  .level-banner { flex-direction: row; align-items: center; gap: 14px; width: 100%; margin-top: 10px; padding: 12px 16px; border-color: rgba(255,193,99,0.45); }
+  .level-banner .banner-text { flex: 1; }
+  .level-banner .banner-name { font-weight: 700; font-size: 15px; font-family: 'Inter', sans-serif; }
+  .level-banner .banner-meta { font-size: 12px; color: var(--cream-dim); margin-top: 5px; display: flex; align-items: center; gap: 8px; }
+  .level-banner .banner-arrow { color: var(--ochre); font-size: 18px; flex-shrink: 0; }
+
+  .xp-track { flex: 1; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.1); overflow: hidden; }
+  .xp-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #FFC163, #FF9F4D); }
+
+  /* The level ring — a conic-gradient progress ring standing in for "% of
+     the way to next level", with a gold glow tying it to the Achievements
+     color language. Level number sits in the cut-out center. */
+  .level-ring {
+    --pct: 0%;
+    width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+    background: conic-gradient(#FFC163 0% var(--pct), rgba(255,255,255,0.14) var(--pct) 100%);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 14px rgba(255,193,99,0.35);
+  }
+  .level-ring.small { width: 26px; height: 26px; box-shadow: none; }
+  .level-ring-inner {
+    width: 34px; height: 34px; border-radius: 50%; background: #1B1030;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .level-ring.small .level-ring-inner { width: 20px; height: 20px; }
+  .level-ring-num { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 13px; color: var(--cream); }
+  .level-ring.small .level-ring-num { font-size: 9px; }
+
+  /* Top-of-home stat strip: streak + a compact level ring, sharing the
+     space the plain streak line used to occupy on its own. */
+  .stat-strip { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 10px 0 18px; }
+  .stat-strip .divider { width: 1px; height: 14px; background: var(--outline); }
+  .stat-strip .streak-text { font-size: 14px; color: var(--cream-dim); font-variant-numeric: tabular-nums; }
+  .stat-strip .level-mini { display: flex; align-items: center; gap: 6px; }
+  .stat-strip .level-mini-text { font-size: 13px; font-weight: 700; color: var(--ochre); }
+
+  /* How XP works screen */
+  .recap-row { display: flex; align-items: center; gap: 14px; }
+  .recap-text .recap-level { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 17px; }
+  .recap-text .recap-sub { font-size: 12px; color: var(--cream-dim); margin-top: 3px; }
+  .recap-text .xp-track { margin-top: 8px; width: 180px; }
+  .section-label { font-size: 12px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--label); margin: 18px 0 10px 4px; }
+  .rule-row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .rule-row:last-child { border-bottom: none; }
+  .rule-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .rule-text { flex: 1; }
+  .rule-title { font-size: 13px; font-weight: 600; }
+  .rule-sub { font-size: 11px; color: var(--cream-dim); margin-top: 1px; }
+  .footnote { font-size: 12px; color: var(--cream-dim); line-height: 1.6; text-align: center; padding: 16px 8px 4px; }
+
   /* My Progress screen */
   .progress-summary-row {
     display: grid;
@@ -1350,7 +1402,7 @@
       timeAttackBest: 0,
       taLifetime: { totalAnswered: 0, totalCorrect: 0 },
       memoryBest: {},
-      memoryLifetime: { boardsCleared: 0 },
+      memoryLifetime: { boardsCleared: 0, bySize: { '6': 0, '8': 0, '12': 0 } },
       memoryClearedSizes: {},
       settings: { direction: 'mixed', roundLength: '10', autoSpeak: true, answerMode: 'choice', soundEffects: true, memoryGridSize: '8' },
       achievements: {},
@@ -1412,6 +1464,69 @@
       return allIds.filter(id => !otherPrefixes.some(p => id.startsWith(p)));
     }
     return allIds.filter(id => id.startsWith(group.prefix));
+  }
+
+  // --- XP & Level ---------------------------------------------------------
+  // XP and Level are purely derived from existing lifetime counters at
+  // render time — nothing new is stored for them, so there's no shape-merge
+  // work needed and nothing that can drift out of sync between devices.
+  // Every ingredient below is a monotonic lifetime counter or a best-ever
+  // record, never a value that can drop — so XP (and therefore Level) only
+  // ever goes up.
+  const XP_LEVEL_BASE_SPAN = 100;    // XP needed to clear Level 1
+  const XP_LEVEL_GROWTH = 1.15;      // each level needs 15% more than the last
+  const XP_PER_QUIZ_CORRECT = 1;
+  const XP_PER_CONJUGATE_CORRECT = 1;
+  const XP_PER_TIMEATTACK_CORRECT = 0.5; // faster-paced mode, so a lower per-answer rate keeps XP/minute roughly even with Quiz
+  const XP_MEMORY_BOARD = { '6': 10, '8': 15, '12': 25 }; // bigger board, bigger reward
+  const XP_MEMORY_LEGACY = 15; // flat fallback for boards cleared before per-size tracking existed
+  const XP_PER_BEST_STREAK_POINT = 2;
+  const XP_PER_ACHIEVEMENT = 20;
+
+  function computeXP(progress) {
+    let xp = 0;
+    xp += progress.lifetime.totalCorrect * XP_PER_QUIZ_CORRECT;
+    xp += progress.conjugateLifetime.totalCorrect * XP_PER_CONJUGATE_CORRECT;
+    xp += progress.taLifetime.totalCorrect * XP_PER_TIMEATTACK_CORRECT;
+
+    const bySize = (progress.memoryLifetime && progress.memoryLifetime.bySize) || {};
+    let trackedBoards = 0;
+    Object.keys(XP_MEMORY_BOARD).forEach(size => {
+      const count = bySize[size] || 0;
+      trackedBoards += count;
+      xp += count * XP_MEMORY_BOARD[size];
+    });
+    // Boards cleared before per-size tracking existed still count, just at
+    // a flat rate since we don't know what size they were.
+    const totalBoards = (progress.memoryLifetime && progress.memoryLifetime.boardsCleared) || 0;
+    const legacyBoards = Math.max(0, totalBoards - trackedBoards);
+    xp += legacyBoards * XP_MEMORY_LEGACY;
+
+    xp += progress.streak.best * XP_PER_BEST_STREAK_POINT;
+    xp += progress.conjugateStreak.best * XP_PER_BEST_STREAK_POINT;
+
+    const achievementsUnlocked = Object.values(progress.achievements || {}).filter(a => a && a.unlocked).length;
+    xp += achievementsUnlocked * XP_PER_ACHIEVEMENT;
+
+    return Math.round(xp);
+  }
+
+  // Walks the compounding-XP curve to find the current level and progress
+  // toward the next one. Cheap even at very high XP totals since it stops
+  // the moment the cumulative threshold passes the current amount.
+  function getXPLevel(progress) {
+    const xp = computeXP(progress);
+    let span = XP_LEVEL_BASE_SPAN;
+    let cumulative = 0;
+    let level = 1;
+    while (cumulative + span <= xp) {
+      cumulative += span;
+      level += 1;
+      span = Math.round(span * XP_LEVEL_GROWTH);
+    }
+    const xpIntoLevel = xp - cumulative;
+    const pct = Math.max(0, Math.min(100, Math.round((xpIntoLevel / span) * 100)));
+    return { xp, level, xpIntoLevel, xpForNextLevel: span, pct };
   }
 
   // file id (matches "categories-{id}.xlsx" in the repo) -> display name + icon
@@ -3016,6 +3131,10 @@
       state.progress.memoryBest[gridSize] = state.memoryMoves;
     }
     state.progress.memoryLifetime.boardsCleared += 1;
+    if (state.progress.memoryLifetime.bySize[gridSize] === undefined) {
+      state.progress.memoryLifetime.bySize[gridSize] = 0;
+    }
+    state.progress.memoryLifetime.bySize[gridSize] += 1;
     state.progress.memoryClearedSizes[gridSize] = true;
     saveProgress();
     state.memoryIsNewBest = isNewBest;
@@ -3451,6 +3570,7 @@
     const app = document.getElementById('app');
     const settings = state.progress.settings;
     const streak = state.progress.streak;
+    const xpLevel = getXPLevel(state.progress);
 
     let statusHtml = '';
     if (state.loading) {
@@ -3544,7 +3664,14 @@
             </div>
             <button id="menu-btn" class="menu-btn">⋯</button>
           </div>
-          <div class="streak-line" style="margin: 6px 0 14px;">🔥 ${streak.current} &nbsp;·&nbsp; Best ${streak.best}${state.pairs.length > 0 ? ` &nbsp;·&nbsp; ${state.pairs.length} words` : ''}</div>
+          <div class="stat-strip">
+            <span class="streak-text">🔥 ${streak.current} &nbsp;·&nbsp; Best ${streak.best}${state.pairs.length > 0 ? ` &nbsp;·&nbsp; ${state.pairs.length} words` : ''}</span>
+            <span class="divider"></span>
+            <span class="level-mini">
+              <span class="level-mini-text">XP</span>
+              <span class="level-ring small" style="--pct:${xpLevel.pct}%;"><span class="level-ring-inner"><span class="level-ring-num">${xpLevel.level}</span></span></span>
+            </span>
+          </div>
           ${menuHtml}
           ${statusHtml}
           ${uploadHtml}
@@ -3562,6 +3689,14 @@
             <div class="banner-text">
               <div class="banner-name">My Progress</div>
               <div class="banner-meta">${totalAnswered} answers logged</div>
+            </div>
+            <div class="banner-arrow">→</div>
+          </button>
+          <button class="game-tile level-banner" data-tile="xpinfo">
+            <span class="level-ring" style="--pct:${xpLevel.pct}%;"><span class="level-ring-inner"><span class="level-ring-num">${xpLevel.level}</span></span></span>
+            <div class="banner-text">
+              <div class="banner-name">Level ${xpLevel.level}</div>
+              <div class="banner-meta"><span class="xp-track"><span class="xp-fill" style="width:${xpLevel.pct}%;"></span></span> ${xpLevel.xpIntoLevel} / ${xpLevel.xpForNextLevel} XP</div>
             </div>
             <div class="banner-arrow">→</div>
           </button>
@@ -3666,6 +3801,7 @@
         else if (id === 'memory') { state.screen = 'memory-setup'; render(); }
         else if (id === 'achievements') { state.screen = 'achievements'; render(); }
         else if (id === 'myprogress') { state.screen = 'my-progress'; render(); }
+        else if (id === 'xpinfo') { state.screen = 'xp-info'; render(); }
         else if (id === 'categories') { state.screen = 'categories'; render(); }
         else if (id === 'verbs') { goToConjugateSetup(); }
       });
@@ -4642,6 +4778,67 @@
     document.getElementById('back-btn').addEventListener('click', goHome);
   }
 
+  function renderXPInfo() {
+    const app = document.getElementById('app');
+    const xpLevel = getXPLevel(state.progress);
+
+    app.innerHTML = `
+      <div class="screen bg-achievements">
+        <div class="wrap">
+          <div class="screen-header">
+            <button id="back-btn" class="back-btn">←</button>
+            <div class="screen-title">✨ How XP works</div>
+          </div>
+
+          <div class="card recap-row">
+            <span class="level-ring" style="--pct:${xpLevel.pct}%;"><span class="level-ring-inner"><span class="level-ring-num">${xpLevel.level}</span></span></span>
+            <div class="recap-text">
+              <div class="recap-level">Level ${xpLevel.level}</div>
+              <div class="recap-sub">${xpLevel.xpIntoLevel} / ${xpLevel.xpForNextLevel} XP · ${xpLevel.xpForNextLevel - xpLevel.xpIntoLevel} XP to Level ${xpLevel.level + 1}</div>
+              <span class="xp-track"><span class="xp-fill" style="width:${xpLevel.pct}%;"></span></span>
+            </div>
+          </div>
+
+          <div class="section-label">Keep playing to earn XP</div>
+          <div class="card">
+            <div class="rule-row">
+              <div class="rule-icon" style="background:rgba(255,107,74,0.18);">📝</div>
+              <div class="rule-text"><div class="rule-title">Quiz &amp; Categories</div><div class="rule-sub">Answer correctly</div></div>
+            </div>
+            <div class="rule-row">
+              <div class="rule-icon" style="background:rgba(52,211,153,0.18);">🔤</div>
+              <div class="rule-text"><div class="rule-title">Conjugate</div><div class="rule-sub">Answer correctly</div></div>
+            </div>
+            <div class="rule-row">
+              <div class="rule-icon" style="background:rgba(45,212,191,0.18);">⚡</div>
+              <div class="rule-text"><div class="rule-title">Time Attack</div><div class="rule-sub">Answer correctly against the clock</div></div>
+            </div>
+            <div class="rule-row">
+              <div class="rule-icon" style="background:rgba(217,70,239,0.18);">🧩</div>
+              <div class="rule-text"><div class="rule-title">Memory Match</div><div class="rule-sub">Clear a board — bigger boards count for more</div></div>
+            </div>
+          </div>
+
+          <div class="section-label">Milestone bonuses</div>
+          <div class="card">
+            <div class="rule-row">
+              <div class="rule-icon" style="background:rgba(255,77,109,0.18);">🔥</div>
+              <div class="rule-text"><div class="rule-title">Beat your best streak</div><div class="rule-sub">In Quiz or Conjugate</div></div>
+            </div>
+            <div class="rule-row">
+              <div class="rule-icon" style="background:rgba(255,193,99,0.18);">🏆</div>
+              <div class="rule-text"><div class="rule-title">Unlock an achievement</div><div class="rule-sub">Any of the 34 badges, any game</div></div>
+            </div>
+          </div>
+
+          <div class="footnote">Your level only ever goes up — it's a record of how much you've played, not a score you can lose.</div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('back-btn').addEventListener('click', goHome);
+  }
+
   function renderTimeAttack() {
     const app = document.getElementById('app');
     const current = state.taCurrentQuestion;
@@ -4791,6 +4988,7 @@
     else if (state.screen === 'achievements') renderAchievements();
     else if (state.screen === 'achievements-detail') renderAchievementGroup();
     else if (state.screen === 'my-progress') renderMyProgress();
+    else if (state.screen === 'xp-info') renderXPInfo();
 
     if (isNewScreen) window.scrollTo(0, 0);
   }
