@@ -445,6 +445,8 @@
     const achievementsUnlocked = Object.values(progress.achievements || {}).filter(a => a && a.unlocked).length;
     xp += achievementsUnlocked * XP_PER_ACHIEVEMENT;
 
+    xp += progress.dailyDoubleBonusXP || 0;
+
     return Math.round(xp);
   }
 
