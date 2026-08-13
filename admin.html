@@ -225,6 +225,10 @@
     font-size: 10px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase;
     margin-top: 3px; color: var(--label);
   }
+  .user-row .level-tag {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+    margin-top: 3px; color: var(--ochre);
+  }
 
   .empty-note { color: var(--cream-dim); font-size: 13px; text-align: center; padding: 10px 0; }
 
@@ -400,6 +404,63 @@
     return PLATFORM_LABELS[raw] || (raw || 'Unknown');
   }
 
+  // --- XP & Level ----------------------------------------------------------
+  // Mirrors computeXP()/getXPLevel() in index.html exactly, so a user's
+  // Level here always matches what they see in the app. Written
+  // defensively (no assumption of a fully shape-merged progress object)
+  // since this reads raw Firestore docs directly, not the app's own
+  // locally-merged state — a doc could in principle be mid-creation or
+  // predate a given progress field.
+  const XP_LEVEL_BASE_SPAN = 100;
+  const XP_LEVEL_GROWTH = 1.15;
+  const XP_PER_QUIZ_CORRECT = 1;
+  const XP_PER_CONJUGATE_CORRECT = 1;
+  const XP_PER_TIMEATTACK_CORRECT = 0.5;
+  const XP_MEMORY_BOARD = { '6': 10, '8': 15, '12': 25 };
+  const XP_MEMORY_LEGACY = 15;
+  const XP_PER_BEST_STREAK_POINT = 2;
+  const XP_PER_ACHIEVEMENT = 20;
+
+  function computeXP(progress) {
+    if (!progress) return 0;
+    let xp = 0;
+    xp += ((progress.lifetime && progress.lifetime.totalCorrect) || 0) * XP_PER_QUIZ_CORRECT;
+    xp += ((progress.conjugateLifetime && progress.conjugateLifetime.totalCorrect) || 0) * XP_PER_CONJUGATE_CORRECT;
+    xp += ((progress.taLifetime && progress.taLifetime.totalCorrect) || 0) * XP_PER_TIMEATTACK_CORRECT;
+
+    const bySize = (progress.memoryLifetime && progress.memoryLifetime.bySize) || {};
+    let trackedBoards = 0;
+    Object.keys(XP_MEMORY_BOARD).forEach(size => {
+      const count = bySize[size] || 0;
+      trackedBoards += count;
+      xp += count * XP_MEMORY_BOARD[size];
+    });
+    const totalBoards = (progress.memoryLifetime && progress.memoryLifetime.boardsCleared) || 0;
+    const legacyBoards = Math.max(0, totalBoards - trackedBoards);
+    xp += legacyBoards * XP_MEMORY_LEGACY;
+
+    xp += ((progress.streak && progress.streak.best) || 0) * XP_PER_BEST_STREAK_POINT;
+    xp += ((progress.conjugateStreak && progress.conjugateStreak.best) || 0) * XP_PER_BEST_STREAK_POINT;
+
+    const achievementsUnlocked = Object.values(progress.achievements || {}).filter(a => a && a.unlocked).length;
+    xp += achievementsUnlocked * XP_PER_ACHIEVEMENT;
+
+    return Math.round(xp);
+  }
+
+  function getXPLevel(progress) {
+    const xp = computeXP(progress);
+    let span = XP_LEVEL_BASE_SPAN;
+    let cumulative = 0;
+    let level = 1;
+    while (cumulative + span <= xp) {
+      cumulative += span;
+      level += 1;
+      span = Math.round(span * XP_LEVEL_GROWTH);
+    }
+    return { xp, level };
+  }
+
   // Calendar boundaries in the viewer's local time (not rolling windows).
   function startOfToday(now) {
     const d = new Date(now);
@@ -505,13 +566,16 @@
       const users = [];
       snap.forEach((docSnap) => {
         const data = docSnap.data() || {};
+        const xpLevel = getXPLevel(data.progress);
         users.push({
           uid: docSnap.id,
           username: data.username || null,
           email: data.email || null,
           platform: data.platform || null,
           createdAtMs: getMs(data.createdAtMs, data.createdAt),
-          lastActiveAtMs: getMs(data.lastActiveAtMs, data.lastActiveAt)
+          lastActiveAtMs: getMs(data.lastActiveAtMs, data.lastActiveAt),
+          xp: xpLevel.xp,
+          level: xpLevel.level
         });
       });
 
@@ -646,6 +710,7 @@
         <div class="who"><div class="name">${escapeHtml(displayName)}${u.email ? ` <span class="u">\u00b7 ${escapeHtml(u.email)}</span>` : ''}</div></div>
         <div class="meta">
           ${whenHtml}
+          <div class="level-tag">Lvl ${u.level}</div>
           <div class="platform">${escapeHtml(platformLabel(u.platform))}</div>
         </div>`;
       list.appendChild(row);
@@ -675,14 +740,16 @@
 
   document.getElementById('downloadCsvBtn').addEventListener('click', () => {
     if (!allUsers.length) return;
-    const headers = ['uid', 'username', 'email', 'platform', 'createdAt', 'lastActiveAt'];
+    const headers = ['uid', 'username', 'email', 'platform', 'createdAt', 'lastActiveAt', 'xp', 'level'];
     const rows = allUsers.map(u => [
       u.uid,
       u.username || '',
       u.email || '',
       u.platform || '',
       u.createdAtMs ? new Date(u.createdAtMs).toISOString() : '',
-      u.lastActiveAtMs ? new Date(u.lastActiveAtMs).toISOString() : ''
+      u.lastActiveAtMs ? new Date(u.lastActiveAtMs).toISOString() : '',
+      u.xp,
+      u.level
     ]);
     const csv = [headers, ...rows].map(row => row.map(csvEscape).join(',')).join('\r\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
