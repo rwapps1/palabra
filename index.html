@@ -2084,6 +2084,7 @@
     lastKnownLevel: null,   // session baseline for detecting a level-up; null until first checkLevelUp() call
     pendingLevelUp: null,   // set the instant a level-up is detected, shown once results are left
     levelUpNextFn: null,    // what to do once the Level Up screen is dismissed
+    levelUpTimer: null,
     queuedAchievementToasts: [],
     lastFlippedIndex: -1,
     lastWasTypo: false,
@@ -2369,7 +2370,18 @@
   function speak(text, lang, btnEl) {
     if (!('speechSynthesis' in window)) return;
     try {
-      window.speechSynthesis.cancel();
+      // Chrome has a well-documented race condition where an unconditional
+      // cancel() immediately followed by speak() can silently drop the
+      // very first utterance of a session — the synthesis engine hasn't
+      // "woken up" yet, and cancelling something that was never speaking
+      // in the first place can still leave it in a state where the next
+      // speak() call gets lost. Only cancel if something's actually
+      // in-flight, and give the engine a brief moment before speaking
+      // rather than calling speak() in the same synchronous tick as the
+      // render that triggered it.
+      if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+        window.speechSynthesis.cancel();
+      }
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = lang;
       utter.rate = 0.95;
@@ -2378,7 +2390,9 @@
         utter.onend = () => btnEl.classList.remove('speaking');
         utter.onerror = () => btnEl.classList.remove('speaking');
       }
-      window.speechSynthesis.speak(utter);
+      setTimeout(() => {
+        try { window.speechSynthesis.speak(utter); } catch (e) {}
+      }, 50);
     } catch (e) {
       // speech is a nice-to-have, never let it break the quiz
     }
@@ -2873,12 +2887,21 @@
     render();
   }
 
+  function clearLevelUpTimer() {
+    if (state.levelUpTimer) {
+      clearTimeout(state.levelUpTimer);
+      state.levelUpTimer = null;
+    }
+  }
+
   // Every button that leaves a results screen (Home, Play again, Change
   // settings — all four games) routes through here instead of calling its
   // destination directly. If a level-up happened during that round, the
   // Level Up screen takes over first and the original destination is
   // deferred until it's dismissed (see advanceFromLevelUp below) — so the
   // celebration can never be missed regardless of which button was tapped.
+  // Auto-advances after a short hold, same tap-to-skip-early pattern as
+  // the round-end Celebrate screen.
   function leaveResults(destinationFn) {
     if (state.pendingLevelUp) {
       state.levelUpNextFn = destinationFn;
@@ -2886,12 +2909,15 @@
       state.screen = 'level-up';
       render();
       pingActivity();
+      clearLevelUpTimer();
+      state.levelUpTimer = setTimeout(advanceFromLevelUp, 3200);
     } else {
       destinationFn();
     }
   }
 
   function advanceFromLevelUp() {
+    clearLevelUpTimer();
     const fn = state.levelUpNextFn;
     state.levelUpNextFn = null;
     if (fn) fn(); else goHome();
