@@ -1249,6 +1249,64 @@
     50%      { opacity: 0.7; }
   }
 
+  /* --- Level Up screen: self-contained, deliberately not reusing the
+     celebrate-badge-* classes above even though the composition is
+     similar, since the badge content here is the Level Ring rather than
+     an emoji and needed its own sizing. Kept as its own dedicated block to
+     avoid any specificity bleed between the two. --- */
+  .levelup-screen { justify-content: center; cursor: pointer; }
+  .levelup-wrap { display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; position: relative; z-index: 3; }
+  .levelup-ring-outer {
+    width: 148px; height: 148px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; margin-bottom: 26px;
+  }
+  .levelup-ring-outer::before {
+    content: ''; position: absolute; inset: -22px; border-radius: 50%;
+    background: radial-gradient(circle, var(--ochre) 0%, transparent 70%);
+    opacity: 0.4; filter: blur(2px);
+    animation: badgeGlowPulse 1.8s ease-in-out infinite;
+  }
+  .levelup-disc {
+    width: 100%; height: 100%; border-radius: 50%;
+    background: conic-gradient(#FFC163, #FF9F4D);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; z-index: 1;
+    box-shadow: 0 0 0 6px rgba(255,255,255,0.04), 0 12px 40px rgba(0,0,0,0.35), 0 0 34px rgba(255,193,99,0.55);
+    animation: badgePopIn 1.1s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  }
+  .levelup-disc-inner {
+    width: calc(100% - 12px); height: calc(100% - 12px); border-radius: 50%;
+    background: #1B1030; display: flex; align-items: center; justify-content: center;
+  }
+  .levelup-num { font-family: 'Sora', sans-serif; font-weight: 800; font-size: 46px; color: var(--cream); line-height: 1; }
+  .levelup-headline {
+    font-family: 'Sora', sans-serif; font-weight: 800; font-size: 34px; letter-spacing: -0.01em;
+    margin: 0 0 8px; color: var(--ochre);
+    opacity: 0; animation: celebrateTextIn 0.5s ease-out 0.55s forwards;
+  }
+  .levelup-subline {
+    font-family: 'Inter', sans-serif; font-size: 15px; color: var(--cream-dim); margin: 0;
+    opacity: 0; animation: celebrateTextIn 0.5s ease-out 0.7s forwards;
+  }
+  .levelup-screen .tap-hint {
+    position: absolute; bottom: 40px; left: 0; right: 0; text-align: center;
+    font-size: 11.5px; letter-spacing: 0.04em; color: var(--cream-dim);
+    opacity: 0; animation: hintFadeIn 0.6s ease-out 0.9s forwards, hintPulse 2s ease-in-out 1.5s infinite;
+    z-index: 3;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .levelup-ring-outer::before,
+    .levelup-disc,
+    .levelup-headline,
+    .levelup-subline,
+    .levelup-screen .tap-hint {
+      animation: none !important;
+      opacity: 1 !important;
+    }
+  }
+
   /* --- App loading screen: shown while loadFromRepo() fetches the word list --- */
   #app-loading {
     position: fixed;
@@ -1813,6 +1871,10 @@
         state.username = data.username || '';
         state.lastSyncedMs = remoteMs;
         state.progressDirty = false;
+        // Resync the level baseline silently — this data may reflect a
+        // level reached on a different device, and shouldn't replay a
+        // celebration here for a milestone this device didn't just earn.
+        state.lastKnownLevel = getXPLevel(state.progress).level;
         // Write straight to localStorage rather than via saveProgress(),
         // which would also schedule another cloud push — a pull should
         // never trigger a push right back, or two open tabs can end up
@@ -1910,6 +1972,26 @@
     }
   }
 
+  // Detects a level-up the instant it happens, from wherever it happens —
+  // saveProgress() is already called after every stat-changing action
+  // across all four games, so this one hook covers everything without
+  // touching each game engine individually. Doesn't show anything itself;
+  // just flags it, so the actual celebration can wait for a safe moment
+  // (see leaveResults() below) rather than interrupting live play.
+  function checkLevelUp() {
+    const level = getXPLevel(state.progress).level;
+    if (state.lastKnownLevel === null) {
+      // First check this session — establish the baseline, don't celebrate
+      // whatever level the account already happened to be at.
+      state.lastKnownLevel = level;
+      return;
+    }
+    if (level > state.lastKnownLevel) {
+      state.pendingLevelUp = level;
+      state.lastKnownLevel = level;
+    }
+  }
+
   function saveProgress() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state.progress));
@@ -1918,6 +2000,7 @@
     }
     state.progressDirty = true;
     pushCloudProgressDebounced();
+    checkLevelUp();
   }
 
   function exportProgress() {
@@ -1998,6 +2081,9 @@
     celebrateTimer: null,
     celebrateVariant: null, // 'perfect' | 'finished'
     celebrateNext: null,    // which screen to land on once the celebration ends
+    lastKnownLevel: null,   // session baseline for detecting a level-up; null until first checkLevelUp() call
+    pendingLevelUp: null,   // set the instant a level-up is detected, shown once results are left
+    levelUpNextFn: null,    // what to do once the Level Up screen is dismissed
     queuedAchievementToasts: [],
     lastFlippedIndex: -1,
     lastWasTypo: false,
@@ -2410,6 +2496,26 @@
     playNote(ctx, 1046.5, now + 0.36, 0.32, 'triangle', 0.18);
   }
 
+  // Level-up fanfare — an ascending trumpet-style call (same playBrassNote
+  // instrument as the Perfect-round fanfare above) landing on a held final
+  // note. Deliberately single-note voicing the whole way through, no
+  // simultaneous chord and no gap before the landing note — both were
+  // tried and ended up sounding like a different instrument bolted on
+  // after a pause, rather than one continuous phrase.
+  function playLevelUpFanfare() {
+    if (!state.progress.settings.soundEffects) return;
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    playBrassNote(ctx, 110, now, 0.4, 0.24); // low brass foundation note
+    const runNotes = [523.25, 659.25, 783.99, 1046.50]; // C5 - E5 - G5 - C6
+    const step = 0.14;
+    runNotes.forEach((freq, i) => {
+      const isLast = i === runNotes.length - 1;
+      playBrassNote(ctx, freq, now + 0.12 + i * step, isLast ? 0.9 : 0.18, isLast ? 0.26 : 0.22);
+    });
+  }
+
   function showAchievementToast(id) {
     const def = ACHIEVEMENTS[id];
     if (!def) return;
@@ -2765,6 +2871,30 @@
     state.activeCategory = null;
     state.screen = 'start';
     render();
+  }
+
+  // Every button that leaves a results screen (Home, Play again, Change
+  // settings — all four games) routes through here instead of calling its
+  // destination directly. If a level-up happened during that round, the
+  // Level Up screen takes over first and the original destination is
+  // deferred until it's dismissed (see advanceFromLevelUp below) — so the
+  // celebration can never be missed regardless of which button was tapped.
+  function leaveResults(destinationFn) {
+    if (state.pendingLevelUp) {
+      state.levelUpNextFn = destinationFn;
+      state.pendingLevelUp = null;
+      state.screen = 'level-up';
+      render();
+      pingActivity();
+    } else {
+      destinationFn();
+    }
+  }
+
+  function advanceFromLevelUp() {
+    const fn = state.levelUpNextFn;
+    state.levelUpNextFn = null;
+    if (fn) fn(); else goHome();
   }
 
   function backToQuizSetup() {
@@ -4221,9 +4351,9 @@
         </div>
       </div>
     `;
-    document.getElementById('back-btn').addEventListener('click', goHome);
-    document.getElementById('again-btn').addEventListener('click', startConjugateRound);
-    document.getElementById('settings-btn').addEventListener('click', backToConjugateSetup);
+    document.getElementById('back-btn').addEventListener('click', () => leaveResults(goHome));
+    document.getElementById('again-btn').addEventListener('click', () => leaveResults(startConjugateRound));
+    document.getElementById('settings-btn').addEventListener('click', () => leaveResults(backToConjugateSetup));
   }
 
   function renderTimeAttackSetup() {
@@ -4386,9 +4516,9 @@
       </div>
     `;
 
-    document.getElementById('back-btn').addEventListener('click', goHome);
-    document.getElementById('again-btn').addEventListener('click', startMemoryMatch);
-    document.getElementById('settings-btn').addEventListener('click', backToMemorySetup);
+    document.getElementById('back-btn').addEventListener('click', () => leaveResults(goHome));
+    document.getElementById('again-btn').addEventListener('click', () => leaveResults(startMemoryMatch));
+    document.getElementById('settings-btn').addEventListener('click', () => leaveResults(backToMemorySetup));
   }
 
   function renderQuiz() {
@@ -4548,6 +4678,33 @@
     }
   }
 
+  // Shown once, right after a results screen is left, if a level-up
+  // happened at any point during that round (see leaveResults() /
+  // checkLevelUp()). Uses a fixed gold theme rather than picking up
+  // whichever game just finished — this is a meta-milestone spanning all
+  // four games, not a per-game moment the way Celebrate is.
+  function renderLevelUp() {
+    const app = document.getElementById('app');
+    const level = getXPLevel(state.progress).level;
+
+    app.innerHTML = `
+      <div class="screen bg-achievements levelup-screen" id="levelup-screen-el">
+        <div class="levelup-wrap">
+          <div class="levelup-ring-outer">
+            <div class="levelup-disc">
+              <div class="levelup-disc-inner"><span class="levelup-num">${level}</span></div>
+            </div>
+          </div>
+          <h1 class="levelup-headline">Level Up!</h1>
+          <p class="levelup-subline">You reached Level ${level}</p>
+        </div>
+        <div class="tap-hint">Tap to continue</div>
+      </div>
+    `;
+    document.getElementById('levelup-screen-el').addEventListener('click', advanceFromLevelUp);
+    playLevelUpFanfare();
+  }
+
   function renderResult() {
     const app = document.getElementById('app');
     const score = state.results.filter(r => r.correct).length;
@@ -4598,9 +4755,9 @@
         </div>
       </div>
     `;
-    document.getElementById('back-btn').addEventListener('click', goHome);
-    document.getElementById('again-btn').addEventListener('click', startQuiz);
-    document.getElementById('settings-btn').addEventListener('click', backToQuizSetup);
+    document.getElementById('back-btn').addEventListener('click', () => leaveResults(goHome));
+    document.getElementById('again-btn').addEventListener('click', () => leaveResults(startQuiz));
+    document.getElementById('settings-btn').addEventListener('click', () => leaveResults(backToQuizSetup));
   }
 
   function renderAchievements() {
@@ -4952,9 +5109,9 @@
         </div>
       </div>
     `;
-    document.getElementById('back-btn').addEventListener('click', goHome);
-    document.getElementById('ta-again-btn').addEventListener('click', startTimeAttack);
-    document.getElementById('ta-settings-btn').addEventListener('click', backToTimeAttackSetup);
+    document.getElementById('back-btn').addEventListener('click', () => leaveResults(goHome));
+    document.getElementById('ta-again-btn').addEventListener('click', () => leaveResults(startTimeAttack));
+    document.getElementById('ta-settings-btn').addEventListener('click', () => leaveResults(backToTimeAttackSetup));
   }
 
   // Tracks the previous screen so render() can tell a real navigation
@@ -4981,6 +5138,7 @@
     else if (state.screen === 'memory-play') renderMemoryPlay();
     else if (state.screen === 'memory-result') renderMemoryResult();
     else if (state.screen === 'celebrate') renderCelebrate();
+    else if (state.screen === 'level-up') renderLevelUp();
     else if (state.screen === 'result') {
       if (state.resultMode === 'timeattack') renderTimeAttackResult();
       else renderResult();
