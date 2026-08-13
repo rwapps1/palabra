@@ -1841,6 +1841,11 @@
         // may well belong to a different account previously used on this
         // device, not this brand new one.
         state.progress = defaultProgress();
+        // Give a brand new account a grace day before the Daily Double
+        // popup can ever appear — someone who just signed up hasn't seen
+        // a normal round yet, let alone Level/XP, so "Power up your
+        // learning" would be meaningless on the very first screen they see.
+        state.progress.dailyDoubleLastHandled = todayDateString();
         state.lastSyncedMs = 0;
         const cred = await withTimeout(window.PalabraAuth.signUp(email, password), AUTH_TIMEOUT_MS);
         const signupMs = Date.now();
@@ -1971,6 +1976,7 @@
         // signup: never carry forward whatever's currently local — it may
         // belong to a different account previously used on this device.
         state.progress = defaultProgress();
+        state.progress.dailyDoubleLastHandled = todayDateString(); // same grace-day rule as email signup
         const ms = Date.now();
         await window.PalabraAuth.setUserDoc(uid, {
           progress: state.progress,
