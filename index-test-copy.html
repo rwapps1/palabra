@@ -2246,6 +2246,7 @@
     resultMode: 'round', // 'round' | 'timeattack'
     isDailyDoubleRound: false,
     isStreamRound: false,
+    lastRoundWasStream: false, // survives into the results screen (isStreamRound itself is cleared before then) so "Play again" knows to restart a stream, not a normal round
     streamCheckpointCount: 0, // answers since the last checkpoint (0-9), resets each checkpoint
     taActive: false,
     taScore: 0,
@@ -2964,6 +2965,7 @@
     const score = state.results.filter(r => r.correct).length;
     const total = state.results.length;
     const perfect = total > 0 && score === total;
+    state.lastRoundWasStream = true;
     state.isStreamRound = false;
     suppressAchievementFX = true;
     evaluateRoundAchievements();
@@ -3003,6 +3005,7 @@
     state.newBestThisRound = false;
     state.lastFlippedIndex = -1;
     state.resultMode = 'round';
+    state.lastRoundWasStream = false;
     state.effectiveAnswerMode = (settings.answerMode === 'choice' && pool.length >= 3) ? 'choice' : 'type';
     prepareQuestion();
     state.screen = 'quiz';
@@ -3251,6 +3254,7 @@
       : 'Quit this round? Your progress on it will be scored as-is.';
     if (!confirm(msg)) return;
     clearAutoAdvanceTimer();
+    state.lastRoundWasStream = state.isStreamRound;
     state.isStreamRound = false;
     state.screen = 'result';
     evaluateRoundAchievements();
@@ -5022,8 +5026,13 @@
     const shouldFlip = state.lastFlippedIndex !== state.index;
     if (shouldFlip) state.lastFlippedIndex = state.index;
 
+    // results.length already counts the just-answered question once
+    // checked is true (recordAnswer pushed it before this render), so the
+    // +1 only belongs while the question is still unanswered — otherwise
+    // the feedback screen for question 10 briefly claims to be question 11.
+    const streamQuestionNum = state.results.length + (state.checked ? 0 : 1);
     const progressLabel = state.isStreamRound
-      ? `Question ${state.results.length + 1} · ${isAudioFormat ? 'LISTEN' : (current.direction === 'es-en' ? 'ES → EN' : 'EN → ES')}`
+      ? `Question ${streamQuestionNum} · ${isAudioFormat ? 'LISTEN' : (current.direction === 'es-en' ? 'ES → EN' : 'EN → ES')}`
       : `${state.index + 1} / ${state.questions.length} · ${current.direction === 'es-en' ? 'ES → EN' : 'EN → ES'}`;
 
     const orbHtml = state.isStreamRound
@@ -5290,14 +5299,15 @@
             <div class="mosaic">${mosaicHtml}</div>
             ${reviewHtml}
             <button id="again-btn" class="btn-primary" style="width:100%; margin-bottom:10px;">Play again</button>
-            <button id="settings-btn" class="btn-secondary" style="width:100%;">Change settings</button>
+            ${state.lastRoundWasStream ? '' : `<button id="settings-btn" class="btn-secondary" style="width:100%;">Change settings</button>`}
           </div>
         </div>
       </div>
     `;
     document.getElementById('back-btn').addEventListener('click', () => leaveResults(goHome));
-    document.getElementById('again-btn').addEventListener('click', () => leaveResults(startQuiz));
-    document.getElementById('settings-btn').addEventListener('click', () => leaveResults(backToQuizSetup));
+    document.getElementById('again-btn').addEventListener('click', () => leaveResults(state.lastRoundWasStream ? startStream : startQuiz));
+    const settingsBtn = document.getElementById('settings-btn');
+    if (settingsBtn) settingsBtn.addEventListener('click', () => leaveResults(backToQuizSetup));
   }
 
   function renderAchievements() {
