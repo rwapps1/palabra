@@ -232,6 +232,74 @@
 
   .empty-note { color: var(--cream-dim); font-size: 13px; text-align: center; padding: 10px 0; }
 
+  /* ---------- nav panel (dashboard -> all users) ---------- */
+  .nav-panel {
+    display: block; width: 100%; text-align: left;
+    background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 20px; padding: 18px 20px; margin-bottom: 14px;
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    font-family: 'Inter', sans-serif; color: var(--cream); cursor: pointer;
+  }
+  .nav-panel-inner { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .nav-panel .panel-title { margin-bottom: 2px; }
+  .nav-panel .panel-sub { margin-bottom: 0; }
+  .nav-chevron { font-size: 24px; color: var(--cream-dim); flex-shrink: 0; }
+
+  /* ---------- all-users view ---------- */
+  .users-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  }
+  .users-header .icon-btn {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    border: 1px solid var(--outline, rgba(255,255,255,0.12));
+    background: rgba(255,255,255,0.06); color: var(--cream);
+    font-size: 16px; cursor: pointer;
+  }
+  .users-header .title-block { flex: 1; min-width: 0; }
+  .users-header .title-block .t {
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 16px;
+  }
+  .users-header .title-block .c { font-size: 12px; color: var(--cream-dim); margin-top: 1px; }
+  .users-header .fs-btn {
+    flex-shrink: 0; width: auto; margin-top: 0; padding: 9px 14px;
+    font-size: 12.5px; white-space: nowrap;
+  }
+
+  .table-panel { padding: 0; overflow: hidden; }
+  .table-scroll { overflow-x: auto; max-height: 70vh; overflow-y: auto; }
+  .users-table {
+    border-collapse: collapse; width: 100%; min-width: 620px; font-size: 12.5px;
+  }
+  .users-table th, .users-table td {
+    padding: 11px 12px; text-align: left; white-space: nowrap;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .users-table thead th {
+    position: sticky; top: 0; z-index: 2; background: #1a1430;
+    font-family: 'Sora', sans-serif; font-weight: 600; font-size: 11.5px;
+    color: var(--cream-dim); text-transform: uppercase; letter-spacing: 0.03em;
+    cursor: pointer; user-select: none;
+  }
+  .users-table thead th.col-action { cursor: default; }
+  .users-table thead th .sort-arrow { margin-left: 4px; color: var(--ochre); opacity: 0; }
+  .users-table thead th.sorted .sort-arrow { opacity: 1; }
+  .users-table tbody td:first-child, .users-table thead th:first-child {
+    position: sticky; left: 0; z-index: 1; background: #1a1430;
+  }
+  .users-table thead th:first-child { z-index: 3; }
+  .users-table tbody tr:hover td { background: rgba(255,255,255,0.04); }
+  .users-table tbody tr:hover td:first-child { background: #211a3a; }
+  .row-delete-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
+    color: var(--terracotta); width: 30px; height: 30px; cursor: pointer; font-size: 13px;
+  }
+  .row-delete-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .landscape-hint {
+    font-size: 11.5px; color: var(--cream-dim); text-align: center;
+    margin-top: 10px; opacity: 0.75;
+  }
+
   .footnote {
     text-align: center; font-size: 11.5px; color: var(--cream-dim);
     margin-top: 18px; opacity: 0.7;
@@ -308,6 +376,16 @@
       </div>
     </div>
 
+    <button id="openUsersBtn" class="nav-panel fade-in" type="button">
+      <div class="nav-panel-inner">
+        <div>
+          <div class="panel-title">All users</div>
+          <div class="panel-sub">Full sortable list — tap to view</div>
+        </div>
+        <div class="nav-chevron">›</div>
+      </div>
+    </button>
+
     <div class="stat-grid fade-in">
       <div class="stat-card c-today">
         <div class="icon-dot"></div>
@@ -361,6 +439,38 @@
     <div class="footnote">Signed in as <span id="whoami"></span> · <button class="btn-ghost" style="width:auto;display:inline;padding:4px 10px;border-radius:999px;font-size:11px;margin-top:8px;" id="signOutBtn" type="button">Sign out</button> · <button class="btn-ghost" style="width:auto;display:inline;padding:4px 10px;border-radius:999px;font-size:11px;margin-top:8px;" id="downloadCsvBtn" type="button">Download CSV</button></div>
   </div>
 
+  <!-- all users -->
+  <div id="view-users" class="hidden">
+    <div class="users-header">
+      <button id="usersBackBtn" class="icon-btn" type="button" aria-label="Back">←</button>
+      <div class="title-block">
+        <div class="t">All users</div>
+        <div class="c" id="usersCount">—</div>
+      </div>
+      <button id="fullscreenBtn" class="btn btn-ghost fs-btn" type="button">⤢ Landscape</button>
+    </div>
+
+    <div class="panel table-panel fade-in">
+      <div class="table-scroll">
+        <table class="users-table" id="usersTable">
+          <thead>
+            <tr>
+              <th data-key="displayName">Username<span class="sort-arrow">▼</span></th>
+              <th data-key="email">Email<span class="sort-arrow">▼</span></th>
+              <th data-key="createdAtMs">Registered<span class="sort-arrow">▼</span></th>
+              <th data-key="lastActiveAtMs">Last active<span class="sort-arrow">▼</span></th>
+              <th data-key="level">Level<span class="sort-arrow">▼</span></th>
+              <th data-key="totalWordsAnswered">Words answered<span class="sort-arrow">▼</span></th>
+              <th class="col-action">—</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="landscape-hint">Tap a column to sort, tap again to reverse. Rotate your device for the full table — the "Landscape" button helps on Android Chrome, but isn't supported by every browser.</div>
+  </div>
+
 </div>
 
 <script type="module">
@@ -369,7 +479,7 @@
     getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut
   } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
   import {
-    getFirestore, collection, getDocs
+    getFirestore, collection, getDocs, doc, deleteDoc
   } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
   // Same project as the main app — this config is not a secret; access is
@@ -445,8 +555,6 @@
     const achievementsUnlocked = Object.values(progress.achievements || {}).filter(a => a && a.unlocked).length;
     xp += achievementsUnlocked * XP_PER_ACHIEVEMENT;
 
-    xp += progress.dailyDoubleBonusXP || 0;
-
     return Math.round(xp);
   }
 
@@ -461,6 +569,17 @@
       span = Math.round(span * XP_LEVEL_GROWTH);
     }
     return { xp, level };
+  }
+
+  // "Words answered" = Quiz + Conjugate + Time Attack lifetime totals.
+  // Memory Match is deliberately excluded — matching a pair isn't really
+  // "answering a word" the way the other three modes are.
+  function wordsAnsweredFor(progress) {
+    if (!progress) return 0;
+    const quiz = (progress.lifetime && progress.lifetime.totalAnswered) || 0;
+    const conjugate = (progress.conjugateLifetime && progress.conjugateLifetime.totalAnswered) || 0;
+    const timeAttack = (progress.taLifetime && progress.taLifetime.totalAnswered) || 0;
+    return quiz + conjugate + timeAttack;
   }
 
   // Calendar boundaries in the viewer's local time (not rolling windows).
@@ -490,7 +609,8 @@
     login: document.getElementById('view-login'),
     denied: document.getElementById('view-denied'),
     error: document.getElementById('view-error'),
-    dashboard: document.getElementById('view-dashboard')
+    dashboard: document.getElementById('view-dashboard'),
+    users: document.getElementById('view-users')
   };
   function showView(name) {
     Object.keys(views).forEach(k => views[k].classList.toggle('hidden', k !== name));
@@ -569,7 +689,7 @@
       snap.forEach((docSnap) => {
         const data = docSnap.data() || {};
         const xpLevel = getXPLevel(data.progress);
-        users.push({
+        const user = {
           uid: docSnap.id,
           username: data.username || null,
           email: data.email || null,
@@ -577,8 +697,11 @@
           createdAtMs: getMs(data.createdAtMs, data.createdAt),
           lastActiveAtMs: getMs(data.lastActiveAtMs, data.lastActiveAt),
           xp: xpLevel.xp,
-          level: xpLevel.level
-        });
+          level: xpLevel.level,
+          totalWordsAnswered: wordsAnsweredFor(data.progress)
+        };
+        user.displayName = displayNameFor(user);
+        users.push(user);
       });
 
       allUsers = users;
@@ -685,6 +808,12 @@
       </div>`).join('');
   }
 
+  // Shared display-name rule used everywhere a user needs a friendly label:
+  // username if set, else the email's local part, else a short uid.
+  function displayNameFor(u) {
+    return u.username || (u.email ? u.email.split('@')[0] : u.uid.slice(0, 8));
+  }
+
   // Shared row renderer for Recent signups, Recently active, and user-lookup
   // results. getMetaLines(u) returns an array of 1-2 {label, ms} lines to
   // render on the right — signups/active show one unlabeled line, lookup
@@ -697,7 +826,7 @@
       return;
     }
     sortedUsers.forEach((u, i) => {
-      const displayName = u.username || (u.email ? u.email.split('@')[0] : u.uid.slice(0, 8));
+      const displayName = u.displayName || displayNameFor(u);
       const initials = displayName.slice(0, 2).toUpperCase();
       const color = ACCENTS[i % ACCENTS.length];
       const whenHtml = getMetaLines(u).map(m => {
@@ -742,7 +871,7 @@
 
   document.getElementById('downloadCsvBtn').addEventListener('click', () => {
     if (!allUsers.length) return;
-    const headers = ['uid', 'username', 'email', 'platform', 'createdAt', 'lastActiveAt', 'xp', 'level'];
+    const headers = ['uid', 'username', 'email', 'platform', 'createdAt', 'lastActiveAt', 'xp', 'level', 'wordsAnswered'];
     const rows = allUsers.map(u => [
       u.uid,
       u.username || '',
@@ -751,7 +880,8 @@
       u.createdAtMs ? new Date(u.createdAtMs).toISOString() : '',
       u.lastActiveAtMs ? new Date(u.lastActiveAtMs).toISOString() : '',
       u.xp,
-      u.level
+      u.level,
+      u.totalWordsAnswered
     ]);
     const csv = [headers, ...rows].map(row => row.map(csvEscape).join(',')).join('\r\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -772,6 +902,131 @@
     }
     return str;
   }
+
+  // --- all users table -----------------------------------------------------
+
+  let usersSortKey = 'createdAtMs';
+  let usersSortDir = 'desc';
+  const COLUMN_DEFAULT_DIR = {
+    displayName: 'asc',
+    email: 'asc',
+    createdAtMs: 'desc',
+    lastActiveAtMs: 'desc',
+    level: 'desc',
+    totalWordsAnswered: 'desc'
+  };
+
+  document.getElementById('openUsersBtn').addEventListener('click', () => {
+    showView('users');
+    renderUsersTable();
+  });
+
+  document.getElementById('usersBackBtn').addEventListener('click', () => {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    showView('dashboard');
+  });
+
+  document.getElementById('fullscreenBtn').addEventListener('click', async () => {
+    // Best-effort only. Orientation Lock needs Fullscreen first and isn't
+    // supported on iOS Safari at all — the table's horizontal scroll works
+    // regardless, so this silently no-ops where unsupported rather than
+    // showing an error the person can't do anything about.
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      }
+      if (screen.orientation && screen.orientation.lock) {
+        await screen.orientation.lock('landscape');
+      }
+    } catch (err) {
+      // Unsupported browser — no-op.
+    }
+  });
+
+  document.querySelectorAll('#usersTable thead th[data-key]').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.key;
+      if (usersSortKey === key) {
+        usersSortDir = usersSortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        usersSortKey = key;
+        usersSortDir = COLUMN_DEFAULT_DIR[key] || 'asc';
+      }
+      renderUsersTable();
+    });
+  });
+
+  function renderUsersTable() {
+    document.getElementById('usersCount').textContent = `${allUsers.length.toLocaleString()} total`;
+
+    document.querySelectorAll('#usersTable thead th[data-key]').forEach(th => {
+      const isSorted = th.dataset.key === usersSortKey;
+      th.classList.toggle('sorted', isSorted);
+      const arrow = th.querySelector('.sort-arrow');
+      if (arrow) arrow.textContent = usersSortDir === 'asc' ? '▲' : '▼';
+    });
+
+    const sorted = allUsers.slice().sort((a, b) => {
+      let av = a[usersSortKey];
+      let bv = b[usersSortKey];
+      if (typeof av === 'string') av = av.toLowerCase();
+      if (typeof bv === 'string') bv = bv.toLowerCase();
+      if (av == null) av = (typeof bv === 'number') ? -Infinity : '';
+      if (bv == null) bv = (typeof av === 'number') ? -Infinity : '';
+      if (av < bv) return usersSortDir === 'asc' ? -1 : 1;
+      if (av > bv) return usersSortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    const now = Date.now();
+    const tbody = document.getElementById('usersTableBody');
+    if (sorted.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-note">No users yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = sorted.map(u => `
+      <tr>
+        <td>${escapeHtml(u.displayName)}</td>
+        <td>${escapeHtml(u.email || '\u2014')}</td>
+        <td>${u.createdAtMs ? relativeTime(u.createdAtMs, now) : 'unknown'}</td>
+        <td>${u.lastActiveAtMs ? relativeTime(u.lastActiveAtMs, now) : 'never'}</td>
+        <td>Lvl ${u.level}</td>
+        <td>${u.totalWordsAnswered.toLocaleString()}</td>
+        <td class="col-action"><button class="row-delete-btn" data-uid="${escapeHtml(u.uid)}" data-label="${escapeHtml(u.email || u.displayName)}" type="button" aria-label="Delete record">🗑</button></td>
+      </tr>`).join('');
+  }
+
+  // Deletes only removes the Firestore data document — it can't touch a
+  // Firebase Auth login (that needs the Admin SDK, not available client-side)
+  // and there's no way to auto-detect "orphaned" docs from here either, for
+  // the same reason. This is for manually clearing entries you can identify
+  // by eye, e.g. old copies of your own account after a delete-and-re-register.
+  document.getElementById('usersTableBody').addEventListener('click', async (e) => {
+    const btn = e.target.closest('.row-delete-btn');
+    if (!btn) return;
+    const uid = btn.dataset.uid;
+    const label = btn.dataset.label;
+    const ok = confirm(
+      `Delete the Firestore record for ${label}?\n\n` +
+      `This permanently removes their account/progress data from the ` +
+      `database and cannot be undone.\n\nThis does NOT delete a Firebase ` +
+      `Authentication login if one still exists for them — only the ` +
+      `Firestore data document.`
+    );
+    if (!ok) return;
+    btn.disabled = true;
+    try {
+      await deleteDoc(doc(db, 'users', uid));
+      // Update locally rather than a full reload, so deleting several
+      // entries in a row doesn't keep bouncing you back to the dashboard.
+      allUsers = allUsers.filter(u => u.uid !== uid);
+      renderUsersTable();
+      renderDashboard(allUsers, Date.now());
+    } catch (err) {
+      alert('Could not delete: ' + ((err && err.message) || 'unknown error'));
+      btn.disabled = false;
+    }
+  });
 
   function relativeTime(ms, now) {
     const diff = Math.max(0, now - ms);
