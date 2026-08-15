@@ -534,9 +534,60 @@
     border-radius: 6px;
     padding: 2px 6px;
   }
+  /* Small "this is tappable" hint, used specifically on the Achievements
+     group tiles — without it, next to the arrow-carrying Stream banner
+     above them, the 4 grid tiles read as static info rather than links. */
+  .game-tile .tile-corner-arrow {
+    position: absolute;
+    bottom: 12px;
+    right: 14px;
+    font-size: 16px;
+    color: var(--cream-dim);
+  }
 
   /* Achievements sits apart from the game grid on purpose - a full-width
      row rather than a tile, so it reads as a progress summary, not a game. */
+  /* "Choose a specific mode" sits directly below the Stream hero card,
+     above the Achievements/Progress/Level banners — same self-contained
+     pattern as those, its own border-color accent (neutral, since it
+     isn't tied to one particular game's color the way the tiles behind
+     it are). */
+  .modes-banner {
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    margin-top: 4px;
+    margin-bottom: 14px;
+    padding: 12px 16px;
+    border-color: var(--outline);
+  }
+  .modes-banner .tile-icon-wrap { margin-bottom: 0; flex-shrink: 0; }
+  .modes-banner .banner-text { flex: 1; }
+  .modes-banner .banner-name { font-weight: 700; font-size: 15px; font-family: 'Inter', sans-serif; }
+  .modes-banner .banner-meta { font-size: 12px; color: var(--cream-dim); margin-top: 2px; }
+  .modes-banner .banner-arrow { color: var(--cream-dim); font-size: 18px; flex-shrink: 0; }
+
+  /* Stream's achievement group gets top billing on the Achievements
+     screen — full-width like the home screen banners, not one of the
+     equal-sized tiles below, since Stream is expected to be the most-
+     played mode going forward. */
+  .stream-achievement-banner {
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    min-height: 108px;
+    margin-bottom: 14px;
+    padding: 18px 18px;
+    border-color: rgba(255,193,99,0.45);
+  }
+  .stream-achievement-banner .tile-icon-wrap { width: 52px; height: 52px; font-size: 24px; margin-bottom: 0; flex-shrink: 0; }
+  .stream-achievement-banner .banner-text { flex: 1; }
+  .stream-achievement-banner .banner-name { font-weight: 700; font-size: 17px; font-family: 'Inter', sans-serif; }
+  .stream-achievement-banner .banner-meta { font-size: 13px; color: var(--cream-dim); margin-top: 4px; }
+  .stream-achievement-banner .banner-arrow { color: var(--ochre); font-size: 20px; flex-shrink: 0; }
+
   .achievements-banner {
     flex-direction: row;
     align-items: center;
@@ -987,6 +1038,20 @@
     0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,255,0.5); }
     50% { box-shadow: 0 0 0 8px rgba(201,168,255,0); }
   }
+  .speak-btn.big {
+    width: 78px;
+    height: 78px;
+    font-size: 30px;
+    margin: 6px auto 4px;
+    background: rgba(201,168,255,0.14);
+    border-color: var(--label);
+  }
+  .audio-hint { font-size: 12px; color: var(--cream-dim); text-align: center; }
+  .glow-orb-progress.streak-orb {
+    background: radial-gradient(circle at 35% 30%, #FFF3DD, #FFC163 55%, #B97C1A 100%);
+    box-shadow: 0 0 24px rgba(255,193,99,0.65);
+    color: #3A2508;
+  }
 
   input[type="text"], input[type="email"], input[type="password"] {
     width: 100%;
@@ -1325,6 +1390,32 @@
     50%      { opacity: 0.7; }
   }
 
+  /* Stream checkpoint — reuses the celebrate badge/headline/subline visuals
+     above, but isn't a whole-screen tap-to-skip like Celebrate is, since it
+     needs two distinct choices (keep going / stop) rather than one. */
+  .stream-checkpoint-screen { justify-content: center; }
+  .checkpoint-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 260px;
+    margin-top: -14px;
+    opacity: 0;
+    animation: celebrateTextIn 0.5s ease-out 0.36s forwards;
+  }
+
+  /* Home screen: Stream hero card */
+  .stream-hero { position: relative; margin: 4px 0 18px; padding: 20px; text-align: center; }
+  .stream-hero .format-row { display: flex; gap: 8px; margin-bottom: 14px; justify-content: center; }
+  .stream-hero .fchip {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: rgba(255,255,255,0.08); border: 1px solid var(--outline);
+    display: flex; align-items: center; justify-content: center; font-size: 13px;
+  }
+  .stream-hero h2 { font-family: 'Sora', sans-serif; font-weight: 800; font-size: 21px; margin: 0 0 6px; }
+  .stream-hero p { font-size: 13px; color: var(--cream-dim); margin: 0 0 16px; line-height: 1.5; }
+
   /* --- Level Up screen: self-contained, deliberately not reusing the
      celebrate-badge-* classes above even though the composition is
      similar, since the badge content here is the Level Ring rather than
@@ -1524,6 +1615,8 @@
 
   // Simplified Leitner-style spaced repetition: box index -> days until next due
   const SRS_INTERVALS_DAYS = [0, 1, 3, 7, 16, 35];
+  const STREAM_CHECKPOINT_SIZE = 20; // how many stream questions between "keep going / stop" checkpoints
+  const STREAM_FORMATS = ['mc', 'audio', 'type'];
 
   function defaultProgress() {
     return {
@@ -1538,6 +1631,8 @@
       memoryBest: {},
       memoryLifetime: { boardsCleared: 0, bySize: { '6': 0, '8': 0, '12': 0 } },
       memoryClearedSizes: {},
+      streamLifetime: { totalAnswered: 0, totalCorrect: 0, checkpointsCompleted: 0, audioCorrect: 0 },
+      masteredWordsCount: 0, // words that have EVER reached box 6 — permanent, never drops if a word later regresses (see ws.masteredEver)
       settings: { direction: 'mixed', roundLength: '10', autoSpeak: true, answerMode: 'choice', soundEffects: true, memoryGridSize: '8' },
       achievements: {},
       dailyDoubleLastHandled: null, // 'YYYY-MM-DD' of last Play/Skip decision, local device date
@@ -1552,6 +1647,8 @@
     streak25:    { name: 'Unstoppable',    desc: 'Reach a 25-answer streak',                icon: '⚡' },
     correct50:   { name: 'Word Explorer',  desc: '50 lifetime correct answers',             icon: '🧭' },
     correct200:  { name: 'Word Master',    desc: '200 lifetime correct answers',            icon: '🎓' },
+    masteredWords25:  { name: 'Well Learned',       desc: '25 words reached box 6 (mastered)',   icon: '🌟' },
+    masteredWords100: { name: 'Vocabulary Vault',   desc: '100 words reached box 6 (mastered)',  icon: '🏦' },
     bigRound:    { name: 'Marathon',       desc: 'Complete a round of 50 or more words',    icon: '🏃' },
     allWords:    { name: 'Completionist',  desc: 'Quiz your entire word list in one round', icon: '📚' },
     timeAttack10: { name: 'Quickdraw',      desc: 'Score 10 in a single Time Attack round',  icon: '🎯' },
@@ -1581,12 +1678,23 @@
     conjugateBigRound:   { name: 'Verb Marathon',   desc: 'Complete a round of 50 or more verbs',  icon: '🛤️' },
     conjugateCorrect200: { name: 'Grammar Grinder', desc: '200 lifetime correct conjugations',     icon: '⚙️' },
     conjugateStreak50:   { name: 'Grammar Legend',  desc: 'Reach a 50-answer Conjugate streak',    icon: '🏛️' },
+    streamFirst:            { name: 'First Stream',      desc: 'Complete your first Stream checkpoint',                          icon: '🚦' },
+    streamCheckpoints10:    { name: 'In The Flow',       desc: 'Reach 10 lifetime Stream checkpoints',                           icon: '🔁' },
+    streamCheckpoints50:    { name: 'Deep Diver',        desc: 'Reach 50 lifetime Stream checkpoints',                           icon: '🤿' },
+    streamPerfectCheckpoint:{ name: 'Clean Sweep',       desc: 'A perfect checkpoint block, no mistakes',                        icon: '🧹' },
+    streamAllFormats:       { name: 'Triple Threat',     desc: 'Answer correctly in choice, listen, and type — all in one session', icon: '🎛️' },
+    streamAudio25:          { name: 'Good Ear',          desc: '25 lifetime correct audio answers in Stream',                    icon: '🎧' },
+    streamStreak40:         { name: 'Locked In',         desc: 'A 40-answer streak within a single stream',                      icon: '🔒' },
+    streamCorrect100:       { name: 'Stream Regular',    desc: '100 lifetime correct answers in Stream',                         icon: '🗺️' },
+    streamCorrect500:       { name: 'Stream Veteran',    desc: '500 lifetime correct answers in Stream',                         icon: '⛰️' },
+    streamMarathon:         { name: 'Marathon Session',  desc: '5 checkpoints in one sitting, no stopping',                      icon: '🏕️' },
   };
 
   // Groups the flat ACHIEVEMENTS registry by which game each badge belongs to,
   // using the id prefix convention already in place (timeAttack*, memory*, conjugate*).
   // Anything with no game-specific prefix belongs to Quiz (which Categories shares).
   const ACHIEVEMENT_GROUPS = [
+    { id: 'stream', name: 'Stream', icon: '🌊', color: 'rgba(255,193,99,0.18)', prefix: 'stream' },
     { id: 'quiz', name: 'Quiz', icon: '🔤', color: 'rgba(255,107,74,0.18)', prefix: null },
     { id: 'timeattack', name: 'Time Attack', icon: '⏱', color: 'rgba(45,212,191,0.18)', prefix: 'timeAttack' },
     { id: 'memory', name: 'Memory Match', icon: '🧩', color: 'rgba(217,70,239,0.18)', prefix: 'memory' },
@@ -1930,9 +2038,11 @@
     merged.lifetime = Object.assign(merged.lifetime, parsed.lifetime || {});
     merged.conjugateLifetime = Object.assign(merged.conjugateLifetime, parsed.conjugateLifetime || {});
     merged.timeAttackBest = typeof parsed.timeAttackBest === 'number' ? parsed.timeAttackBest : 0;
+    merged.masteredWordsCount = typeof parsed.masteredWordsCount === 'number' ? parsed.masteredWordsCount : 0;
     merged.taLifetime = Object.assign(merged.taLifetime, parsed.taLifetime || {});
     merged.memoryBest = Object.assign({}, parsed.memoryBest || {});
     merged.memoryLifetime = Object.assign(merged.memoryLifetime, parsed.memoryLifetime || {});
+    merged.streamLifetime = Object.assign(merged.streamLifetime, parsed.streamLifetime || {});
     merged.memoryClearedSizes = Object.assign({}, parsed.memoryClearedSizes || {});
     merged.settings = Object.assign(merged.settings, parsed.settings || {});
     merged.achievements = Object.assign({}, parsed.achievements || {});
@@ -2048,9 +2158,11 @@
       merged.lifetime = Object.assign(merged.lifetime, parsed.lifetime || {});
       merged.conjugateLifetime = Object.assign(merged.conjugateLifetime, parsed.conjugateLifetime || {});
       merged.timeAttackBest = typeof parsed.timeAttackBest === 'number' ? parsed.timeAttackBest : 0;
+      merged.masteredWordsCount = typeof parsed.masteredWordsCount === 'number' ? parsed.masteredWordsCount : 0;
       merged.taLifetime = Object.assign(merged.taLifetime, parsed.taLifetime || {});
       merged.memoryBest = Object.assign({}, parsed.memoryBest || {});
       merged.memoryLifetime = Object.assign(merged.memoryLifetime, parsed.memoryLifetime || {});
+      merged.streamLifetime = Object.assign(merged.streamLifetime, parsed.streamLifetime || {});
       merged.memoryClearedSizes = Object.assign({}, parsed.memoryClearedSizes || {});
       merged.settings = Object.assign(merged.settings, parsed.settings || {});
       merged.achievements = Object.assign({}, parsed.achievements || {});
@@ -2119,9 +2231,11 @@
         merged.lifetime = Object.assign(merged.lifetime, parsed.lifetime || {});
         merged.conjugateLifetime = Object.assign(merged.conjugateLifetime, parsed.conjugateLifetime || {});
         merged.timeAttackBest = typeof parsed.timeAttackBest === 'number' ? parsed.timeAttackBest : 0;
+        merged.masteredWordsCount = typeof parsed.masteredWordsCount === 'number' ? parsed.masteredWordsCount : 0;
         merged.taLifetime = Object.assign(merged.taLifetime, parsed.taLifetime || {});
         merged.memoryBest = Object.assign({}, parsed.memoryBest || {});
         merged.memoryLifetime = Object.assign(merged.memoryLifetime, parsed.memoryLifetime || {});
+        merged.streamLifetime = Object.assign(merged.streamLifetime, parsed.streamLifetime || {});
         merged.memoryClearedSizes = Object.assign({}, parsed.memoryClearedSizes || {});
         merged.settings = Object.assign(merged.settings, parsed.settings || {});
         merged.achievements = Object.assign({}, parsed.achievements || {});
@@ -2182,6 +2296,12 @@
     lastWasTypo: false,
     resultMode: 'round', // 'round' | 'timeattack'
     isDailyDoubleRound: false,
+    isStreamRound: false,
+    lastRoundWasStream: false, // survives into the results screen (isStreamRound itself is cleared before then) so "Play again" knows to restart a stream, not a normal round
+    streamCheckpointCount: 0, // answers since the last checkpoint (0-9), resets each checkpoint
+    streamSessionStreak: 0,      // correct-in-a-row within THIS stream session only (Locked In) — same session-only pattern as taStreak
+    streamSessionCheckpoints: 0, // checkpoints reached in one continuous sitting, without stopping (Marathon Session)
+    streamFormatsCorrect: {},    // which formats (mc/audio/type) have had a correct answer this session (Triple Threat)
     taActive: false,
     taScore: 0,
     taStreak: 0,
@@ -2349,6 +2469,32 @@
       ...p,
       direction: directionSetting === 'mixed' ? (Math.random() < 0.5 ? 'es-en' : 'en-es') : directionSetting,
     }));
+  }
+
+  // Builds `count` more Stream questions, each carrying its own answer
+  // format (mc / audio / type) so the format varies question to question
+  // instead of being fixed for the whole round like normal Quiz. Uses the
+  // same weighted due/never-seen selection as everything else (getWeight),
+  // sampling WITH replacement (via weightedPickOne) since a continuous
+  // stream can't rely on a finite without-replacement pool the way a
+  // fixed-length round does.
+  function buildStreamBatch(pairs, count, avoidKey, startPosition) {
+    const batch = [];
+    let lastKey = avoidKey || null;
+    for (let i = 0; i < count; i++) {
+      const p = weightedPickOne(pairs, getWeight, lastKey);
+      lastKey = wordKey(p);
+      batch.push({
+        ...p,
+        direction: Math.random() < 0.5 ? 'es-en' : 'en-es',
+        // Cycles on a running position (not i, which resets every batch)
+        // so format rotation stays deliberate across batch top-ups instead
+        // of risking two of the same format landing back-to-back at a
+        // batch boundary.
+        format: STREAM_FORMATS[(startPosition + i) % STREAM_FORMATS.length],
+      });
+    }
+    return batch;
   }
 
   function getDistractors(current, correctText, count) {
@@ -2842,12 +2988,68 @@
     flushQueuedAchievementToasts();
   }
 
+  // Every 10 Stream questions: a soft checkpoint, not a hard stop. Reuses
+  // the celebrate visuals but offers a real choice instead of a single
+  // tap-anywhere-to-continue, since "keep going" and "stop" lead somewhere
+  // genuinely different here (stopping shows results; continuing doesn't).
+  function showStreamCheckpoint() {
+    clearCelebrateTimer();
+
+    const recentResults = state.results.slice(state.results.length - STREAM_CHECKPOINT_SIZE);
+    const perfectBlock = recentResults.length === STREAM_CHECKPOINT_SIZE && recentResults.every(r => r.correct);
+    state.progress.streamLifetime.checkpointsCompleted += 1;
+    state.streamSessionCheckpoints += 1;
+    if (state.progress.streamLifetime.checkpointsCompleted === 1) unlockAchievement('streamFirst');
+    if (state.progress.streamLifetime.checkpointsCompleted >= 10) unlockAchievement('streamCheckpoints10');
+    if (state.progress.streamLifetime.checkpointsCompleted >= 50) unlockAchievement('streamCheckpoints50');
+    if (perfectBlock) unlockAchievement('streamPerfectCheckpoint');
+    if (state.streamSessionCheckpoints >= 5) unlockAchievement('streamMarathon');
+    saveProgress();
+
+    state.screen = 'stream-checkpoint';
+    render();
+    pingActivity();
+    // Longer than a normal round-end Celebrate hold (2200ms) on purpose —
+    // there's a real decision here (keep going or stop), not just a
+    // glance, so it needs actual reading + deciding time.
+    state.celebrateTimer = setTimeout(continueStream, 4500);
+  }
+
+  function continueStream() {
+    clearCelebrateTimer();
+    state.streamCheckpointCount = 0;
+    state.index += 1;
+    state.input = '';
+    state.checked = false;
+    prepareQuestion();
+    state.screen = 'quiz';
+    render();
+  }
+
+  function stopStream() {
+    clearCelebrateTimer();
+    const score = state.results.filter(r => r.correct).length;
+    const total = state.results.length;
+    const perfect = total > 0 && score === total;
+    state.lastRoundWasStream = true;
+    state.isStreamRound = false;
+    suppressAchievementFX = true;
+    evaluateRoundAchievements();
+    suppressAchievementFX = false;
+    showCelebration(perfect ? 'perfect' : 'finished', 'result');
+  }
+
   function prepareQuestion() {
     clearAutoAdvanceTimer();
     state.selectedOption = null;
     state.lastWasTypo = false;
     const current = state.questions[state.index];
-    if (state.effectiveAnswerMode === 'choice' && current) {
+    // Stream decides choice-vs-type per question (current.format); every
+    // other mode still uses the single round-level answerMode setting.
+    const useChoiceMode = state.isStreamRound
+      ? (current && current.format !== 'type')
+      : (state.effectiveAnswerMode === 'choice');
+    if (useChoiceMode && current) {
       const targetField = current.direction === 'es-en' ? current.en : current.es;
       const correctText = splitAnswers(targetField)[0];
       const distractors = getDistractors(current, correctText, 2);
@@ -2869,6 +3071,7 @@
     state.newBestThisRound = false;
     state.lastFlippedIndex = -1;
     state.resultMode = 'round';
+    state.lastRoundWasStream = false;
     state.effectiveAnswerMode = (settings.answerMode === 'choice' && pool.length >= 3) ? 'choice' : 'type';
     prepareQuestion();
     state.screen = 'quiz';
@@ -2899,6 +3102,17 @@
       ws.right += 1;
       ws.box = Math.min((ws.box || 0) + 1, SRS_INTERVALS_DAYS.length - 1);
       ws.nextDue = now + SRS_INTERVALS_DAYS[ws.box] * 86400000;
+      // Permanent flag: true the first time this word ever reaches box 6,
+      // and never cleared again — even if the word later gets a wrong
+      // answer and drops back down. masteredWordsCount must only ever go
+      // up, or the achievement would feel like it's regressing through no
+      // fault of the person playing.
+      if (ws.box === SRS_INTERVALS_DAYS.length - 1 && !ws.masteredEver) {
+        ws.masteredEver = true;
+        state.progress.masteredWordsCount = (state.progress.masteredWordsCount || 0) + 1;
+        if (state.progress.masteredWordsCount >= 25) unlockAchievement('masteredWords25');
+        if (state.progress.masteredWordsCount >= 100) unlockAchievement('masteredWords100');
+      }
       state.progress.streak.current += 1;
       if (state.progress.streak.current > state.progress.streak.best) {
         state.progress.streak.best = state.progress.streak.current;
@@ -2919,6 +3133,30 @@
     if (state.progress.streak.current >= 25) unlockAchievement('streak25');
     if (state.progress.lifetime.totalCorrect >= 50) unlockAchievement('correct50');
     if (state.progress.lifetime.totalCorrect >= 200) unlockAchievement('correct200');
+
+    // Stream-specific tracking. Kept separate from the shared counters
+    // above (lifetime/streak) since those already blend across every mode
+    // that calls recordAnswer — these need to be genuinely Stream-only to
+    // mean what their achievements claim.
+    if (state.isStreamRound) {
+      state.progress.streamLifetime.totalAnswered += 1;
+      if (correct) {
+        state.progress.streamLifetime.totalCorrect += 1;
+        state.streamSessionStreak += 1;
+        if (current.format) state.streamFormatsCorrect[current.format] = true;
+        if (current.format === 'audio') state.progress.streamLifetime.audioCorrect += 1;
+      } else {
+        state.streamSessionStreak = 0;
+      }
+      if (state.progress.streamLifetime.totalCorrect >= 100) unlockAchievement('streamCorrect100');
+      if (state.progress.streamLifetime.totalCorrect >= 500) unlockAchievement('streamCorrect500');
+      if (state.progress.streamLifetime.audioCorrect >= 25) unlockAchievement('streamAudio25');
+      if (state.streamSessionStreak >= 40) unlockAchievement('streamStreak40');
+      if (state.streamFormatsCorrect.mc && state.streamFormatsCorrect.audio && state.streamFormatsCorrect.type) {
+        unlockAchievement('streamAllFormats');
+      }
+      saveProgress();
+    }
   }
 
   function submitAnswer() {
@@ -2940,6 +3178,12 @@
     state.lastWasTypo = wasTypo;
     recordAnswer(current, correct, state.input);
     render();
+    // A forgiven typo has a full sentence plus the correct spelling to
+    // read (see the near-miss feedback in renderQuiz) — a plain correct
+    // answer's 750ms is too quick for that, but it's not as much to
+    // absorb as a wrong answer's full "correct answer: X" breakdown either.
+    const delay = !correct ? 3000 : (wasTypo ? 1800 : 750);
+    state.autoAdvanceTimer = setTimeout(() => { nextQuestion(); }, delay);
   }
 
   function selectOption(optionText) {
@@ -2957,6 +3201,28 @@
 
   function nextQuestion() {
     clearAutoAdvanceTimer();
+    if (state.isStreamRound) {
+      state.streamCheckpointCount += 1;
+      // Keep the batch topped up well before it runs out, so it never
+      // visibly "ends" — buildStreamBatch samples with replacement, so
+      // this works regardless of how long the session has run.
+      if (state.questions.length - (state.index + 1) < 5) {
+        const lastKey = wordKey(state.questions[state.questions.length - 1]);
+        state.questions = state.questions.concat(
+          buildStreamBatch(activePairs(), 20, lastKey, state.questions.length)
+        );
+      }
+      if (state.streamCheckpointCount >= STREAM_CHECKPOINT_SIZE) {
+        showStreamCheckpoint();
+        return;
+      }
+      state.index += 1;
+      state.input = '';
+      state.checked = false;
+      prepareQuestion();
+      render();
+      return;
+    }
     if (state.index + 1 >= state.questions.length) {
       const score = state.results.filter(r => r.correct).length;
       const total = state.results.length;
@@ -3084,8 +3350,13 @@
   }
 
   function quitQuiz() {
-    if (!confirm('Quit this round? Your progress on it will be scored as-is.')) return;
+    const msg = state.isStreamRound
+      ? 'Stop here? Your progress so far will be saved.'
+      : 'Quit this round? Your progress on it will be scored as-is.';
+    if (!confirm(msg)) return;
     clearAutoAdvanceTimer();
+    state.lastRoundWasStream = state.isStreamRound;
+    state.isStreamRound = false;
     state.screen = 'result';
     evaluateRoundAchievements();
     render();
@@ -3783,6 +4054,33 @@
     render();
   }
 
+  // Stream: a continuous, mixed-format round with no fixed length — built
+  // as a Quiz variant the same way Daily Double is, so it inherits sound
+  // effects, achievement checks, and the deferred Level Up screen for free
+  // via the existing recordAnswer()/leaveResults() machinery, rather than
+  // needing any of that rebuilt separately.
+  function startStream() {
+    state.activeCategory = null; // main pool only, same as Daily Double
+    const pool = activePairs();
+    state.questions = buildStreamBatch(pool, 20, null, 0);
+    state.index = 0;
+    state.results = [];
+    state.input = '';
+    state.checked = false;
+    state.newBestThisRound = false;
+    state.lastFlippedIndex = -1;
+    state.resultMode = 'round';
+    state.isDailyDoubleRound = false;
+    state.isStreamRound = true;
+    state.streamCheckpointCount = 0;
+    state.streamSessionStreak = 0;
+    state.streamSessionCheckpoints = 0;
+    state.streamFormatsCorrect = {};
+    prepareQuestion();
+    state.screen = 'quiz';
+    render();
+  }
+
   function handleDailyDoublePlay() {
     state.progress.dailyDoubleLastHandled = todayDateString();
     saveProgress();
@@ -3965,28 +4263,8 @@
     const achIds = Object.keys(ACHIEVEMENTS);
     const achUnlockedCount = achIds.filter(id => state.progress.achievements[id] && state.progress.achievements[id].unlocked).length;
     const achTotalCount = achIds.length;
-    const taBest = state.progress.timeAttackBest || 0;
-    const memBest = state.progress.memoryBest[settings.memoryGridSize];
     const noWords = state.pairs.length === 0;
     const totalAnswered = state.progress.lifetime.totalAnswered + state.progress.conjugateLifetime.totalAnswered;
-
-    const tiles = [
-      { id: 'quiz', icon: '🔤', name: 'Quiz', meta: 'Type or choose', color: 'rgba(255,107,74,0.18)', locked: false, gate: true },
-      { id: 'timeattack', icon: '⏱', name: 'Time Attack', meta: taBest > 0 ? `Best: ${taBest}` : '60 seconds', color: 'rgba(45,212,191,0.18)', locked: false, gate: true },
-      { id: 'memory', icon: '🧩', name: 'Memory Match', meta: memBest ? `Best: ${memBest} moves` : 'Find the pairs', color: 'rgba(217,70,239,0.18)', locked: false, gate: true },
-      { id: 'verbs', icon: '📖', name: 'Conjugate', meta: 'Present tense', color: 'rgba(52,211,153,0.18)', locked: false, gate: false },
-      { id: 'categories', icon: '🏷️', name: 'Categories', meta: CATEGORIES.length + ' topics', color: 'rgba(255,107,74,0.18)', locked: false, gate: false },
-      { id: 'mystery', icon: '❓', name: 'Exciting New Game', meta: 'Coming soon', color: 'rgba(255,255,255,0.06)', locked: true, gate: false },
-    ];
-
-    const tilesHtml = tiles.map(t => `
-      <button class="game-tile ${t.locked ? 'locked' : ''}" data-tile="${t.id}" ${(!t.locked && t.gate && noWords) ? 'disabled' : ''}>
-        ${t.locked ? '<div class="tile-soon">Soon</div>' : ''}
-        <div class="tile-icon-wrap" style="background:${t.color};">${t.icon}</div>
-        <div class="tile-name">${esc(t.name)}</div>
-        <div class="tile-meta">${esc(t.meta)}</div>
-      </button>
-    `).join('');
 
     app.innerHTML = `
       <div class="screen upload-screen bg-quiz">
@@ -4009,7 +4287,20 @@
           ${menuHtml}
           ${statusHtml}
           ${uploadHtml}
-          <div class="game-grid">${tilesHtml}</div>
+          <div class="card stream-hero">
+            <div class="format-row"><span class="fchip">🔤</span><span class="fchip">🔊</span><span class="fchip">✎</span></div>
+            <h2>Your Learning Stream</h2>
+            <p>Mixed questions — choose, listen, or type. Learn the words you need most, one after another.</p>
+            <button id="start-stream-btn" class="btn-primary" ${state.pairs.length < 3 ? 'disabled' : ''}>Start Stream →</button>
+          </div>
+          <button class="game-tile modes-banner" data-tile="gamemodes">
+            <div class="tile-icon-wrap" style="background:rgba(255,255,255,0.08);">🎮</div>
+            <div class="banner-text">
+              <div class="banner-name">Choose a specific mode</div>
+              <div class="banner-meta">Quiz, Time Attack, Memory Match & more</div>
+            </div>
+            <div class="banner-arrow">→</div>
+          </button>
           <button class="game-tile achievements-banner" data-tile="achievements">
             <div class="tile-icon-wrap" style="background:rgba(255,193,99,0.18);">🏆</div>
             <div class="banner-text">
@@ -4057,6 +4348,9 @@
       state.showMenu = false;
       importProgress(e.target.files[0]);
     });
+
+    const startStreamBtn = document.getElementById('start-stream-btn');
+    if (startStreamBtn) startStreamBtn.addEventListener('click', startStream);
 
     if (showDailyDouble) {
       document.getElementById('dd-play-btn').addEventListener('click', handleDailyDoublePlay);
@@ -4143,6 +4437,61 @@
     document.querySelectorAll('.game-tile').forEach(tile => {
       tile.addEventListener('click', () => {
         const id = tile.dataset.tile;
+        if (tile.disabled) return;
+        if (id === 'gamemodes') { state.screen = 'game-modes'; render(); }
+        else if (id === 'achievements') { state.screen = 'achievements'; render(); }
+        else if (id === 'myprogress') { state.screen = 'my-progress'; render(); }
+        else if (id === 'xpinfo') { state.screen = 'xp-info'; render(); }
+      });
+    });
+  }
+
+  // The 6 game-mode tiles, previously always visible on Home, now live
+  // behind "Choose a specific mode" so Home reads as: start a stream, or
+  // go pick something specific. Same tiles, same click behavior, just one
+  // tap deeper — reusing .game-tile/.game-grid styling verbatim.
+  function renderGameModes() {
+    const app = document.getElementById('app');
+    const settings = state.progress.settings;
+    const taBest = state.progress.timeAttackBest || 0;
+    const memBest = state.progress.memoryBest[settings.memoryGridSize];
+    const noWords = state.pairs.length === 0;
+
+    const tiles = [
+      { id: 'quiz', icon: '🔤', name: 'Quiz', meta: 'Type or choose', color: 'rgba(255,107,74,0.18)', locked: false, gate: true },
+      { id: 'timeattack', icon: '⏱', name: 'Time Attack', meta: taBest > 0 ? `Best: ${taBest}` : '60 seconds', color: 'rgba(45,212,191,0.18)', locked: false, gate: true },
+      { id: 'memory', icon: '🧩', name: 'Memory Match', meta: memBest ? `Best: ${memBest} moves` : 'Find the pairs', color: 'rgba(217,70,239,0.18)', locked: false, gate: true },
+      { id: 'verbs', icon: '📖', name: 'Conjugate', meta: 'Present tense', color: 'rgba(52,211,153,0.18)', locked: false, gate: false },
+      { id: 'categories', icon: '🏷️', name: 'Categories', meta: CATEGORIES.length + ' topics', color: 'rgba(255,107,74,0.18)', locked: false, gate: false },
+      { id: 'mystery', icon: '❓', name: 'Exciting New Game', meta: 'Coming soon', color: 'rgba(255,255,255,0.06)', locked: true, gate: false },
+    ];
+
+    const tilesHtml = tiles.map(t => `
+      <button class="game-tile ${t.locked ? 'locked' : ''}" data-tile="${t.id}" ${(!t.locked && t.gate && noWords) ? 'disabled' : ''}>
+        ${t.locked ? '<div class="tile-soon">Soon</div>' : ''}
+        <div class="tile-icon-wrap" style="background:${t.color};">${t.icon}</div>
+        <div class="tile-name">${esc(t.name)}</div>
+        <div class="tile-meta">${esc(t.meta)}</div>
+      </button>
+    `).join('');
+
+    app.innerHTML = `
+      <div class="screen bg-quiz">
+        <div class="wrap wrap-centered">
+          <div class="screen-header">
+            <button id="back-btn" class="back-btn">←</button>
+            <div class="screen-title">Choose a mode</div>
+          </div>
+          <div class="game-grid">${tilesHtml}</div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('back-btn').addEventListener('click', () => { state.screen = 'start'; render(); });
+
+    document.querySelectorAll('.game-tile').forEach(tile => {
+      tile.addEventListener('click', () => {
+        const id = tile.dataset.tile;
         const def = tiles.find(t => t.id === id);
         if (def && def.locked) {
           showComingSoonToast(def.icon, def.name);
@@ -4152,9 +4501,6 @@
         if (id === 'quiz') { state.screen = 'quiz-setup'; render(); }
         else if (id === 'timeattack') { state.screen = 'timeattack-setup'; render(); }
         else if (id === 'memory') { state.screen = 'memory-setup'; render(); }
-        else if (id === 'achievements') { state.screen = 'achievements'; render(); }
-        else if (id === 'myprogress') { state.screen = 'my-progress'; render(); }
-        else if (id === 'xpinfo') { state.screen = 'xp-info'; render(); }
         else if (id === 'categories') { state.screen = 'categories'; render(); }
         else if (id === 'verbs') { goToConjugateSetup(); }
       });
@@ -4199,7 +4545,7 @@
       </div>
     `;
 
-    document.getElementById('back-btn').addEventListener('click', goHome);
+    document.getElementById('back-btn').addEventListener('click', () => { state.screen = 'game-modes'; render(); });
     document.getElementById('start-btn').addEventListener('click', startQuiz);
 
     document.querySelectorAll('#direction-group .seg-btn').forEach(btn => {
@@ -4248,7 +4594,7 @@
       </div>
     `;
 
-    document.getElementById('back-btn').addEventListener('click', goHome);
+    document.getElementById('back-btn').addEventListener('click', () => { state.screen = 'game-modes'; render(); });
     document.querySelectorAll('.game-tile').forEach(tile => {
       tile.addEventListener('click', () => {
         loadCategoryFile(tile.dataset.cat);
@@ -4380,7 +4726,7 @@
       </div>
     `;
 
-    document.getElementById('back-btn').addEventListener('click', goHome);
+    document.getElementById('back-btn').addEventListener('click', () => { state.screen = 'game-modes'; render(); });
 
     if (!state.verbsLoading && !state.verbsError) {
       document.getElementById('start-btn').addEventListener('click', startConjugateRound);
@@ -4614,7 +4960,7 @@
       </div>
     `;
 
-    document.getElementById('back-btn').addEventListener('click', goHome);
+    document.getElementById('back-btn').addEventListener('click', () => { state.screen = 'game-modes'; render(); });
     document.getElementById('start-btn').addEventListener('click', startTimeAttack);
 
     document.querySelectorAll('#direction-group .seg-btn').forEach(btn => {
@@ -4663,7 +5009,7 @@
       </div>
     `;
 
-    document.getElementById('back-btn').addEventListener('click', goHome);
+    document.getElementById('back-btn').addEventListener('click', () => { state.screen = 'game-modes'; render(); });
     document.getElementById('start-btn').addEventListener('click', startMemoryMatch);
     document.querySelectorAll('#gridsize-group .seg-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -4749,22 +5095,69 @@
     const current = state.questions[state.index];
     if (!current) return;
 
+    const isAudioFormat = state.isStreamRound && current.format === 'audio';
+
     let tilesHtml = '';
-    state.questions.forEach((_, i) => {
-      let bg = 'var(--outline)';
-      if (i < state.results.length) bg = state.results[i].correct ? COLORS.green : COLORS.red;
-      else if (i === state.index) bg = COLORS.ochre;
-      tilesHtml += `<div class="tile" style="background:${bg}"></div>`;
-    });
+    if (state.isStreamRound) {
+      // Shows progress within the current 10-question checkpoint block,
+      // not the whole (continuously-extended) questions array.
+      const recentResults = state.results.slice(state.results.length - state.streamCheckpointCount);
+      for (let i = 0; i < STREAM_CHECKPOINT_SIZE; i++) {
+        let bg = 'var(--outline)';
+        if (i < recentResults.length) bg = recentResults[i].correct ? COLORS.green : COLORS.red;
+        else if (i === recentResults.length) bg = COLORS.ochre;
+        tilesHtml += `<div class="tile" style="background:${bg}"></div>`;
+      }
+    } else {
+      state.questions.forEach((_, i) => {
+        let bg = 'var(--outline)';
+        if (i < state.results.length) bg = state.results[i].correct ? COLORS.green : COLORS.red;
+        else if (i === state.index) bg = COLORS.ochre;
+        tilesHtml += `<div class="tile" style="background:${bg}"></div>`;
+      });
+    }
 
     const promptWord = current.direction === 'es-en' ? current.es : current.en;
     const answerWord = current.direction === 'es-en' ? current.en : current.es;
     const promptLang = current.direction === 'es-en' ? 'es-ES' : 'en-US';
     const answerLang = current.direction === 'es-en' ? 'en-US' : 'es-ES';
 
-    const useChoice = state.effectiveAnswerMode === 'choice' && state.currentOptions;
+    // Stream decides choice-vs-type per question; every other mode still
+    // uses the single round-level answerMode setting.
+    const useChoice = state.isStreamRound
+      ? (current.format !== 'type' && state.currentOptions)
+      : (state.effectiveAnswerMode === 'choice' && state.currentOptions);
     const shouldFlip = state.lastFlippedIndex !== state.index;
     if (shouldFlip) state.lastFlippedIndex = state.index;
+
+    // results.length already counts the just-answered question once
+    // checked is true (recordAnswer pushed it before this render), so the
+    // +1 only belongs while the question is still unanswered — otherwise
+    // the feedback screen for question 10 briefly claims to be question 11.
+    const streamQuestionNum = state.results.length + (state.checked ? 0 : 1);
+    const progressLabel = state.isStreamRound
+      ? `Question ${streamQuestionNum} · ${isAudioFormat ? 'LISTEN' : (current.direction === 'es-en' ? 'ES → EN' : 'EN → ES')}`
+      : `${state.index + 1} / ${state.questions.length} · ${current.direction === 'es-en' ? 'ES → EN' : 'EN → ES'}`;
+
+    const orbHtml = state.isStreamRound
+      ? `<div class="glow-orb-progress streak-orb"><div class="orb-num">🔥${state.progress.streak.current}</div><div class="orb-lbl">STREAK</div></div>`
+      : `<div class="glow-orb-progress"><div class="orb-num">${state.index + 1}</div><div class="orb-lbl">OF ${state.questions.length}</div></div>`;
+
+    // One instruction line, computed once here so every mode that shares
+    // this screen (Quiz, Daily Double, Categories, Stream) gets it for
+    // free rather than needing separate wiring per mode. Audio format
+    // already has its own hint ("Listen, then choose...") below, so it's
+    // skipped here to avoid saying the same thing twice.
+    const instructionText = isAudioFormat ? '' : useChoice
+      ? (current.direction === 'es-en' ? 'What does this mean?' : 'How do you say this in Spanish?')
+      : (current.direction === 'es-en' ? 'Type the English translation' : 'Type the word in Spanish');
+
+    // Audio format hides the written word entirely — listening is the
+    // exercise — and always speaks it (see the autoSpeak binding below),
+    // regardless of the user's own "speak words aloud" setting.
+    const promptRowHtml = isAudioFormat
+      ? `<button id="speak-prompt-btn" class="speak-btn big" title="Hear it">🔊</button><div class="audio-hint">Listen, then choose the meaning</div>`
+      : `<div class="audio-hint" style="margin-bottom:10px;">${instructionText}</div><div class="prompt-row"><div class="prompt-word">${esc(promptWord)}</div><button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button></div>`;
 
     let bottomHtml;
 
@@ -4800,28 +5193,36 @@
         <input id="answer-input" type="text" placeholder="Type the translation…" value="${esc(state.input)}" autocomplete="off" />
         <button id="check-btn" class="btn-primary">Check</button>
       `;
+    } else if (state.wasCorrect) {
+      // Matches choice mode's correct state: no button, auto-advance only
+      // (see submitAnswer). A near-miss now also shows the correct
+      // spelling, not just "close enough" — you were forgiven, but you
+      // should still see the right answer.
+      bottomHtml = `
+        <div class="feedback correct">
+          <div class="title">✅ Correct</div>
+          ${state.lastWasTypo ? `<div class="answer">✓ Close enough — small typo forgiven. Correct spelling: <strong>${esc(answerWord)}</strong> <button id="speak-answer-btn" class="speak-btn" title="Hear it" style="width:26px;height:26px;font-size:12px;">🔊</button></div>` : ''}
+        </div>
+      `;
     } else {
       bottomHtml = `
-        <div class="feedback ${state.wasCorrect ? 'correct' : 'wrong'}">
-          <div class="title">${state.wasCorrect ? '✅ Correct' : '❌ Not quite'}</div>
-          ${!state.wasCorrect ? `<div class="answer">Correct answer: <strong>${esc(answerWord)}</strong> <button id="speak-answer-btn" class="speak-btn" title="Hear it" style="width:26px;height:26px;font-size:12px;">🔊</button></div>` : ''}
-          ${state.wasCorrect && state.lastWasTypo ? `<div class="answer">✓ Close enough — small typo forgiven</div>` : ''}
+        <div class="feedback wrong">
+          <div class="title">❌ Not quite</div>
+          <div class="answer">Correct answer: <strong>${esc(answerWord)}</strong> <button id="speak-answer-btn" class="speak-btn" title="Hear it" style="width:26px;height:26px;font-size:12px;">🔊</button></div>
         </div>
         <button id="next-btn" class="btn-primary">${state.index + 1 >= state.questions.length ? 'See results' : 'Next word'}</button>
+        <div class="countdown-bar-track"><div class="countdown-bar-fill" id="countdown-fill"></div></div>
       `;
     }
 
     app.innerHTML = `
       <div class="screen bg-quiz">
         <div class="wrap">
-          <div class="tiles" style="grid-template-columns: repeat(${Math.min(state.questions.length, 20)}, 1fr);">${tilesHtml}</div>
-          <div class="progress-label">${state.index + 1} / ${state.questions.length} · ${current.direction === 'es-en' ? 'ES → EN' : 'EN → ES'}</div>
+          <div class="tiles" style="grid-template-columns: repeat(${state.isStreamRound ? STREAM_CHECKPOINT_SIZE : Math.min(state.questions.length, 20)}, 1fr);">${tilesHtml}</div>
+          <div class="progress-label">${progressLabel}</div>
           <div class="prompt-card ${shouldFlip ? 'card-flip-in' : ''}">
-            <div class="glow-orb-progress"><div class="orb-num">${state.index + 1}</div><div class="orb-lbl">OF ${state.questions.length}</div></div>
-            <div class="prompt-row">
-              <div class="prompt-word">${esc(promptWord)}</div>
-              <button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button>
-            </div>
+            ${orbHtml}
+            ${promptRowHtml}
           </div>
           ${bottomHtml}
           <button id="quiz-quit-btn" class="quit-link" style="display:block; text-align:center; width:100%; margin-top:14px;">Quit</button>
@@ -4831,13 +5232,14 @@
 
     const speakPromptBtn = document.getElementById('speak-prompt-btn');
     speakPromptBtn.addEventListener('click', () => speak(promptWord, promptLang, speakPromptBtn));
+    const shouldAutoSpeak = isAudioFormat || state.progress.settings.autoSpeak;
 
     if (useChoice) {
       if (!state.checked) {
         document.querySelectorAll('#options-container .option-btn').forEach((btn, i) => {
           btn.addEventListener('click', () => selectOption(state.currentOptions[i]));
         });
-        if (state.progress.settings.autoSpeak) speak(promptWord, promptLang, speakPromptBtn);
+        if (shouldAutoSpeak) speak(promptWord, promptLang, speakPromptBtn);
       } else if (!state.wasCorrect) {
         document.getElementById('next-btn').addEventListener('click', nextQuestion);
         const fill = document.getElementById('countdown-fill');
@@ -4856,9 +5258,18 @@
         }
       });
       document.getElementById('check-btn').addEventListener('click', submitAnswer);
-      if (state.progress.settings.autoSpeak) speak(promptWord, promptLang, speakPromptBtn);
-    } else {
+      if (shouldAutoSpeak) speak(promptWord, promptLang, speakPromptBtn);
+    } else if (!state.wasCorrect) {
       document.getElementById('next-btn').addEventListener('click', nextQuestion);
+      const speakAnswerBtn = document.getElementById('speak-answer-btn');
+      if (speakAnswerBtn) speakAnswerBtn.addEventListener('click', () => speak(answerWord, answerLang, speakAnswerBtn));
+      const fill = document.getElementById('countdown-fill');
+      if (fill) {
+        requestAnimationFrame(() => { requestAnimationFrame(() => { fill.style.width = '0%'; }); });
+      }
+    } else {
+      // typed correct (possibly a forgiven near-miss) — no Next button,
+      // matches choice mode's silent auto-advance-only correct state.
       const speakAnswerBtn = document.getElementById('speak-answer-btn');
       if (speakAnswerBtn) speakAnswerBtn.addEventListener('click', () => speak(answerWord, answerLang, speakAnswerBtn));
     }
@@ -4899,6 +5310,34 @@
     } else {
       playFinishedChime();
     }
+  }
+
+  // Every 10 Stream questions — a soft checkpoint, not a hard stop. Same
+  // visual family as Celebrate (badge/headline/subline) but a genuine
+  // two-way choice instead of a single tap-anywhere-to-continue, since
+  // "keep going" and "stop" lead somewhere different here.
+  function renderStreamCheckpoint() {
+    const app = document.getElementById('app');
+    const recentResults = state.results.slice(state.results.length - STREAM_CHECKPOINT_SIZE);
+    const correctInBlock = recentResults.filter(r => r.correct).length;
+
+    app.innerHTML = `
+      <div class="screen bg-quiz stream-checkpoint-screen">
+        <div class="celebrate-wrap">
+          <div class="celebrate-badge-ring">
+            <div class="celebrate-badge-disc">🔥</div>
+          </div>
+          <div class="celebrate-headline finished">${correctInBlock}/${STREAM_CHECKPOINT_SIZE} in a row!</div>
+          <p class="celebrate-subline">Keep going, or stop here for now.</p>
+          <div class="checkpoint-actions">
+            <button id="stream-continue-btn" class="btn-primary">Keep going →</button>
+            <button id="stream-stop-btn" class="link-btn">Stop for today</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('stream-continue-btn').addEventListener('click', continueStream);
+    document.getElementById('stream-stop-btn').addEventListener('click', stopStream);
   }
 
   // Shown once, right after a results screen is left, if a level-up
@@ -4973,20 +5412,37 @@
             <div class="mosaic">${mosaicHtml}</div>
             ${reviewHtml}
             <button id="again-btn" class="btn-primary" style="width:100%; margin-bottom:10px;">Play again</button>
-            <button id="settings-btn" class="btn-secondary" style="width:100%;">Change settings</button>
+            ${state.lastRoundWasStream ? '' : `<button id="settings-btn" class="btn-secondary" style="width:100%;">Change settings</button>`}
           </div>
         </div>
       </div>
     `;
     document.getElementById('back-btn').addEventListener('click', () => leaveResults(goHome));
-    document.getElementById('again-btn').addEventListener('click', () => leaveResults(startQuiz));
-    document.getElementById('settings-btn').addEventListener('click', () => leaveResults(backToQuizSetup));
+    document.getElementById('again-btn').addEventListener('click', () => leaveResults(state.lastRoundWasStream ? startStream : startQuiz));
+    const settingsBtn = document.getElementById('settings-btn');
+    if (settingsBtn) settingsBtn.addEventListener('click', () => leaveResults(backToQuizSetup));
   }
 
   function renderAchievements() {
     const app = document.getElementById('app');
 
-    const tilesHtml = ACHIEVEMENT_GROUPS.map(group => {
+    const streamGroup = ACHIEVEMENT_GROUPS.find(g => g.id === 'stream');
+    const gridGroups = ACHIEVEMENT_GROUPS.filter(g => g.id !== 'stream');
+
+    const streamIds = achievementIdsForGroup(streamGroup);
+    const streamUnlocked = streamIds.filter(id => state.progress.achievements[id] && state.progress.achievements[id].unlocked).length;
+    const streamHtml = `
+      <button class="game-tile stream-achievement-banner" data-group="${streamGroup.id}">
+        <div class="tile-icon-wrap" style="background:${streamGroup.color};">${streamGroup.icon}</div>
+        <div class="banner-text">
+          <div class="banner-name">${esc(streamGroup.name)}</div>
+          <div class="banner-meta">${streamUnlocked}/${streamIds.length} unlocked</div>
+        </div>
+        <div class="banner-arrow">→</div>
+      </button>
+    `;
+
+    const tilesHtml = gridGroups.map(group => {
       const ids = achievementIdsForGroup(group);
       const unlockedCount = ids.filter(id => state.progress.achievements[id] && state.progress.achievements[id].unlocked).length;
       return `
@@ -4994,6 +5450,7 @@
           <div class="tile-icon-wrap" style="background:${group.color};">${group.icon}</div>
           <div class="tile-name">${esc(group.name)}</div>
           <div class="tile-meta">${unlockedCount}/${ids.length} unlocked</div>
+          <div class="tile-corner-arrow">→</div>
         </button>
       `;
     }).join('');
@@ -5005,6 +5462,7 @@
             <button id="back-btn" class="back-btn">←</button>
             <div class="screen-title">🏆 Achievements</div>
           </div>
+          ${streamHtml}
           <div class="game-grid">${tilesHtml}</div>
         </div>
       </div>
@@ -5182,6 +5640,10 @@
           <div class="section-label">Keep playing to earn XP</div>
           <div class="card">
             <div class="rule-row">
+              <div class="rule-icon" style="background:rgba(255,193,99,0.18);">🌊</div>
+              <div class="rule-text"><div class="rule-title">Stream</div><div class="rule-sub">Answer correctly — mixed, continuous practice, the best way to rack up XP</div></div>
+            </div>
+            <div class="rule-row">
               <div class="rule-icon" style="background:rgba(255,107,74,0.18);">📝</div>
               <div class="rule-text"><div class="rule-title">Quiz &amp; Categories</div><div class="rule-sub">Answer correctly</div></div>
             </div>
@@ -5203,7 +5665,7 @@
           <div class="card">
             <div class="rule-row">
               <div class="rule-icon" style="background:rgba(255,77,109,0.18);">🔥</div>
-              <div class="rule-text"><div class="rule-title">Beat your best streak</div><div class="rule-sub">In Quiz or Conjugate</div></div>
+              <div class="rule-text"><div class="rule-title">Beat your best streak</div><div class="rule-sub">In Quiz, Stream, or Conjugate</div></div>
             </div>
             <div class="rule-row">
               <div class="rule-icon" style="background:rgba(255,193,99,0.18);">🏆</div>
@@ -5348,6 +5810,7 @@
 
     if (state.screen === 'login') renderLogin();
     else if (state.screen === 'start') renderStart();
+    else if (state.screen === 'game-modes') renderGameModes();
     else if (state.screen === 'quiz-setup') renderQuizSetup();
     else if (state.screen === 'categories') renderCategories();
     else if (state.screen === 'category-setup') renderCategorySetup();
@@ -5361,6 +5824,7 @@
     else if (state.screen === 'memory-play') renderMemoryPlay();
     else if (state.screen === 'memory-result') renderMemoryResult();
     else if (state.screen === 'celebrate') renderCelebrate();
+    else if (state.screen === 'stream-checkpoint') renderStreamCheckpoint();
     else if (state.screen === 'level-up') renderLevelUp();
     else if (state.screen === 'result') {
       if (state.resultMode === 'timeattack') renderTimeAttackResult();
