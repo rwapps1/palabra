@@ -5113,12 +5113,21 @@
       ? `<div class="glow-orb-progress streak-orb"><div class="orb-num">🔥${state.progress.streak.current}</div><div class="orb-lbl">STREAK</div></div>`
       : `<div class="glow-orb-progress"><div class="orb-num">${state.index + 1}</div><div class="orb-lbl">OF ${state.questions.length}</div></div>`;
 
+    // One instruction line, computed once here so every mode that shares
+    // this screen (Quiz, Daily Double, Categories, Stream) gets it for
+    // free rather than needing separate wiring per mode. Audio format
+    // already has its own hint ("Listen, then choose...") below, so it's
+    // skipped here to avoid saying the same thing twice.
+    const instructionText = isAudioFormat ? '' : useChoice
+      ? (current.direction === 'es-en' ? 'What does this mean?' : 'How do you say this in Spanish?')
+      : (current.direction === 'es-en' ? 'Type the English translation' : 'Type the word in Spanish');
+
     // Audio format hides the written word entirely — listening is the
     // exercise — and always speaks it (see the autoSpeak binding below),
     // regardless of the user's own "speak words aloud" setting.
     const promptRowHtml = isAudioFormat
       ? `<button id="speak-prompt-btn" class="speak-btn big" title="Hear it">🔊</button><div class="audio-hint">Listen, then choose the meaning</div>`
-      : `<div class="prompt-row"><div class="prompt-word">${esc(promptWord)}</div><button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button></div>`;
+      : `<div class="audio-hint" style="margin-bottom:10px;">${instructionText}</div><div class="prompt-row"><div class="prompt-word">${esc(promptWord)}</div><button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button></div>`;
 
     let bottomHtml;
 
