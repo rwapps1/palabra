@@ -739,6 +739,40 @@ function renderSummary() {
   document.getElementById('again-btn').addEventListener('click', startStream);
 }
 
+/* ---------- keyboard-safe scrolling (same fix as index.html) ---------- */
+// interactive-widget=resizes-content shrinks the viewport around the
+// keyboard, but only guarantees the *focused* input scrolls into view —
+// not the Check/Sign in button after it. Walk forward from whatever's
+// focused until a primary/secondary action button turns up, and bring
+// that into view instead.
+function findNextActionButton(el, hops) {
+  if (!el || hops > 8) return null;
+  let node = el;
+  while (node) {
+    const sib = node.nextElementSibling;
+    if (sib) {
+      if (sib.tagName === 'BUTTON' && (sib.classList.contains('btn-primary') || sib.classList.contains('btn-secondary'))) return sib;
+      const nested = sib.querySelector && sib.querySelector('.btn-primary, .btn-secondary');
+      if (nested) return nested;
+      node = sib;
+    } else {
+      node = node.parentElement;
+      if (!node || node.id === 'app') return null;
+    }
+  }
+  return null;
+}
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    const active = document.activeElement;
+    if (!active || (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA')) return;
+    const keyboardLikelyOpen = (window.innerHeight - window.visualViewport.height) > 150;
+    if (!keyboardLikelyOpen) return;
+    const target = findNextActionButton(active, 0) || active;
+    setTimeout(() => target.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 80);
+  });
+}
+
 /* ---------- boot ---------- */
 window.addEventListener('palabra-firebase-ready', () => {
   window.PalabraAuth.onAuthStateChanged((user) => {

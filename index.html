@@ -5417,6 +5417,55 @@
       if (state.screen === 'start') render();
     }
   });
+
+  // ---- Keyboard-safe scrolling ----------------------------------------
+  // interactive-widget=resizes-content (viewport meta, see <head>) makes
+  // Chrome actually shrink the page around the on-screen keyboard instead
+  // of just overlaying it — but that alone only guarantees the *focused*
+  // input scrolls into view, not whatever comes after it. On a typed-answer
+  // screen (Quiz, Conjugate, Time Attack) or the login form, that's the
+  // Check/Sign in/Save button, and it can still end up just out of sight
+  // below a short keyboard-shrunk viewport, worse with Chrome's own
+  // autofill accessory bar eating extra height on top of the keyboard.
+  //
+  // Rather than hard-coding this per screen, walk forward from whatever
+  // input is focused (through siblings, then up to the parent's siblings
+  // if it runs out, stopping at #app) until a primary/secondary action
+  // button is found, and bring that into view instead of just the input.
+  // Works for every current typed-input screen and any future one without
+  // needing to be wired up again each time.
+  function findNextActionButton(el, hops) {
+    if (!el || hops > 8) return null;
+    let node = el;
+    while (node) {
+      const sib = node.nextElementSibling;
+      if (sib) {
+        if (sib.tagName === 'BUTTON' && (sib.classList.contains('btn-primary') || sib.classList.contains('btn-secondary'))) return sib;
+        const nested = sib.querySelector && sib.querySelector('.btn-primary, .btn-secondary');
+        if (nested) return nested;
+        node = sib;
+      } else {
+        node = node.parentElement;
+        if (!node || node.id === 'app') return null;
+      }
+    }
+    return null;
+  }
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+      const active = document.activeElement;
+      if (!active || (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA')) return;
+      // Only react to a genuine keyboard open, not the address bar
+      // auto-hiding/showing (a much smaller height change) or a pinch-zoom.
+      const keyboardLikelyOpen = (window.innerHeight - window.visualViewport.height) > 150;
+      if (!keyboardLikelyOpen) return;
+      const target = findNextActionButton(active, 0) || active;
+      // Small delay lets the resize settle before scrolling, so it doesn't
+      // fight with the browser's own scroll-input-into-view behavior.
+      setTimeout(() => target.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 80);
+    });
+  }
 </script>
 </body>
 </html>
