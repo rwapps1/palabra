@@ -5452,20 +5452,33 @@
     return null;
   }
 
+  function scrollKeyboardTargetIntoView(active) {
+    if (!active || (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA')) return;
+    const target = findNextActionButton(active, 0) || active;
+    target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  // Two independent triggers, deliberately redundant, since a single
+  // heuristic already failed once here:
+  // 1) visualViewport resize — fires when the keyboard genuinely changes
+  //    the visible area. Under interactive-widget=resizes-content the
+  //    layout viewport shrinks together with the visual one, so there's
+  //    no reliable "gap" to gate on — just react to any resize while an
+  //    input is focused rather than trying to guess whether it was the
+  //    keyboard specifically.
+  // 2) focusin, on a longer delay — a fallback in case the resize event
+  //    fires before the keyboard animation has actually settled, or
+  //    doesn't fire as expected on a given device/Chrome version.
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', () => {
-      const active = document.activeElement;
-      if (!active || (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA')) return;
-      // Only react to a genuine keyboard open, not the address bar
-      // auto-hiding/showing (a much smaller height change) or a pinch-zoom.
-      const keyboardLikelyOpen = (window.innerHeight - window.visualViewport.height) > 150;
-      if (!keyboardLikelyOpen) return;
-      const target = findNextActionButton(active, 0) || active;
-      // Small delay lets the resize settle before scrolling, so it doesn't
-      // fight with the browser's own scroll-input-into-view behavior.
-      setTimeout(() => target.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 80);
+      setTimeout(() => scrollKeyboardTargetIntoView(document.activeElement), 80);
     });
   }
+  document.addEventListener('focusin', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+      setTimeout(() => scrollKeyboardTargetIntoView(e.target), 350);
+    }
+  });
 </script>
 </body>
 </html>

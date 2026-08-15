@@ -762,16 +762,24 @@ function findNextActionButton(el, hops) {
   }
   return null;
 }
+function scrollKeyboardTargetIntoView(active) {
+  if (!active || (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA')) return;
+  const target = findNextActionButton(active, 0) || active;
+  target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+// Two independent triggers on purpose — a single heuristic (viewport gap)
+// already failed once here, since resizes-content shrinks layout and
+// visual viewport together and leaves no gap to detect.
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => {
-    const active = document.activeElement;
-    if (!active || (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA')) return;
-    const keyboardLikelyOpen = (window.innerHeight - window.visualViewport.height) > 150;
-    if (!keyboardLikelyOpen) return;
-    const target = findNextActionButton(active, 0) || active;
-    setTimeout(() => target.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 80);
+    setTimeout(() => scrollKeyboardTargetIntoView(document.activeElement), 80);
   });
 }
+document.addEventListener('focusin', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    setTimeout(() => scrollKeyboardTargetIntoView(e.target), 350);
+  }
+});
 
 /* ---------- boot ---------- */
 window.addEventListener('palabra-firebase-ready', () => {
