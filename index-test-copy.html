@@ -558,6 +558,25 @@
   .modes-banner .banner-meta { font-size: 12px; color: var(--cream-dim); margin-top: 2px; }
   .modes-banner .banner-arrow { color: var(--cream-dim); font-size: 18px; flex-shrink: 0; }
 
+  /* Stream's achievement group gets top billing on the Achievements
+     screen — full-width like the home screen banners, not one of the
+     equal-sized tiles below, since Stream is expected to be the most-
+     played mode going forward. */
+  .stream-achievement-banner {
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    border-color: rgba(255,193,99,0.45);
+  }
+  .stream-achievement-banner .tile-icon-wrap { margin-bottom: 0; flex-shrink: 0; }
+  .stream-achievement-banner .banner-text { flex: 1; }
+  .stream-achievement-banner .banner-name { font-weight: 700; font-size: 15px; font-family: 'Inter', sans-serif; }
+  .stream-achievement-banner .banner-meta { font-size: 12px; color: var(--cream-dim); margin-top: 2px; }
+  .stream-achievement-banner .banner-arrow { color: var(--ochre); font-size: 18px; flex-shrink: 0; }
+
   .achievements-banner {
     flex-direction: row;
     align-items: center;
@@ -1664,11 +1683,11 @@
   // using the id prefix convention already in place (timeAttack*, memory*, conjugate*).
   // Anything with no game-specific prefix belongs to Quiz (which Categories shares).
   const ACHIEVEMENT_GROUPS = [
+    { id: 'stream', name: 'Stream', icon: '🌊', color: 'rgba(255,193,99,0.18)', prefix: 'stream' },
     { id: 'quiz', name: 'Quiz', icon: '🔤', color: 'rgba(255,107,74,0.18)', prefix: null },
     { id: 'timeattack', name: 'Time Attack', icon: '⏱', color: 'rgba(45,212,191,0.18)', prefix: 'timeAttack' },
     { id: 'memory', name: 'Memory Match', icon: '🧩', color: 'rgba(217,70,239,0.18)', prefix: 'memory' },
     { id: 'conjugate', name: 'Conjugate', icon: '📖', color: 'rgba(52,211,153,0.18)', prefix: 'conjugate' },
-    { id: 'stream', name: 'Stream', icon: '🌊', color: 'rgba(255,193,99,0.18)', prefix: 'stream' },
   ];
 
   function achievementIdsForGroup(group) {
@@ -5396,7 +5415,23 @@
   function renderAchievements() {
     const app = document.getElementById('app');
 
-    const tilesHtml = ACHIEVEMENT_GROUPS.map(group => {
+    const streamGroup = ACHIEVEMENT_GROUPS.find(g => g.id === 'stream');
+    const gridGroups = ACHIEVEMENT_GROUPS.filter(g => g.id !== 'stream');
+
+    const streamIds = achievementIdsForGroup(streamGroup);
+    const streamUnlocked = streamIds.filter(id => state.progress.achievements[id] && state.progress.achievements[id].unlocked).length;
+    const streamHtml = `
+      <button class="game-tile stream-achievement-banner" data-group="${streamGroup.id}">
+        <div class="tile-icon-wrap" style="background:${streamGroup.color};">${streamGroup.icon}</div>
+        <div class="banner-text">
+          <div class="banner-name">${esc(streamGroup.name)}</div>
+          <div class="banner-meta">${streamUnlocked}/${streamIds.length} unlocked</div>
+        </div>
+        <div class="banner-arrow">→</div>
+      </button>
+    `;
+
+    const tilesHtml = gridGroups.map(group => {
       const ids = achievementIdsForGroup(group);
       const unlockedCount = ids.filter(id => state.progress.achievements[id] && state.progress.achievements[id].unlocked).length;
       return `
@@ -5415,6 +5450,7 @@
             <button id="back-btn" class="back-btn">←</button>
             <div class="screen-title">🏆 Achievements</div>
           </div>
+          ${streamHtml}
           <div class="game-grid">${tilesHtml}</div>
         </div>
       </div>
