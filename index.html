@@ -5249,7 +5249,11 @@
 
     const clozeBlank = current.format === 'cloze' ? findClozeBlank(current) : null;
     const clozeFallback = current.format === 'cloze' && !clozeBlank;
-    const promptWord = (current.format === 'cloze' && clozeBlank) ? current.sentence
+    // Read the context aloud, not the answer — the whole point of cloze is
+    // guessing the missing word, so speaking current.sentence verbatim
+    // (which still contains it) would just hand it over. "..." gives
+    // TTS engines a natural pause where the word would go.
+    const promptWord = (current.format === 'cloze' && clozeBlank) ? `${clozeBlank.before} ... ${clozeBlank.after}`.replace(/\s+/g, ' ').trim()
       : clozeFallback ? primaryText(current.en)
       : primaryText(current.direction === 'es-en' ? current.es : current.en);
     const answerWord = current.format === 'cloze' ? primaryText(current.es) : primaryText(current.direction === 'es-en' ? current.en : current.es);
