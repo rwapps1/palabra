@@ -1370,6 +1370,7 @@
     gap: 12px;
     width: 100%;
     max-width: 260px;
+    margin-top: -14px;
     opacity: 0;
     animation: celebrateTextIn 0.5s ease-out 0.36s forwards;
   }
@@ -4436,7 +4437,7 @@
       </div>
     `;
 
-    document.getElementById('back-btn').addEventListener('click', goHome);
+    document.getElementById('back-btn').addEventListener('click', () => { state.screen = 'game-modes'; render(); });
     document.getElementById('start-btn').addEventListener('click', startQuiz);
 
     document.querySelectorAll('#direction-group .seg-btn').forEach(btn => {
@@ -4485,7 +4486,7 @@
       </div>
     `;
 
-    document.getElementById('back-btn').addEventListener('click', goHome);
+    document.getElementById('back-btn').addEventListener('click', () => { state.screen = 'game-modes'; render(); });
     document.querySelectorAll('.game-tile').forEach(tile => {
       tile.addEventListener('click', () => {
         loadCategoryFile(tile.dataset.cat);
@@ -4617,7 +4618,7 @@
       </div>
     `;
 
-    document.getElementById('back-btn').addEventListener('click', goHome);
+    document.getElementById('back-btn').addEventListener('click', () => { state.screen = 'game-modes'; render(); });
 
     if (!state.verbsLoading && !state.verbsError) {
       document.getElementById('start-btn').addEventListener('click', startConjugateRound);
@@ -4851,7 +4852,7 @@
       </div>
     `;
 
-    document.getElementById('back-btn').addEventListener('click', goHome);
+    document.getElementById('back-btn').addEventListener('click', () => { state.screen = 'game-modes'; render(); });
     document.getElementById('start-btn').addEventListener('click', startTimeAttack);
 
     document.querySelectorAll('#direction-group .seg-btn').forEach(btn => {
@@ -4900,7 +4901,7 @@
       </div>
     `;
 
-    document.getElementById('back-btn').addEventListener('click', goHome);
+    document.getElementById('back-btn').addEventListener('click', () => { state.screen = 'game-modes'; render(); });
     document.getElementById('start-btn').addEventListener('click', startMemoryMatch);
     document.querySelectorAll('#gridsize-group .seg-btn').forEach(btn => {
       btn.addEventListener('click', () => {
