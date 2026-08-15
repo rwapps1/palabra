@@ -1601,6 +1601,8 @@
       memoryBest: {},
       memoryLifetime: { boardsCleared: 0, bySize: { '6': 0, '8': 0, '12': 0 } },
       memoryClearedSizes: {},
+      streamLifetime: { totalAnswered: 0, totalCorrect: 0, checkpointsCompleted: 0, audioCorrect: 0 },
+      masteredWordsCount: 0, // words that have EVER reached box 6 — permanent, never drops if a word later regresses (see ws.masteredEver)
       settings: { direction: 'mixed', roundLength: '10', autoSpeak: true, answerMode: 'choice', soundEffects: true, memoryGridSize: '8' },
       achievements: {},
       dailyDoubleLastHandled: null, // 'YYYY-MM-DD' of last Play/Skip decision, local device date
@@ -1615,6 +1617,8 @@
     streak25:    { name: 'Unstoppable',    desc: 'Reach a 25-answer streak',                icon: '⚡' },
     correct50:   { name: 'Word Explorer',  desc: '50 lifetime correct answers',             icon: '🧭' },
     correct200:  { name: 'Word Master',    desc: '200 lifetime correct answers',            icon: '🎓' },
+    masteredWords25:  { name: 'Well Learned',       desc: '25 words reached box 6 (mastered)',   icon: '🌟' },
+    masteredWords100: { name: 'Vocabulary Vault',   desc: '100 words reached box 6 (mastered)',  icon: '🏦' },
     bigRound:    { name: 'Marathon',       desc: 'Complete a round of 50 or more words',    icon: '🏃' },
     allWords:    { name: 'Completionist',  desc: 'Quiz your entire word list in one round', icon: '📚' },
     timeAttack10: { name: 'Quickdraw',      desc: 'Score 10 in a single Time Attack round',  icon: '🎯' },
@@ -1644,6 +1648,16 @@
     conjugateBigRound:   { name: 'Verb Marathon',   desc: 'Complete a round of 50 or more verbs',  icon: '🛤️' },
     conjugateCorrect200: { name: 'Grammar Grinder', desc: '200 lifetime correct conjugations',     icon: '⚙️' },
     conjugateStreak50:   { name: 'Grammar Legend',  desc: 'Reach a 50-answer Conjugate streak',    icon: '🏛️' },
+    streamFirst:            { name: 'First Stream',      desc: 'Complete your first Stream checkpoint',                          icon: '🚦' },
+    streamCheckpoints10:    { name: 'In The Flow',       desc: 'Reach 10 lifetime Stream checkpoints',                           icon: '🔁' },
+    streamCheckpoints50:    { name: 'Deep Diver',        desc: 'Reach 50 lifetime Stream checkpoints',                           icon: '🤿' },
+    streamPerfectCheckpoint:{ name: 'Clean Sweep',       desc: 'A perfect checkpoint block, no mistakes',                        icon: '🧹' },
+    streamAllFormats:       { name: 'Triple Threat',     desc: 'Answer correctly in choice, listen, and type — all in one session', icon: '🎛️' },
+    streamAudio25:          { name: 'Good Ear',          desc: '25 lifetime correct audio answers in Stream',                    icon: '🎧' },
+    streamStreak40:         { name: 'Locked In',         desc: 'A 40-answer streak within a single stream',                      icon: '🔒' },
+    streamCorrect100:       { name: 'Stream Regular',    desc: '100 lifetime correct answers in Stream',                         icon: '🗺️' },
+    streamCorrect500:       { name: 'Stream Veteran',    desc: '500 lifetime correct answers in Stream',                         icon: '⛰️' },
+    streamMarathon:         { name: 'Marathon Session',  desc: '5 checkpoints in one sitting, no stopping',                      icon: '🏕️' },
   };
 
   // Groups the flat ACHIEVEMENTS registry by which game each badge belongs to,
@@ -1654,6 +1668,7 @@
     { id: 'timeattack', name: 'Time Attack', icon: '⏱', color: 'rgba(45,212,191,0.18)', prefix: 'timeAttack' },
     { id: 'memory', name: 'Memory Match', icon: '🧩', color: 'rgba(217,70,239,0.18)', prefix: 'memory' },
     { id: 'conjugate', name: 'Conjugate', icon: '📖', color: 'rgba(52,211,153,0.18)', prefix: 'conjugate' },
+    { id: 'stream', name: 'Stream', icon: '🌊', color: 'rgba(255,193,99,0.18)', prefix: 'stream' },
   ];
 
   function achievementIdsForGroup(group) {
@@ -1993,9 +2008,11 @@
     merged.lifetime = Object.assign(merged.lifetime, parsed.lifetime || {});
     merged.conjugateLifetime = Object.assign(merged.conjugateLifetime, parsed.conjugateLifetime || {});
     merged.timeAttackBest = typeof parsed.timeAttackBest === 'number' ? parsed.timeAttackBest : 0;
+    merged.masteredWordsCount = typeof parsed.masteredWordsCount === 'number' ? parsed.masteredWordsCount : 0;
     merged.taLifetime = Object.assign(merged.taLifetime, parsed.taLifetime || {});
     merged.memoryBest = Object.assign({}, parsed.memoryBest || {});
     merged.memoryLifetime = Object.assign(merged.memoryLifetime, parsed.memoryLifetime || {});
+    merged.streamLifetime = Object.assign(merged.streamLifetime, parsed.streamLifetime || {});
     merged.memoryClearedSizes = Object.assign({}, parsed.memoryClearedSizes || {});
     merged.settings = Object.assign(merged.settings, parsed.settings || {});
     merged.achievements = Object.assign({}, parsed.achievements || {});
@@ -2111,9 +2128,11 @@
       merged.lifetime = Object.assign(merged.lifetime, parsed.lifetime || {});
       merged.conjugateLifetime = Object.assign(merged.conjugateLifetime, parsed.conjugateLifetime || {});
       merged.timeAttackBest = typeof parsed.timeAttackBest === 'number' ? parsed.timeAttackBest : 0;
+      merged.masteredWordsCount = typeof parsed.masteredWordsCount === 'number' ? parsed.masteredWordsCount : 0;
       merged.taLifetime = Object.assign(merged.taLifetime, parsed.taLifetime || {});
       merged.memoryBest = Object.assign({}, parsed.memoryBest || {});
       merged.memoryLifetime = Object.assign(merged.memoryLifetime, parsed.memoryLifetime || {});
+      merged.streamLifetime = Object.assign(merged.streamLifetime, parsed.streamLifetime || {});
       merged.memoryClearedSizes = Object.assign({}, parsed.memoryClearedSizes || {});
       merged.settings = Object.assign(merged.settings, parsed.settings || {});
       merged.achievements = Object.assign({}, parsed.achievements || {});
@@ -2182,9 +2201,11 @@
         merged.lifetime = Object.assign(merged.lifetime, parsed.lifetime || {});
         merged.conjugateLifetime = Object.assign(merged.conjugateLifetime, parsed.conjugateLifetime || {});
         merged.timeAttackBest = typeof parsed.timeAttackBest === 'number' ? parsed.timeAttackBest : 0;
+        merged.masteredWordsCount = typeof parsed.masteredWordsCount === 'number' ? parsed.masteredWordsCount : 0;
         merged.taLifetime = Object.assign(merged.taLifetime, parsed.taLifetime || {});
         merged.memoryBest = Object.assign({}, parsed.memoryBest || {});
         merged.memoryLifetime = Object.assign(merged.memoryLifetime, parsed.memoryLifetime || {});
+        merged.streamLifetime = Object.assign(merged.streamLifetime, parsed.streamLifetime || {});
         merged.memoryClearedSizes = Object.assign({}, parsed.memoryClearedSizes || {});
         merged.settings = Object.assign(merged.settings, parsed.settings || {});
         merged.achievements = Object.assign({}, parsed.achievements || {});
@@ -2248,6 +2269,9 @@
     isStreamRound: false,
     lastRoundWasStream: false, // survives into the results screen (isStreamRound itself is cleared before then) so "Play again" knows to restart a stream, not a normal round
     streamCheckpointCount: 0, // answers since the last checkpoint (0-9), resets each checkpoint
+    streamSessionStreak: 0,      // correct-in-a-row within THIS stream session only (Locked In) — same session-only pattern as taStreak
+    streamSessionCheckpoints: 0, // checkpoints reached in one continuous sitting, without stopping (Marathon Session)
+    streamFormatsCorrect: {},    // which formats (mc/audio/type) have had a correct answer this session (Triple Threat)
     taActive: false,
     taScore: 0,
     taStreak: 0,
@@ -2940,6 +2964,18 @@
   // genuinely different here (stopping shows results; continuing doesn't).
   function showStreamCheckpoint() {
     clearCelebrateTimer();
+
+    const recentResults = state.results.slice(state.results.length - STREAM_CHECKPOINT_SIZE);
+    const perfectBlock = recentResults.length === STREAM_CHECKPOINT_SIZE && recentResults.every(r => r.correct);
+    state.progress.streamLifetime.checkpointsCompleted += 1;
+    state.streamSessionCheckpoints += 1;
+    if (state.progress.streamLifetime.checkpointsCompleted === 1) unlockAchievement('streamFirst');
+    if (state.progress.streamLifetime.checkpointsCompleted >= 10) unlockAchievement('streamCheckpoints10');
+    if (state.progress.streamLifetime.checkpointsCompleted >= 50) unlockAchievement('streamCheckpoints50');
+    if (perfectBlock) unlockAchievement('streamPerfectCheckpoint');
+    if (state.streamSessionCheckpoints >= 5) unlockAchievement('streamMarathon');
+    saveProgress();
+
     state.screen = 'stream-checkpoint';
     render();
     pingActivity();
@@ -3036,6 +3072,17 @@
       ws.right += 1;
       ws.box = Math.min((ws.box || 0) + 1, SRS_INTERVALS_DAYS.length - 1);
       ws.nextDue = now + SRS_INTERVALS_DAYS[ws.box] * 86400000;
+      // Permanent flag: true the first time this word ever reaches box 6,
+      // and never cleared again — even if the word later gets a wrong
+      // answer and drops back down. masteredWordsCount must only ever go
+      // up, or the achievement would feel like it's regressing through no
+      // fault of the person playing.
+      if (ws.box === SRS_INTERVALS_DAYS.length - 1 && !ws.masteredEver) {
+        ws.masteredEver = true;
+        state.progress.masteredWordsCount = (state.progress.masteredWordsCount || 0) + 1;
+        if (state.progress.masteredWordsCount >= 25) unlockAchievement('masteredWords25');
+        if (state.progress.masteredWordsCount >= 100) unlockAchievement('masteredWords100');
+      }
       state.progress.streak.current += 1;
       if (state.progress.streak.current > state.progress.streak.best) {
         state.progress.streak.best = state.progress.streak.current;
@@ -3056,6 +3103,30 @@
     if (state.progress.streak.current >= 25) unlockAchievement('streak25');
     if (state.progress.lifetime.totalCorrect >= 50) unlockAchievement('correct50');
     if (state.progress.lifetime.totalCorrect >= 200) unlockAchievement('correct200');
+
+    // Stream-specific tracking. Kept separate from the shared counters
+    // above (lifetime/streak) since those already blend across every mode
+    // that calls recordAnswer — these need to be genuinely Stream-only to
+    // mean what their achievements claim.
+    if (state.isStreamRound) {
+      state.progress.streamLifetime.totalAnswered += 1;
+      if (correct) {
+        state.progress.streamLifetime.totalCorrect += 1;
+        state.streamSessionStreak += 1;
+        if (current.format) state.streamFormatsCorrect[current.format] = true;
+        if (current.format === 'audio') state.progress.streamLifetime.audioCorrect += 1;
+      } else {
+        state.streamSessionStreak = 0;
+      }
+      if (state.progress.streamLifetime.totalCorrect >= 100) unlockAchievement('streamCorrect100');
+      if (state.progress.streamLifetime.totalCorrect >= 500) unlockAchievement('streamCorrect500');
+      if (state.progress.streamLifetime.audioCorrect >= 25) unlockAchievement('streamAudio25');
+      if (state.streamSessionStreak >= 40) unlockAchievement('streamStreak40');
+      if (state.streamFormatsCorrect.mc && state.streamFormatsCorrect.audio && state.streamFormatsCorrect.type) {
+        unlockAchievement('streamAllFormats');
+      }
+      saveProgress();
+    }
   }
 
   function submitAnswer() {
@@ -3972,6 +4043,9 @@
     state.isDailyDoubleRound = false;
     state.isStreamRound = true;
     state.streamCheckpointCount = 0;
+    state.streamSessionStreak = 0;
+    state.streamSessionCheckpoints = 0;
+    state.streamFormatsCorrect = {};
     prepareQuestion();
     state.screen = 'quiz';
     render();
