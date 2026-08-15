@@ -534,6 +534,16 @@
     border-radius: 6px;
     padding: 2px 6px;
   }
+  /* Small "this is tappable" hint, used specifically on the Achievements
+     group tiles — without it, next to the arrow-carrying Stream banner
+     above them, the 4 grid tiles read as static info rather than links. */
+  .game-tile .tile-corner-arrow {
+    position: absolute;
+    bottom: 12px;
+    right: 14px;
+    font-size: 16px;
+    color: var(--cream-dim);
+  }
 
   /* Achievements sits apart from the game grid on purpose - a full-width
      row rather than a tile, so it reads as a progress summary, not a game. */
@@ -567,15 +577,16 @@
     align-items: center;
     gap: 14px;
     width: 100%;
+    min-height: 108px;
     margin-bottom: 14px;
-    padding: 14px 16px;
+    padding: 18px 18px;
     border-color: rgba(255,193,99,0.45);
   }
-  .stream-achievement-banner .tile-icon-wrap { margin-bottom: 0; flex-shrink: 0; }
+  .stream-achievement-banner .tile-icon-wrap { width: 52px; height: 52px; font-size: 24px; margin-bottom: 0; flex-shrink: 0; }
   .stream-achievement-banner .banner-text { flex: 1; }
-  .stream-achievement-banner .banner-name { font-weight: 700; font-size: 15px; font-family: 'Inter', sans-serif; }
-  .stream-achievement-banner .banner-meta { font-size: 12px; color: var(--cream-dim); margin-top: 2px; }
-  .stream-achievement-banner .banner-arrow { color: var(--ochre); font-size: 18px; flex-shrink: 0; }
+  .stream-achievement-banner .banner-name { font-weight: 700; font-size: 17px; font-family: 'Inter', sans-serif; }
+  .stream-achievement-banner .banner-meta { font-size: 13px; color: var(--cream-dim); margin-top: 4px; }
+  .stream-achievement-banner .banner-arrow { color: var(--ochre); font-size: 20px; flex-shrink: 0; }
 
   .achievements-banner {
     flex-direction: row;
@@ -5439,6 +5450,7 @@
           <div class="tile-icon-wrap" style="background:${group.color};">${group.icon}</div>
           <div class="tile-name">${esc(group.name)}</div>
           <div class="tile-meta">${unlockedCount}/${ids.length} unlocked</div>
+          <div class="tile-corner-arrow">→</div>
         </button>
       `;
     }).join('');
@@ -5628,6 +5640,10 @@
           <div class="section-label">Keep playing to earn XP</div>
           <div class="card">
             <div class="rule-row">
+              <div class="rule-icon" style="background:rgba(255,193,99,0.18);">🌊</div>
+              <div class="rule-text"><div class="rule-title">Stream</div><div class="rule-sub">Answer correctly — mixed, continuous practice, the best way to rack up XP</div></div>
+            </div>
+            <div class="rule-row">
               <div class="rule-icon" style="background:rgba(255,107,74,0.18);">📝</div>
               <div class="rule-text"><div class="rule-title">Quiz &amp; Categories</div><div class="rule-sub">Answer correctly</div></div>
             </div>
@@ -5649,7 +5665,7 @@
           <div class="card">
             <div class="rule-row">
               <div class="rule-icon" style="background:rgba(255,77,109,0.18);">🔥</div>
-              <div class="rule-text"><div class="rule-title">Beat your best streak</div><div class="rule-sub">In Quiz or Conjugate</div></div>
+              <div class="rule-text"><div class="rule-title">Beat your best streak</div><div class="rule-sub">In Quiz, Stream, or Conjugate</div></div>
             </div>
             <div class="rule-row">
               <div class="rule-icon" style="background:rgba(255,193,99,0.18);">🏆</div>
