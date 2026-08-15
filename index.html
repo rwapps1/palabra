@@ -1015,6 +1015,32 @@
     margin-top: 6px;
     font-style: italic;
   }
+  /* A word's disambiguating Note, shown under the prompt word only when
+     that word IS the note-bearing English text (see renderQuiz/
+     renderTimeAttack) - deliberately styled the same as .prompt-translation
+     but a separate class so the two can be tuned independently later. */
+  .prompt-note {
+    font-size: 14px;
+    color: var(--cream-dim);
+    margin-top: 6px;
+    font-style: italic;
+  }
+  /* Cloze/fill-in-the-blank: the sentence reads as normal body text with
+     the missing word rendered as a distinct blank, rather than the huge
+     .prompt-word treatment - it's a sentence to read, not a single word
+     to react to. */
+  .cloze-sentence {
+    font-family: 'Sora', sans-serif;
+    font-weight: 600;
+    font-size: 22px;
+    line-height: 1.5;
+  }
+  .cloze-blank {
+    display: inline-block;
+    min-width: 60px;
+    border-bottom: 2px solid var(--ochre);
+    color: var(--ochre);
+  }
   .speak-btn {
     background: rgba(255,255,255,0.06);
     border: 1px solid var(--outline);
@@ -1586,7 +1612,6 @@
 <script>
   // ── Edit this to match the file name sitting in your repo ──
   const WORDS_FILE = 'words.xlsx';
-  const VERBS_FILE = 'verbs.xlsx';
   // ─────────────────────────────────────────────────────────
 
   // ── Telegram signup notification. Token/chat ID live here in the client,
@@ -1616,7 +1641,7 @@
   // Simplified Leitner-style spaced repetition: box index -> days until next due
   const SRS_INTERVALS_DAYS = [0, 1, 3, 7, 16, 35];
   const STREAM_CHECKPOINT_SIZE = 20; // how many stream questions between "keep going / stop" checkpoints
-  const STREAM_FORMATS = ['mc', 'audio', 'type'];
+  const STREAM_FORMATS = ['mc', 'audio', 'type', 'cloze'];
 
   function defaultProgress() {
     return {
@@ -1796,6 +1821,26 @@
   ];
 
   function normalizeWordStats(wordStats) {
+    // One-time migration: some words used to carry a disambiguator baked
+    // into the English cell, e.g. "to be (essential)" - that text now
+    // lives in a separate Note column, so the English cell (and therefore
+    // this word's key) is clean. Rename any stored key still using the old
+    // parenthetical form so existing box/streak progress carries over
+    // rather than looking reset. Harmless no-op for verbStats, whose keys
+    // are `es::personIndex` and never contain parentheses.
+    Object.keys(wordStats).forEach(oldKey => {
+      const sep = oldKey.indexOf('::');
+      if (sep === -1) return;
+      const esPart = oldKey.slice(0, sep);
+      const enPart = oldKey.slice(sep + 2);
+      const strippedEn = enPart.replace(/\s*\([^)]*\)\s*$/, '').trim();
+      if (!strippedEn || strippedEn === enPart) return;
+      const newKey = esPart + '::' + strippedEn;
+      if (newKey === oldKey || wordStats[newKey]) return;
+      wordStats[newKey] = wordStats[oldKey];
+      delete wordStats[oldKey];
+    });
+
     Object.keys(wordStats).forEach(key => {
       const ws = wordStats[key];
       if (typeof ws.box !== 'number') {
@@ -2268,6 +2313,7 @@
     showUpload: false,
     showMenu: false,
     pairs: [],
+    mainPool: [],
     error: '',
     hasHeader: true,
     fileName: '',
@@ -2301,7 +2347,7 @@
     streamCheckpointCount: 0, // answers since the last checkpoint (0-9), resets each checkpoint
     streamSessionStreak: 0,      // correct-in-a-row within THIS stream session only (Locked In) — same session-only pattern as taStreak
     streamSessionCheckpoints: 0, // checkpoints reached in one continuous sitting, without stopping (Marathon Session)
-    streamFormatsCorrect: {},    // which formats (mc/audio/type) have had a correct answer this session (Triple Threat)
+    streamFormatsCorrect: {},    // which formats (mc/audio/type/cloze) have had a correct answer this session (Triple Threat only requires mc/audio/type)
     taActive: false,
     taScore: 0,
     taStreak: 0,
@@ -2368,10 +2414,60 @@
     return normalize(pair.es) + '::' + normalize(pair.en);
   }
 
+  // Anywhere a field is being displayed as a single word - a prompt, or a
+  // "Correct answer:" reveal - rather than checked against, only the first
+  // slash-separated alternative should show. Matching still checks all of
+  // them via splitAnswers(); this is display-only.
+  function primaryText(field) {
+    return splitAnswers(field)[0] || '';
+  }
+
+  // The field a question's typed/chosen answer is actually checked
+  // against. Cloze always tests the Spanish word itself, regardless of
+  // the direction randomly assigned to that question - there's no
+  // "translate this" step, just "what word is missing".
+  function targetFieldFor(current) {
+    if (current.format === 'cloze') return current.es;
+    return current.direction === 'es-en' ? current.en : current.es;
+  }
+
+  // Finds pair.es (or its regular plural) inside pair.sentence and
+  // returns the surrounding text split around it, ready to render with a
+  // blank in place of the match. Mirrors the exact matching logic used to
+  // author and validate the Sentence column, so anything that passed
+  // validation there is guaranteed to blank cleanly here. Returns null if
+  // the word truly isn't found (used both to disable cloze for a row at
+  // load time and, defensively, again at render time).
+  function findClozeBlank(pair) {
+    if (!pair.sentence) return null;
+    const es = pair.es;
+    const forms = [es];
+    if (/[aeiouáéíóú]$/i.test(es)) forms.push(es + 's');
+    else if (/ón$/i.test(es)) forms.push(es.slice(0, -2) + 'ones');
+    else if (/z$/i.test(es)) forms.push(es.slice(0, -1) + 'ces');
+    else forms.push(es + 'es');
+    const boundary = 'a-zA-ZáéíóúñÁÉÍÓÚÑ';
+    for (const form of forms) {
+      const escaped = form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(`(?<![${boundary}])${escaped}(?![${boundary}])`, 'i');
+      const match = pair.sentence.match(re);
+      if (match) {
+        const idx = match.index;
+        return {
+          before: pair.sentence.slice(0, idx),
+          matched: match[0],
+          after: pair.sentence.slice(idx + match[0].length),
+        };
+      }
+    }
+    return null;
+  }
+
   // The word pool every quiz-family function should read from: the active
-  // category's words if one is selected, otherwise the main repo word list.
+  // category's words if one is selected, otherwise the main pool (which
+  // already excludes conjugation-only verbs - see isMainPoolEligible).
   function activePairs() {
-    return state.activeCategory ? state.categoryPairs : state.pairs;
+    return state.activeCategory ? state.categoryPairs : state.mainPool;
   }
 
   function getWeight(pair) {
@@ -2484,6 +2580,11 @@
     for (let i = 0; i < count; i++) {
       const p = weightedPickOne(pairs, getWeight, lastKey);
       lastKey = wordKey(p);
+      let format = STREAM_FORMATS[(startPosition + i) % STREAM_FORMATS.length];
+      // Cloze only works for words that actually have sentence data -
+      // most won't yet. Falling back to typed translation keeps the
+      // rotation's cadence intact instead of skipping this word entirely.
+      if (format === 'cloze' && !findClozeBlank(p)) format = 'type';
       batch.push({
         ...p,
         direction: Math.random() < 0.5 ? 'es-en' : 'en-es',
@@ -2491,7 +2592,7 @@
         // so format rotation stays deliberate across batch top-ups instead
         // of risking two of the same format landing back-to-back at a
         // batch boundary.
-        format: STREAM_FORMATS[(startPosition + i) % STREAM_FORMATS.length],
+        format,
       });
     }
     return batch;
@@ -2862,14 +2963,67 @@
   function extractPairsFromRows(rows, skipHeader) {
     const startIdx = skipHeader ? 1 : 0;
     const cleaned = [];
+    const seenEs = new Set();
+    const dupes = [];
+    const unknownCats = new Set();
+    const badSentences = [];
+    let skipped = 0;
     for (let i = startIdx; i < rows.length; i++) {
       const row = rows[i];
       if (!row) continue;
       const es = (row[0] ?? '').toString().trim();
       const en = (row[1] ?? '').toString().trim();
-      if (es && en) cleaned.push({ es, en });
+      const note = (row[2] ?? '').toString().trim();
+      const category = (row[3] ?? '').toString().trim();
+      const sentence = (row[4] ?? '').toString().trim();
+      if (!es && !en) continue; // fully blank row - not worth flagging
+      if (!es || !en) { skipped++; continue; }
+      const esKey = es.toLowerCase();
+      if (seenEs.has(esKey)) dupes.push(es);
+      seenEs.add(esKey);
+      if (category) {
+        category.split(',').map(c => c.trim()).filter(Boolean).forEach(tag => {
+          if (tag !== 'conjugation' && !CATEGORIES.some(c => c.id === tag)) unknownCats.add(tag);
+        });
+      }
+      const pair = { es, en, note, category, sentence };
+      if (sentence && !findClozeBlank(pair)) {
+        // A sentence that doesn't actually contain its own target word
+        // (typo, wrong row, edited word without updating the sentence)
+        // would either break rendering or silently reveal nothing to
+        // blank - drop it rather than risk either, this word just isn't
+        // cloze-eligible until the sheet is fixed.
+        badSentences.push(es);
+        pair.sentence = '';
+      }
+      cleaned.push(pair);
     }
+    if (skipped > 0) console.warn(`Palabra: skipped ${skipped} row(s) with only one of Spanish/English filled in.`);
+    if (dupes.length > 0) console.warn(`Palabra: duplicate Spanish word(s) in the sheet: ${dupes.join(', ')}`);
+    if (unknownCats.size > 0) console.warn(`Palabra: unrecognized category tag(s): ${[...unknownCats].join(', ')}`);
+    if (badSentences.length > 0) console.warn(`Palabra: sentence doesn't contain its own word, cloze disabled for: ${badSentences.join(', ')}`);
     return cleaned;
+  }
+
+  // A pair's Category cell can hold several comma-separated tags (e.g.
+  // "conjugation,dailyverbs"). These two helpers are the single place that
+  // knows how to read that.
+  function pairCategories(pair) {
+    return pair.category ? pair.category.split(',').map(c => c.trim()).filter(Boolean) : [];
+  }
+
+  function pairHasCategory(pair, categoryId) {
+    return pairCategories(pair).includes(categoryId);
+  }
+
+  // A word stays out of normal Quiz/Time Attack/Stream/Daily Double
+  // practice only if "conjugation" is its *only* tag - a word tagged both
+  // conjugation and a normal category (several dailyverbs entries are
+  // both) still shows up in ordinary practice via that other tag.
+  function isMainPoolEligible(pair) {
+    const cats = pairCategories(pair);
+    if (cats.length === 0) return true;
+    return cats.some(c => c !== 'conjugation');
   }
 
   function parseRows(rows, skipHeader) {
@@ -2877,9 +3031,20 @@
     if (cleaned.length === 0) {
       state.error = 'No word pairs found. Make sure column A has Spanish and column B has English.';
       state.pairs = [];
+      state.mainPool = [];
+      state.verbPairs = [];
+      state.verbsLoaded = false;
+      state.verbsError = '';
     } else {
       state.error = '';
       state.pairs = cleaned;
+      state.mainPool = cleaned.filter(isMainPoolEligible);
+      state.verbPairs = cleaned.filter(p => pairHasCategory(p, 'conjugation'));
+      state.verbsLoaded = state.verbPairs.length > 0;
+      state.verbsError = state.verbPairs.length === 0
+        ? 'No verbs found. Make sure some rows in words.xlsx have "conjugation" in the Category column.'
+        : '';
+      state.verbsLoading = false;
     }
     render();
   }
@@ -3047,7 +3212,7 @@
     // Stream decides choice-vs-type per question (current.format); every
     // other mode still uses the single round-level answerMode setting.
     const useChoiceMode = state.isStreamRound
-      ? (current && current.format !== 'type')
+      ? (current && current.format !== 'type' && current.format !== 'cloze')
       : (state.effectiveAnswerMode === 'choice');
     if (useChoiceMode && current) {
       const targetField = current.direction === 'es-en' ? current.en : current.es;
@@ -3079,12 +3244,12 @@
   }
 
   function recordAnswer(current, correct, userAnswerDisplay) {
-    const targetField = current.direction === 'es-en' ? current.en : current.es;
+    const targetField = targetFieldFor(current);
     state.wasCorrect = correct;
     state.checked = true;
     state.results.push({
-      prompt: current.direction === 'es-en' ? current.es : current.en,
-      correctAnswer: targetField,
+      prompt: current.format === 'cloze' ? primaryText(current.es) : primaryText(current.direction === 'es-en' ? current.es : current.en),
+      correctAnswer: primaryText(targetField),
       userAnswer: userAnswerDisplay,
       correct,
     });
@@ -3096,8 +3261,8 @@
     const ws = state.progress.wordStats[key];
     const now = Date.now();
     ws.lastSeen = now;
-    ws.es = current.es;
-    ws.en = current.en;
+    ws.es = primaryText(current.es);
+    ws.en = primaryText(current.en);
     if (correct) {
       ws.right += 1;
       ws.box = Math.min((ws.box || 0) + 1, SRS_INTERVALS_DAYS.length - 1);
@@ -3162,7 +3327,7 @@
   function submitAnswer() {
     const current = state.questions[state.index];
     if (!current || state.checked) return;
-    const targetField = current.direction === 'es-en' ? current.en : current.es;
+    const targetField = targetFieldFor(current);
     const userNorm = normalize(state.input);
     const acceptable = splitAnswers(targetField).map(normalize);
     let correct = false;
@@ -3309,44 +3474,23 @@
 
   function loadCategoryFile(categoryId) {
     state.activeCategory = categoryId;
-    state.categoryPairs = [];
-    state.categoryLoading = true;
-    state.categoryError = '';
+    state.categoryLoading = false;
     // A 50-word round doesn't make sense for a themed category list -
     // fall back to a sane default rather than cycling through it repeatedly.
     if (state.progress.settings.roundLength === '50') {
       state.progress.settings.roundLength = '20';
       saveProgress();
     }
+    const filtered = state.pairs.filter(p => pairHasCategory(p, categoryId));
+    if (filtered.length === 0) {
+      state.categoryError = 'No words tagged "' + categoryId + '" found. Check the Category column in words.xlsx.';
+      state.categoryPairs = [];
+    } else {
+      state.categoryError = '';
+      state.categoryPairs = filtered;
+    }
     state.screen = 'category-setup';
     render();
-
-    fetch('categories-' + categoryId + '.xlsx')
-      .then((resp) => {
-        if (!resp.ok) throw new Error('File not found: ' + resp.status);
-        return resp.arrayBuffer();
-      })
-      .then((buf) => {
-        const data = new Uint8Array(buf);
-        const wb = XLSX.read(data, { type: 'array' });
-        const sheet = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-        const cleaned = extractPairsFromRows(rows, state.hasHeader);
-        state.categoryLoading = false;
-        if (cleaned.length === 0) {
-          state.categoryError = 'No word pairs found in this category file.';
-          state.categoryPairs = [];
-        } else {
-          state.categoryError = '';
-          state.categoryPairs = cleaned;
-        }
-        render();
-      })
-      .catch(() => {
-        state.categoryLoading = false;
-        state.categoryError = 'Couldn\'t load "categories-' + categoryId + '.xlsx". Make sure it exists in the repo.';
-        render();
-      });
   }
 
   function quitQuiz() {
@@ -3390,7 +3534,7 @@
   function loadNextTimeAttackQuestion() {
     const settings = state.progress.settings;
     const prevKey = state.taCurrentQuestion ? wordKey(state.taCurrentQuestion) : null;
-    const picked = weightedPickOne(state.pairs, getWeight, prevKey);
+    const picked = weightedPickOne(state.mainPool, getWeight, prevKey);
     const direction = settings.direction === 'mixed' ? (Math.random() < 0.5 ? 'es-en' : 'en-es') : settings.direction;
     const current = { ...picked, direction };
     state.taCurrentQuestion = current;
@@ -3407,7 +3551,7 @@
   }
 
   function startTimeAttack() {
-    if (state.pairs.length === 0) return;
+    if (state.mainPool.length === 0) return;
     const settings = state.progress.settings;
     state.results = [];
     state.taScore = 0;
@@ -3417,7 +3561,7 @@
     state.taEndTime = Date.now() + 60000;
     state.taTimeLeft = 60;
     state.resultMode = 'timeattack';
-    state.effectiveAnswerMode = (settings.answerMode === 'choice' && state.pairs.length >= 3) ? 'choice' : 'type';
+    state.effectiveAnswerMode = (settings.answerMode === 'choice' && state.mainPool.length >= 3) ? 'choice' : 'type';
     loadNextTimeAttackQuestion();
     state.screen = 'timeattack';
     render();
@@ -3551,23 +3695,23 @@
     const ws = state.progress.wordStats[key];
     const now = Date.now();
     ws.lastSeen = now;
-    ws.es = pair.es;
-    ws.en = pair.en;
+    ws.es = primaryText(pair.es);
+    ws.en = primaryText(pair.en);
     ws.right += 1;
     ws.box = Math.min((ws.box || 0) + 1, SRS_INTERVALS_DAYS.length - 1);
     ws.nextDue = now + SRS_INTERVALS_DAYS[ws.box] * 86400000;
   }
 
   function startMemoryMatch() {
-    if (state.pairs.length < 2) return;
+    if (state.mainPool.length < 2) return;
     const gridSize = parseInt(state.progress.settings.memoryGridSize, 10);
-    const pairCount = Math.min(gridSize, state.pairs.length);
-    const chosen = weightedSampleWithoutReplacement(state.pairs, getWeight, pairCount);
+    const pairCount = Math.min(gridSize, state.mainPool.length);
+    const chosen = weightedSampleWithoutReplacement(state.mainPool, getWeight, pairCount);
 
     const tiles = [];
     chosen.forEach((pair, i) => {
-      const esText = splitAnswers(pair.es)[0];
-      const enText = splitAnswers(pair.en)[0];
+      const esText = primaryText(pair.es);
+      const enText = primaryText(pair.en);
       tiles.push({ pairIndex: i, lang: 'es', text: esText, matched: false, pair });
       tiles.push({ pairIndex: i, lang: 'en', text: enText, matched: false, pair });
     });
@@ -3748,39 +3892,23 @@
     return candidates.slice(0, count);
   }
 
+  // Verbs now come from the same sheet as everything else (rows tagged
+  // "conjugation" - see isMainPoolEligible/pairHasCategory), already
+  // derived into state.verbPairs whenever the word list loads (parseRows).
+  // This just re-derives from whatever's currently in state.pairs - kept
+  // around as a synchronous fallback for goToConjugateSetup, in case it's
+  // ever reached before the word list has loaded.
   function loadVerbsFile() {
-    state.verbsLoading = true;
-    state.verbsError = '';
+    state.verbsLoading = false;
+    state.verbPairs = state.pairs.filter(p => pairHasCategory(p, 'conjugation'));
+    if (state.verbPairs.length === 0) {
+      state.verbsError = 'No verbs found. Make sure some rows in words.xlsx have "conjugation" in the Category column.';
+      state.verbsLoaded = false;
+    } else {
+      state.verbsError = '';
+      state.verbsLoaded = true;
+    }
     render();
-    fetch(VERBS_FILE)
-      .then((resp) => {
-        if (!resp.ok) throw new Error('File not found: ' + resp.status);
-        return resp.arrayBuffer();
-      })
-      .then((buf) => {
-        const data = new Uint8Array(buf);
-        const wb = XLSX.read(data, { type: 'array' });
-        const sheet = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-        const cleaned = extractPairsFromRows(rows, state.hasHeader);
-        state.verbsLoading = false;
-        if (cleaned.length === 0) {
-          state.verbsError = 'No verbs found in verbs.xlsx.';
-          state.verbPairs = [];
-          state.verbsLoaded = false;
-        } else {
-          state.verbsError = '';
-          state.verbPairs = cleaned;
-          state.verbsLoaded = true;
-        }
-        render();
-      })
-      .catch(() => {
-        state.verbsLoading = false;
-        state.verbsLoaded = false;
-        state.verbsError = 'Couldn\'t load "verbs.xlsx". Make sure it exists in the repo.';
-        render();
-      });
   }
 
   function goToConjugateSetup() {
@@ -4012,7 +4140,7 @@
     const usedKeys = new Set(selected.map(w => wordKey(w)));
 
     if (selected.length < 10) {
-      const neverSeen = shuffle(state.pairs.filter(p => !state.progress.wordStats[wordKey(p)] && !usedKeys.has(wordKey(p))));
+      const neverSeen = shuffle(state.mainPool.filter(p => !state.progress.wordStats[wordKey(p)] && !usedKeys.has(wordKey(p))));
       for (const p of neverSeen) {
         if (selected.length >= 10) break;
         selected.push(p);
@@ -4023,7 +4151,7 @@
     // words run out. Top up with anything not already picked rather than
     // quietly running a shorter round.
     if (selected.length < 10) {
-      const anyRemaining = shuffle(state.pairs.filter(p => !usedKeys.has(wordKey(p))));
+      const anyRemaining = shuffle(state.mainPool.filter(p => !usedKeys.has(wordKey(p))));
       for (const p of anyRemaining) {
         if (selected.length >= 10) break;
         selected.push(p);
@@ -4277,7 +4405,7 @@
             <button id="menu-btn" class="menu-btn">⋯</button>
           </div>
           <div class="stat-strip">
-            <span class="streak-text">🔥 ${streak.current} &nbsp;·&nbsp; Best ${streak.best}${state.pairs.length > 0 ? ` &nbsp;·&nbsp; ${state.pairs.length} words` : ''}</span>
+            <span class="streak-text">🔥 ${streak.current} &nbsp;·&nbsp; Best ${streak.best}${state.mainPool.length > 0 ? ` &nbsp;·&nbsp; ${state.mainPool.length} words` : ''}</span>
             <span class="divider"></span>
             <span class="level-mini">
               <span class="level-mini-text">XP</span>
@@ -4291,7 +4419,7 @@
             <div class="format-row"><span class="fchip">🔤</span><span class="fchip">🔊</span><span class="fchip">✎</span></div>
             <h2>Your Learning Stream</h2>
             <p>Mixed questions — choose, listen, or type. Learn the words you need most, one after another.</p>
-            <button id="start-stream-btn" class="btn-primary" ${state.pairs.length < 3 ? 'disabled' : ''}>Start Stream →</button>
+            <button id="start-stream-btn" class="btn-primary" ${state.mainPool.length < 3 ? 'disabled' : ''}>Start Stream →</button>
           </div>
           <button class="game-tile modes-banner" data-tile="gamemodes">
             <div class="tile-icon-wrap" style="background:rgba(255,255,255,0.08);">🎮</div>
@@ -4538,7 +4666,7 @@
               <div class="segmented" id="direction-group">${directionHtml}</div>
               <div class="segmented" id="length-group" style="margin-top:14px;">${lengthHtml}</div>
               <div class="segmented" id="answermode-group" style="margin-top:14px;">${answerModeHtml}</div>
-              <button id="start-btn" class="btn-primary" style="margin-top:22px;" ${state.pairs.length === 0 ? 'disabled' : ''}>Start Quiz</button>
+              <button id="start-btn" class="btn-primary" style="margin-top:22px;" ${state.mainPool.length === 0 ? 'disabled' : ''}>Start Quiz</button>
             </div>
           </div>
         </div>
@@ -4764,6 +4892,7 @@
     const personLabel = PERSON_LABELS[combo.person];
     const correctText = conjugatePresent(combo.pair.es, combo.person);
     const promptLang = 'es-ES';
+    const verbTranslation = primaryText(combo.pair.en);
 
     const useChoice = state.progress.settings.answerMode === 'choice' && state.conjugateCurrentOptions;
     const shouldFlip = state.lastFlippedIndex !== state.conjugateIndex;
@@ -4825,7 +4954,8 @@
               <div class="prompt-word">${esc(promptWord)}</div>
               <button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button>
             </div>
-            <div class="prompt-translation">${esc(combo.pair.en)}</div>
+            <div class="prompt-translation">${esc(verbTranslation)}</div>
+            ${combo.pair.note ? `<div class="prompt-note">${esc(combo.pair.note)}</div>` : ''}
           </div>
           ${bottomHtml}
           <button id="conjugate-quit-btn" class="quit-link" style="display:block; text-align:center; width:100%; margin-top:14px;">Quit</button>
@@ -4952,7 +5082,7 @@
             <div class="card" style="width:100%;">
               <div class="segmented" id="direction-group">${directionHtml}</div>
               <div class="segmented" id="answermode-group" style="margin-top:14px;">${answerModeHtml}</div>
-              <button id="start-btn" class="btn-primary" style="margin-top:22px;" ${state.pairs.length === 0 ? 'disabled' : ''}>Start — 60 seconds</button>
+              <button id="start-btn" class="btn-primary" style="margin-top:22px;" ${state.mainPool.length === 0 ? 'disabled' : ''}>Start — 60 seconds</button>
               ${taBest > 0 ? `<div style="text-align:center; font-size:12px; color:var(--cream-dim); margin-top:10px;">Best: ${taBest}</div>` : ''}
             </div>
           </div>
@@ -4987,7 +5117,7 @@
       `<button class="seg-btn ${settings.memoryGridSize === val ? 'active' : ''}" data-val="${val}">${label}</button>`
     ).join('');
     const best = state.progress.memoryBest[settings.memoryGridSize];
-    const tooFew = state.pairs.length < 2;
+    const tooFew = state.mainPool.length < 2;
 
     app.innerHTML = `
       <div class="screen bg-memory">
@@ -5117,15 +5247,29 @@
       });
     }
 
-    const promptWord = current.direction === 'es-en' ? current.es : current.en;
-    const answerWord = current.direction === 'es-en' ? current.en : current.es;
-    const promptLang = current.direction === 'es-en' ? 'es-ES' : 'en-US';
-    const answerLang = current.direction === 'es-en' ? 'en-US' : 'es-ES';
+    const clozeBlank = current.format === 'cloze' ? findClozeBlank(current) : null;
+    const clozeFallback = current.format === 'cloze' && !clozeBlank;
+    const promptWord = (current.format === 'cloze' && clozeBlank) ? current.sentence
+      : clozeFallback ? primaryText(current.en)
+      : primaryText(current.direction === 'es-en' ? current.es : current.en);
+    const answerWord = current.format === 'cloze' ? primaryText(current.es) : primaryText(current.direction === 'es-en' ? current.en : current.es);
+    const promptLang = (current.format === 'cloze' && clozeBlank) ? 'es-ES'
+      : clozeFallback ? 'en-US'
+      : (current.direction === 'es-en' ? 'es-ES' : 'en-US');
+    const answerLang = current.format === 'cloze' ? 'es-ES' : (current.direction === 'es-en' ? 'en-US' : 'es-ES');
+    // The Note column disambiguates the English gloss specifically - only
+    // relevant wherever English text is what's being shown, whether that's
+    // the prompt (EN→ES) or the reveal (ES→EN, wrong or typo-forgiven).
+    // Cloze never shows it - the prompt is a Spanish sentence, not a gloss.
+    const promptNote = (current.format !== 'cloze' && current.direction !== 'es-en') ? (current.note || '') : '';
+    const answerNote = (current.format !== 'cloze' && current.direction === 'es-en') ? (current.note || '') : '';
 
     // Stream decides choice-vs-type per question; every other mode still
-    // uses the single round-level answerMode setting.
+    // uses the single round-level answerMode setting. Cloze is always
+    // typed - a word bank would just hand back the ambiguity problem the
+    // format exists to avoid (see the sentence-writing discussion).
     const useChoice = state.isStreamRound
-      ? (current.format !== 'type' && state.currentOptions)
+      ? (current.format !== 'type' && current.format !== 'cloze' && state.currentOptions)
       : (state.effectiveAnswerMode === 'choice' && state.currentOptions);
     const shouldFlip = state.lastFlippedIndex !== state.index;
     if (shouldFlip) state.lastFlippedIndex = state.index;
@@ -5136,7 +5280,7 @@
     // the feedback screen for question 10 briefly claims to be question 11.
     const streamQuestionNum = state.results.length + (state.checked ? 0 : 1);
     const progressLabel = state.isStreamRound
-      ? `Question ${streamQuestionNum} · ${isAudioFormat ? 'LISTEN' : (current.direction === 'es-en' ? 'ES → EN' : 'EN → ES')}`
+      ? `Question ${streamQuestionNum} · ${isAudioFormat ? 'LISTEN' : (current.format === 'cloze' && clozeBlank ? 'FILL IN THE BLANK' : (current.direction === 'es-en' ? 'ES → EN' : 'EN → ES'))}`
       : `${state.index + 1} / ${state.questions.length} · ${current.direction === 'es-en' ? 'ES → EN' : 'EN → ES'}`;
 
     const orbHtml = state.isStreamRound
@@ -5148,16 +5292,25 @@
     // free rather than needing separate wiring per mode. Audio format
     // already has its own hint ("Listen, then choose...") below, so it's
     // skipped here to avoid saying the same thing twice.
-    const instructionText = isAudioFormat ? '' : useChoice
+    const instructionText = isAudioFormat ? '' : (current.format === 'cloze' && clozeBlank) ? 'Type the missing word'
+      : clozeFallback ? 'Type the word in Spanish'
+      : useChoice
       ? (current.direction === 'es-en' ? 'What does this mean?' : 'How do you say this in Spanish?')
       : (current.direction === 'es-en' ? 'Type the English translation' : 'Type the word in Spanish');
 
     // Audio format hides the written word entirely — listening is the
     // exercise — and always speaks it (see the autoSpeak binding below),
-    // regardless of the user's own "speak words aloud" setting.
+    // regardless of the user's own "speak words aloud" setting. Cloze
+    // shows the sentence with the target word blanked instead of a single
+    // big prompt word; if the blank couldn't be found (shouldn't happen —
+    // buildStreamBatch already checks — but a defensive fallback matters
+    // more than a broken screen) it just renders like a normal typed
+    // question instead.
     const promptRowHtml = isAudioFormat
       ? `<button id="speak-prompt-btn" class="speak-btn big" title="Hear it">🔊</button><div class="audio-hint">Listen, then choose the meaning</div>`
-      : `<div class="audio-hint" style="margin-bottom:10px;">${instructionText}</div><div class="prompt-row"><div class="prompt-word">${esc(promptWord)}</div><button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button></div>`;
+      : (current.format === 'cloze' && clozeBlank)
+      ? `<div class="audio-hint" style="margin-bottom:10px;">${instructionText}</div><div class="cloze-sentence">${esc(clozeBlank.before)}<span class="cloze-blank">____</span>${esc(clozeBlank.after)}</div><button id="speak-prompt-btn" class="speak-btn" title="Hear it" style="margin-top:10px;">🔊</button>`
+      : `<div class="audio-hint" style="margin-bottom:10px;">${instructionText}</div><div class="prompt-row"><div class="prompt-word">${esc(promptWord)}</div><button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button></div>${promptNote ? `<div class="prompt-note">${esc(promptNote)}</div>` : ''}`;
 
     let bottomHtml;
 
@@ -5201,14 +5354,14 @@
       bottomHtml = `
         <div class="feedback correct">
           <div class="title">✅ Correct</div>
-          ${state.lastWasTypo ? `<div class="answer">✓ Close enough — small typo forgiven. Correct spelling: <strong>${esc(answerWord)}</strong> <button id="speak-answer-btn" class="speak-btn" title="Hear it" style="width:26px;height:26px;font-size:12px;">🔊</button></div>` : ''}
+          ${state.lastWasTypo ? `<div class="answer">✓ Close enough — small typo forgiven. Correct spelling: <strong>${esc(answerWord)}</strong>${answerNote ? ` (${esc(answerNote)})` : ''} <button id="speak-answer-btn" class="speak-btn" title="Hear it" style="width:26px;height:26px;font-size:12px;">🔊</button></div>` : ''}
         </div>
       `;
     } else {
       bottomHtml = `
         <div class="feedback wrong">
           <div class="title">❌ Not quite</div>
-          <div class="answer">Correct answer: <strong>${esc(answerWord)}</strong> <button id="speak-answer-btn" class="speak-btn" title="Hear it" style="width:26px;height:26px;font-size:12px;">🔊</button></div>
+          <div class="answer">Correct answer: <strong>${esc(answerWord)}</strong>${answerNote ? ` (${esc(answerNote)})` : ''} <button id="speak-answer-btn" class="speak-btn" title="Hear it" style="width:26px;height:26px;font-size:12px;">🔊</button></div>
         </div>
         <button id="next-btn" class="btn-primary">${state.index + 1 >= state.questions.length ? 'See results' : 'Next word'}</button>
         <div class="countdown-bar-track"><div class="countdown-bar-fill" id="countdown-fill"></div></div>
@@ -5686,8 +5839,9 @@
     const current = state.taCurrentQuestion;
     if (!current) return;
 
-    const promptWord = current.direction === 'es-en' ? current.es : current.en;
+    const promptWord = primaryText(current.direction === 'es-en' ? current.es : current.en);
     const promptLang = current.direction === 'es-en' ? 'es-ES' : 'en-US';
+    const promptNote = current.direction !== 'es-en' ? (current.note || '') : '';
 
     let bottomHtml;
     if (state.effectiveAnswerMode === 'choice' && state.taCurrentOptions) {
@@ -5719,6 +5873,7 @@
               <div class="prompt-word">${esc(promptWord)}</div>
               <button id="ta-speak-btn" class="speak-btn" title="Hear it">🔊</button>
             </div>
+            ${promptNote ? `<div class="prompt-note">${esc(promptNote)}</div>` : ''}
           </div>
           ${bottomHtml}
           <button id="ta-quit-btn" class="quit-link" style="display:block; text-align:center; width:100%; margin-top:14px;">Quit</button>
@@ -5856,11 +6011,10 @@
 
   loadFromRepo();
 
-  // Also load the verb list at startup, not just when Conjugate is opened.
-  // My Progress's "verb combos to review" fallback lookup needs it in
-  // memory to recover display text for legacy entries - without this it
-  // only works once Conjugate has been opened at least once this session.
-  loadVerbsFile();
+  // Verbs, categories, and everything else now come from the single sheet
+  // loaded above — parseRows() derives state.verbPairs automatically as
+  // soon as it resolves, no separate fetch needed (see loadVerbsFile's own
+  // comment for the still-needed synchronous fallback it provides).
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
