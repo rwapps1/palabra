@@ -537,6 +537,27 @@
 
   /* Achievements sits apart from the game grid on purpose - a full-width
      row rather than a tile, so it reads as a progress summary, not a game. */
+  /* "Choose a specific mode" sits directly below the Stream hero card,
+     above the Achievements/Progress/Level banners — same self-contained
+     pattern as those, its own border-color accent (neutral, since it
+     isn't tied to one particular game's color the way the tiles behind
+     it are). */
+  .modes-banner {
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    margin-top: 4px;
+    margin-bottom: 14px;
+    padding: 12px 16px;
+    border-color: var(--outline);
+  }
+  .modes-banner .tile-icon-wrap { margin-bottom: 0; flex-shrink: 0; }
+  .modes-banner .banner-text { flex: 1; }
+  .modes-banner .banner-name { font-weight: 700; font-size: 15px; font-family: 'Inter', sans-serif; }
+  .modes-banner .banner-meta { font-size: 12px; color: var(--cream-dim); margin-top: 2px; }
+  .modes-banner .banner-arrow { color: var(--cream-dim); font-size: 18px; flex-shrink: 0; }
+
   .achievements-banner {
     flex-direction: row;
     align-items: center;
@@ -1354,8 +1375,8 @@
   }
 
   /* Home screen: Stream hero card */
-  .stream-hero { position: relative; margin: 4px 0 18px; padding: 20px; }
-  .stream-hero .format-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .stream-hero { position: relative; margin: 4px 0 18px; padding: 20px; text-align: center; }
+  .stream-hero .format-row { display: flex; gap: 8px; margin-bottom: 14px; justify-content: center; }
   .stream-hero .fchip {
     width: 30px; height: 30px; border-radius: 50%;
     background: rgba(255,255,255,0.08); border: 1px solid var(--outline);
@@ -2920,7 +2941,10 @@
     state.screen = 'stream-checkpoint';
     render();
     pingActivity();
-    state.celebrateTimer = setTimeout(continueStream, 2200);
+    // Longer than a normal round-end Celebrate hold (2200ms) on purpose —
+    // there's a real decision here (keep going or stop), not just a
+    // glance, so it needs actual reading + deciding time.
+    state.celebrateTimer = setTimeout(continueStream, 4500);
   }
 
   function continueStream() {
@@ -3049,7 +3073,11 @@
     state.lastWasTypo = wasTypo;
     recordAnswer(current, correct, state.input);
     render();
-    const delay = correct ? 750 : 3000;
+    // A forgiven typo has a full sentence plus the correct spelling to
+    // read (see the near-miss feedback in renderQuiz) — a plain correct
+    // answer's 750ms is too quick for that, but it's not as much to
+    // absorb as a wrong answer's full "correct answer: X" breakdown either.
+    const delay = !correct ? 3000 : (wasTypo ? 1800 : 750);
     state.autoAdvanceTimer = setTimeout(() => { nextQuestion(); }, delay);
   }
 
@@ -4126,28 +4154,8 @@
     const achIds = Object.keys(ACHIEVEMENTS);
     const achUnlockedCount = achIds.filter(id => state.progress.achievements[id] && state.progress.achievements[id].unlocked).length;
     const achTotalCount = achIds.length;
-    const taBest = state.progress.timeAttackBest || 0;
-    const memBest = state.progress.memoryBest[settings.memoryGridSize];
     const noWords = state.pairs.length === 0;
     const totalAnswered = state.progress.lifetime.totalAnswered + state.progress.conjugateLifetime.totalAnswered;
-
-    const tiles = [
-      { id: 'quiz', icon: '🔤', name: 'Quiz', meta: 'Type or choose', color: 'rgba(255,107,74,0.18)', locked: false, gate: true },
-      { id: 'timeattack', icon: '⏱', name: 'Time Attack', meta: taBest > 0 ? `Best: ${taBest}` : '60 seconds', color: 'rgba(45,212,191,0.18)', locked: false, gate: true },
-      { id: 'memory', icon: '🧩', name: 'Memory Match', meta: memBest ? `Best: ${memBest} moves` : 'Find the pairs', color: 'rgba(217,70,239,0.18)', locked: false, gate: true },
-      { id: 'verbs', icon: '📖', name: 'Conjugate', meta: 'Present tense', color: 'rgba(52,211,153,0.18)', locked: false, gate: false },
-      { id: 'categories', icon: '🏷️', name: 'Categories', meta: CATEGORIES.length + ' topics', color: 'rgba(255,107,74,0.18)', locked: false, gate: false },
-      { id: 'mystery', icon: '❓', name: 'Exciting New Game', meta: 'Coming soon', color: 'rgba(255,255,255,0.06)', locked: true, gate: false },
-    ];
-
-    const tilesHtml = tiles.map(t => `
-      <button class="game-tile ${t.locked ? 'locked' : ''}" data-tile="${t.id}" ${(!t.locked && t.gate && noWords) ? 'disabled' : ''}>
-        ${t.locked ? '<div class="tile-soon">Soon</div>' : ''}
-        <div class="tile-icon-wrap" style="background:${t.color};">${t.icon}</div>
-        <div class="tile-name">${esc(t.name)}</div>
-        <div class="tile-meta">${esc(t.meta)}</div>
-      </button>
-    `).join('');
 
     app.innerHTML = `
       <div class="screen upload-screen bg-quiz">
@@ -4173,10 +4181,17 @@
           <div class="card stream-hero">
             <div class="format-row"><span class="fchip">🔤</span><span class="fchip">🔊</span><span class="fchip">✎</span></div>
             <h2>Start a stream</h2>
-            <p>Mixed questions — choose, listen, or type. We pick what you need to practice most, one after another, no menu in between.</p>
+            <p>Mixed questions — choose, listen, or type. Learn the words you need most, one after another.</p>
             <button id="start-stream-btn" class="btn-primary" ${state.pairs.length < 3 ? 'disabled' : ''}>Start stream →</button>
           </div>
-          <div class="game-grid">${tilesHtml}</div>
+          <button class="game-tile modes-banner" data-tile="gamemodes">
+            <div class="tile-icon-wrap" style="background:rgba(255,255,255,0.08);">🎮</div>
+            <div class="banner-text">
+              <div class="banner-name">Choose a specific mode</div>
+              <div class="banner-meta">Quiz, Time Attack, Memory Match & more</div>
+            </div>
+            <div class="banner-arrow">→</div>
+          </button>
           <button class="game-tile achievements-banner" data-tile="achievements">
             <div class="tile-icon-wrap" style="background:rgba(255,193,99,0.18);">🏆</div>
             <div class="banner-text">
@@ -4313,6 +4328,61 @@
     document.querySelectorAll('.game-tile').forEach(tile => {
       tile.addEventListener('click', () => {
         const id = tile.dataset.tile;
+        if (tile.disabled) return;
+        if (id === 'gamemodes') { state.screen = 'game-modes'; render(); }
+        else if (id === 'achievements') { state.screen = 'achievements'; render(); }
+        else if (id === 'myprogress') { state.screen = 'my-progress'; render(); }
+        else if (id === 'xpinfo') { state.screen = 'xp-info'; render(); }
+      });
+    });
+  }
+
+  // The 6 game-mode tiles, previously always visible on Home, now live
+  // behind "Choose a specific mode" so Home reads as: start a stream, or
+  // go pick something specific. Same tiles, same click behavior, just one
+  // tap deeper — reusing .game-tile/.game-grid styling verbatim.
+  function renderGameModes() {
+    const app = document.getElementById('app');
+    const settings = state.progress.settings;
+    const taBest = state.progress.timeAttackBest || 0;
+    const memBest = state.progress.memoryBest[settings.memoryGridSize];
+    const noWords = state.pairs.length === 0;
+
+    const tiles = [
+      { id: 'quiz', icon: '🔤', name: 'Quiz', meta: 'Type or choose', color: 'rgba(255,107,74,0.18)', locked: false, gate: true },
+      { id: 'timeattack', icon: '⏱', name: 'Time Attack', meta: taBest > 0 ? `Best: ${taBest}` : '60 seconds', color: 'rgba(45,212,191,0.18)', locked: false, gate: true },
+      { id: 'memory', icon: '🧩', name: 'Memory Match', meta: memBest ? `Best: ${memBest} moves` : 'Find the pairs', color: 'rgba(217,70,239,0.18)', locked: false, gate: true },
+      { id: 'verbs', icon: '📖', name: 'Conjugate', meta: 'Present tense', color: 'rgba(52,211,153,0.18)', locked: false, gate: false },
+      { id: 'categories', icon: '🏷️', name: 'Categories', meta: CATEGORIES.length + ' topics', color: 'rgba(255,107,74,0.18)', locked: false, gate: false },
+      { id: 'mystery', icon: '❓', name: 'Exciting New Game', meta: 'Coming soon', color: 'rgba(255,255,255,0.06)', locked: true, gate: false },
+    ];
+
+    const tilesHtml = tiles.map(t => `
+      <button class="game-tile ${t.locked ? 'locked' : ''}" data-tile="${t.id}" ${(!t.locked && t.gate && noWords) ? 'disabled' : ''}>
+        ${t.locked ? '<div class="tile-soon">Soon</div>' : ''}
+        <div class="tile-icon-wrap" style="background:${t.color};">${t.icon}</div>
+        <div class="tile-name">${esc(t.name)}</div>
+        <div class="tile-meta">${esc(t.meta)}</div>
+      </button>
+    `).join('');
+
+    app.innerHTML = `
+      <div class="screen bg-quiz">
+        <div class="wrap wrap-centered">
+          <div class="screen-header">
+            <button id="back-btn" class="back-btn">←</button>
+            <div class="screen-title">Choose a mode</div>
+          </div>
+          <div class="game-grid">${tilesHtml}</div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('back-btn').addEventListener('click', () => { state.screen = 'start'; render(); });
+
+    document.querySelectorAll('.game-tile').forEach(tile => {
+      tile.addEventListener('click', () => {
+        const id = tile.dataset.tile;
         const def = tiles.find(t => t.id === id);
         if (def && def.locked) {
           showComingSoonToast(def.icon, def.name);
@@ -4322,9 +4392,6 @@
         if (id === 'quiz') { state.screen = 'quiz-setup'; render(); }
         else if (id === 'timeattack') { state.screen = 'timeattack-setup'; render(); }
         else if (id === 'memory') { state.screen = 'memory-setup'; render(); }
-        else if (id === 'achievements') { state.screen = 'achievements'; render(); }
-        else if (id === 'myprogress') { state.screen = 'my-progress'; render(); }
-        else if (id === 'xpinfo') { state.screen = 'xp-info'; render(); }
         else if (id === 'categories') { state.screen = 'categories'; render(); }
         else if (id === 'verbs') { goToConjugateSetup(); }
       });
@@ -5597,6 +5664,7 @@
 
     if (state.screen === 'login') renderLogin();
     else if (state.screen === 'start') renderStart();
+    else if (state.screen === 'game-modes') renderGameModes();
     else if (state.screen === 'quiz-setup') renderQuizSetup();
     else if (state.screen === 'categories') renderCategories();
     else if (state.screen === 'category-setup') renderCategorySetup();
