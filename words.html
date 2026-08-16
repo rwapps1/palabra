@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palabra — Word List</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #100A1E;
+    --bg-card: rgba(255,255,255,0.07);
+    --bg-card-alt: rgba(255,255,255,0.12);
+    --ochre: #FFC163;
+    --terracotta: #FF4D6D;
+    --green: #2DD4BF;
+    --label: #C9A8FF;
+    --cream: #F7F3ED;
+    --cream-dim: #B8AFC9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--cream); font-family: 'Inter', sans-serif;
+    min-height: 100vh; padding: 24px 16px 60px;
+  }
+  .hidden { display: none !important; }
+  .wrap { max-width: 720px; margin: 0 auto; }
+
+  .header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06);
+    color: var(--cream); font-size: 16px; cursor: pointer; text-decoration: none;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .header .title-block { flex: 1; min-width: 0; }
+  .header .t { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 18px; }
+  .header .c { font-size: 12px; color: var(--cream-dim); margin-top: 1px; }
+
+  .panel {
+    background: var(--bg-card); border-radius: 20px; padding: 20px;
+    border: 1px solid rgba(255,255,255,0.06); backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px); margin-bottom: 14px;
+  }
+  .center-panel { text-align: center; padding: 40px 24px; }
+  .center-panel .glyph { font-size: 28px; margin-bottom: 10px; }
+  .center-panel h2 { font-family: 'Sora', sans-serif; font-size: 16px; margin-bottom: 6px; }
+  .center-panel p { color: var(--cream-dim); font-size: 13px; line-height: 1.5; }
+
+  .toolbar { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .search-input {
+    flex: 1; min-width: 160px; padding: 11px 14px; border-radius: 12px;
+    background: var(--bg-card-alt); border: 1px solid rgba(255,255,255,0.1);
+    color: var(--cream); font-family: 'Inter', sans-serif; font-size: 13.5px;
+  }
+  .search-input::placeholder { color: var(--cream-dim); }
+  .cat-select {
+    padding: 11px 10px; border-radius: 12px; background: var(--bg-card-alt);
+    border: 1px solid rgba(255,255,255,0.1); color: var(--cream); font-size: 13px;
+    font-family: 'Inter', sans-serif;
+  }
+  .add-btn {
+    flex-shrink: 0; padding: 11px 16px; border-radius: 12px; border: none;
+    background: var(--green); color: #08312c; font-weight: 700; font-size: 13.5px; cursor: pointer;
+    white-space: nowrap;
+  }
+  .result-count { font-size: 12px; color: var(--cream-dim); margin-bottom: 10px; }
+
+  .table-panel { padding: 0; overflow: hidden; }
+  .table-scroll { overflow-x: auto; }
+  .word-table { border-collapse: collapse; width: 100%; min-width: 460px; font-size: 13.5px; }
+  .word-table th {
+    text-align: left; padding: 11px 12px; font-family: 'Sora', sans-serif; font-weight: 600;
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--cream-dim);
+    background: #1a1430; position: sticky; top: 0;
+  }
+  .word-table td {
+    padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); vertical-align: middle;
+  }
+  .word-table tr.detail-row td { background: rgba(255,255,255,0.02); padding: 12px; }
+  .word-table tr.new-row td { background: rgba(45,212,191,0.06); }
+
+  .cell-edit {
+    padding: 5px 7px; border-radius: 8px; border: 1px dashed transparent; cursor: text; min-width: 50px;
+  }
+  .cell-edit:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.03); }
+  .cell-edit:focus { outline: none; border: 1px solid var(--ochre); background: var(--bg-card-alt); }
+  .cat-cell { font-size: 12px; color: var(--label); }
+
+  .row-actions { display: flex; gap: 6px; }
+  .row-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
+    color: var(--cream-dim); width: 28px; height: 28px; cursor: pointer; font-size: 12px; flex-shrink: 0;
+  }
+  .row-btn.delete { color: var(--terracotta); }
+
+  .detail-field { margin-bottom: 10px; }
+  .detail-field:last-child { margin-bottom: 0; }
+  .detail-field label {
+    display: block; font-size: 11px; color: var(--cream-dim); margin-bottom: 4px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .detail-field textarea {
+    width: 100%; min-height: 44px; padding: 9px 11px; border-radius: 10px;
+    background: var(--bg-card-alt); border: 1px solid rgba(255,255,255,0.1);
+    color: var(--cream); font-family: 'Inter', sans-serif; font-size: 13px; resize: vertical;
+  }
+
+  .pagination {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 12px 4px; font-size: 13px; color: var(--cream-dim);
+  }
+  .page-btn {
+    padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.06); color: var(--cream); font-size: 13px; cursor: pointer;
+  }
+  .page-btn:disabled { opacity: 0.35; cursor: default; }
+
+  .footer-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
+    padding: 14px 16px; flex-wrap: wrap;
+  }
+  .dirty-indicator { font-size: 12.5px; color: var(--cream-dim); display: flex; align-items: center; gap: 6px; }
+  .dirty-indicator .dot {
+    width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: background 0.2s;
+  }
+  .dirty-indicator.dirty .dot { background: var(--terracotta); box-shadow: 0 0 8px var(--terracotta); }
+  .dirty-indicator.dirty { color: var(--terracotta); }
+  .download-btn {
+    padding: 11px 18px; border-radius: 999px; border: none; font-weight: 700; font-size: 13.5px;
+    background: var(--ochre); color: #241608; cursor: pointer;
+  }
+  .download-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .note {
+    font-size: 11.5px; color: var(--cream-dim); text-align: center; margin-top: 14px; opacity: 0.75;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <a class="icon-btn" href="admin.html" aria-label="Back to admin">←</a>
+    <div class="title-block">
+      <div class="t">Word List</div>
+      <div class="c" id="headerCount">Loading…</div>
+    </div>
+  </div>
+
+  <div id="view-loading">
+    <div class="panel center-panel">
+      <div class="glyph">⏳</div>
+      <h2>Loading words.xlsx…</h2>
+    </div>
+  </div>
+
+  <div id="view-error" class="hidden">
+    <div class="panel center-panel">
+      <div class="glyph">⚠️</div>
+      <h2>Couldn't load the word list</h2>
+      <p id="errorText">Something went wrong fetching or reading words.xlsx.</p>
+    </div>
+  </div>
+
+  <div id="view-editor" class="hidden">
+
+    <div class="toolbar">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search Spanish, English, note, sentence…">
+      <select class="cat-select" id="catSelect">
+        <option value="">All categories</option>
+      </select>
+      <button class="add-btn" id="addBtn" type="button">+ Add word</button>
+    </div>
+    <div class="result-count" id="resultCount"></div>
+
+    <div class="panel table-panel">
+      <div class="table-scroll">
+        <table class="word-table">
+          <thead>
+            <tr>
+              <th>Spanish</th>
+              <th>English</th>
+              <th>Category</th>
+              <th style="width:76px;">—</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="pagination">
+      <button class="page-btn" id="prevPageBtn" type="button">‹ Prev</button>
+      <span id="pageLabel">Page 1</span>
+      <button class="page-btn" id="nextPageBtn" type="button">Next ›</button>
+    </div>
+
+    <div class="footer-bar">
+      <div class="dirty-indicator" id="dirtyIndicator"><span class="dot"></span><span id="dirtyText">No unsaved changes</span></div>
+      <button class="download-btn" id="downloadBtn" disabled type="button">⬇ Download updated words.xlsx</button>
+    </div>
+
+    <div class="note">Downloading doesn't publish anything — commit the downloaded file to your repo, replacing the existing words.xlsx, same as you would after editing it in Excel. The "Decisions Log" sheet is preserved untouched.</div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+  const PAGE_SIZE = 50;
+  const COLUMNS = ['Spanish', 'English', 'Note', 'Category', 'Sentence'];
+
+  let workbook = null;   // full parsed workbook, kept so other sheets (Decisions Log) survive untouched
+  let words = [];        // [{es, en, note, cat, sentence}, ...] — the editable "Words" sheet
+  let page = 1;
+  let isDirty = false;
+
+  const els = {
+    loading: document.getElementById('view-loading'),
+    error: document.getElementById('view-error'),
+    editor: document.getElementById('view-editor'),
+    errorText: document.getElementById('errorText'),
+    headerCount: document.getElementById('headerCount'),
+    searchInput: document.getElementById('searchInput'),
+    catSelect: document.getElementById('catSelect'),
+    addBtn: document.getElementById('addBtn'),
+    resultCount: document.getElementById('resultCount'),
+    tableBody: document.getElementById('tableBody'),
+    prevBtn: document.getElementById('prevPageBtn'),
+    nextBtn: document.getElementById('nextPageBtn'),
+    pageLabel: document.getElementById('pageLabel'),
+    dirtyIndicator: document.getElementById('dirtyIndicator'),
+    dirtyText: document.getElementById('dirtyText'),
+    downloadBtn: document.getElementById('downloadBtn')
+  };
+
+  function showView(name) {
+    ['loading', 'error', 'editor'].forEach(k => els[k].classList.toggle('hidden', k !== name));
+  }
+
+  // --- load ----------------------------------------------------------------
+
+  async function load() {
+    showView('loading');
+    try {
+      const res = await fetch('words.xlsx', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+      const buf = await res.arrayBuffer();
+      workbook = XLSX.read(buf, { type: 'array' });
+
+      if (!workbook.Sheets['Words']) {
+        throw new Error('This file has no sheet named "Words" — check the tab name matches exactly.');
+      }
+
+      const aoa = XLSX.utils.sheet_to_json(workbook.Sheets['Words'], { header: 1, defval: '' });
+      words = aoa.slice(1)
+        .filter(r => (r[0] || r[1]))
+        .map(r => ({ es: String(r[0] || ''), en: String(r[1] || ''), note: String(r[2] || ''), cat: String(r[3] || ''), sentence: String(r[4] || '') }));
+
+      populateCategoryFilter();
+      isDirty = false;
+      updateDirtyUI();
+      page = 1;
+      renderTable();
+      showView('editor');
+    } catch (err) {
+      els.errorText.textContent = (err && err.message) ? err.message : 'Unknown error.';
+      showView('error');
+    }
+  }
+
+  function populateCategoryFilter() {
+    const cats = new Set();
+    words.forEach(w => {
+      w.cat.split(',').map(c => c.trim()).filter(Boolean).forEach(c => cats.add(c));
+    });
+    const sorted = Array.from(cats).sort();
+    els.catSelect.innerHTML = '<option value="">All categories</option>' +
+      sorted.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  }
+
+  // --- filtering / pagination -----------------------------------------------
+
+  function getFiltered() {
+    const q = els.searchInput.value.trim().toLowerCase();
+    const catFilter = els.catSelect.value;
+    return words.filter(w => {
+      if (catFilter) {
+        const cats = w.cat.split(',').map(c => c.trim());
+        if (!cats.includes(catFilter)) return false;
+      }
+      if (!q) return true;
+      return w.es.toLowerCase().includes(q) || w.en.toLowerCase().includes(q) ||
+             w.note.toLowerCase().includes(q) || w.sentence.toLowerCase().includes(q);
+    });
+  }
+
+  // --- render ----------------------------------------------------------------
+
+  function renderTable() {
+    els.headerCount.textContent = `${words.length.toLocaleString()} words`;
+
+    const filtered = getFiltered();
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if (page > totalPages) page = totalPages;
+    const start = (page - 1) * PAGE_SIZE;
+    const pageItems = filtered.slice(start, start + PAGE_SIZE);
+
+    els.resultCount.textContent = filtered.length === words.length
+      ? `Showing ${pageItems.length} of ${filtered.length}`
+      : `${filtered.length} match${filtered.length === 1 ? '' : 'es'} — showing ${pageItems.length}`;
+
+    els.pageLabel.textContent = `Page ${page} of ${totalPages}`;
+    els.prevBtn.disabled = page <= 1;
+    els.nextBtn.disabled = page >= totalPages;
+
+    if (pageItems.length === 0) {
+      els.tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--cream-dim);padding:24px;">No matches.</td></tr>';
+      return;
+    }
+
+    els.tableBody.innerHTML = pageItems.map(w => {
+      const idx = words.indexOf(w);
+      const hasExtra = w.note || w.sentence;
+      return `
+        <tr data-idx="${idx}">
+          <td><div class="cell-edit" contenteditable="true" data-field="es">${escapeHtml(w.es)}</div></td>
+          <td><div class="cell-edit" contenteditable="true" data-field="en">${escapeHtml(w.en)}</div></td>
+          <td><div class="cell-edit cat-cell" contenteditable="true" data-field="cat">${escapeHtml(w.cat)}</div></td>
+          <td>
+            <div class="row-actions">
+              <button class="row-btn expand-btn" data-idx="${idx}" type="button" aria-label="Edit note/sentence">${hasExtra ? '✎' : '+'}</button>
+              <button class="row-btn delete delete-btn" data-idx="${idx}" type="button" aria-label="Delete word">🗑</button>
+            </div>
+          </td>
+        </tr>
+        <tr class="detail-row hidden" data-detail-for="${idx}">
+          <td colspan="4">
+            <div class="detail-field">
+              <label>Note</label>
+              <textarea data-field="note" data-idx="${idx}" rows="1">${escapeHtml(w.note)}</textarea>
+            </div>
+            <div class="detail-field">
+              <label>Example sentence</label>
+              <textarea data-field="sentence" data-idx="${idx}" rows="2">${escapeHtml(w.sentence)}</textarea>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  // --- edits (never re-render on keystroke — would break contenteditable cursor position) ---
+
+  els.tableBody.addEventListener('input', (e) => {
+    const cell = e.target.closest('.cell-edit');
+    if (cell) {
+      const row = cell.closest('tr[data-idx]');
+      const idx = parseInt(row.dataset.idx, 10);
+      words[idx][cell.dataset.field] = cell.textContent;
+      setDirty();
+      return;
+    }
+    const textarea = e.target.closest('textarea[data-field]');
+    if (textarea) {
+      const idx = parseInt(textarea.dataset.idx, 10);
+      words[idx][textarea.dataset.field] = textarea.value;
+      setDirty();
+    }
+  });
+
+  els.tableBody.addEventListener('click', (e) => {
+    const delBtn = e.target.closest('.delete-btn');
+    if (delBtn) {
+      const idx = parseInt(delBtn.dataset.idx, 10);
+      const w = words[idx];
+      if (!confirm(`Delete "${w.es || '(blank)'}" / "${w.en || '(blank)'}"?`)) return;
+      words.splice(idx, 1);
+      setDirty();
+      renderTable();
+      return;
+    }
+    const expBtn = e.target.closest('.expand-btn');
+    if (expBtn) {
+      const idx = expBtn.dataset.idx;
+      const detailRow = els.tableBody.querySelector(`tr[data-detail-for="${idx}"]`);
+      if (detailRow) detailRow.classList.toggle('hidden');
+    }
+  });
+
+  // --- add / search / filter / pagination ------------------------------------
+
+  els.addBtn.addEventListener('click', () => {
+    els.searchInput.value = '';
+    els.catSelect.value = '';
+    words.unshift({ es: '', en: '', note: '', cat: '', sentence: '' });
+    setDirty();
+    page = 1;
+    renderTable();
+    const firstCell = els.tableBody.querySelector('.cell-edit');
+    if (firstCell) firstCell.focus();
+  });
+
+  els.searchInput.addEventListener('input', () => { page = 1; renderTable(); });
+  els.catSelect.addEventListener('change', () => { page = 1; renderTable(); });
+  els.prevBtn.addEventListener('click', () => { page -= 1; renderTable(); });
+  els.nextBtn.addEventListener('click', () => { page += 1; renderTable(); });
+
+  // --- dirty state / download -------------------------------------------------
+
+  function setDirty() {
+    isDirty = true;
+    updateDirtyUI();
+  }
+  function updateDirtyUI() {
+    els.dirtyIndicator.classList.toggle('dirty', isDirty);
+    els.dirtyText.textContent = isDirty ? 'Unsaved changes' : 'No unsaved changes';
+    els.downloadBtn.disabled = !isDirty;
+  }
+
+  els.downloadBtn.addEventListener('click', () => {
+    // Drop fully-blank rows (e.g. an "Add word" row left empty) before export.
+    const cleanWords = words.filter(w => w.es.trim() || w.en.trim());
+    const aoa = [COLUMNS, ...cleanWords.map(w => [w.es, w.en, w.note, w.cat, w.sentence])];
+    const newSheet = XLSX.utils.aoa_to_sheet(aoa);
+    workbook.Sheets['Words'] = newSheet;
+    XLSX.writeFile(workbook, 'words.xlsx');
+  });
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  load();
+</script>
+</body>
+</html>
