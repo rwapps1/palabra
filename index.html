@@ -6104,12 +6104,19 @@
   // browser tab, or closing the Activity entirely in the APK. This section
   // makes back navigate within the app instead, using the History API.
   //
-  // Design: rather than modelling exact menu depth, we maintain at most ONE
-  // extra history entry ("the trap") at any time. Any screen that isn't the
-  // floor (start/login) keeps that one entry armed; landing back on the
-  // floor sheds it. Every screen falls into exactly one of three buckets:
-  //   - floor: start, login - never trapped, so a further back press here
-  //     genuinely exits (closes the APK / leaves to the previous page).
+  // Design: every non-floor screen gets its own real history entry - no
+  // attempt to collapse multiple menu levels into a shared slot (an earlier
+  // version tried that and broke as soon as the user went two levels deep,
+  // e.g. Achievements -> an achievement group - because going deeper just
+  // relabelled the one entry instead of adding a new one, so there was only
+  // ever a single real pop available no matter how many screens you'd
+  // actually visited). Landing back on the floor (start/login) instead
+  // sheds everything accumulated in one `history.go()` jump, so exact depth
+  // never has to matter once you're home again - a further back press there
+  // genuinely exits (closes the APK / leaves to the previous page).
+  //
+  // Every screen falls into exactly one of three special buckets:
+  //   - floor: start, login - see above.
   //   - swallow: round-end / celebration screens - back does nothing at
   //     all. These are reached automatically (timers, round completion),
   //     never chosen by the user, so there's nothing sensible to return to.
@@ -6118,7 +6125,8 @@
   //     navigation.
   // Everything else (menu/setup/detail screens) already has its own
   // "back-btn" wired by its render function - hardware back just clicks it,
-  // so behavior is guaranteed identical to tapping the on-screen arrow.
+  // so behavior is guaranteed identical to tapping the on-screen arrow, and
+  // the resulting screen change re-arms itself the normal way below.
   const BACK_FLOOR_SCREENS = new Set(['start', 'login']);
   const BACK_SWALLOW_SCREENS = new Set(['celebrate', 'level-up', 'stream-checkpoint', 'result', 'conjugate-result', 'memory-result']);
   const BACK_QUIT_HANDLERS = {
@@ -6128,49 +6136,56 @@
     conjugate: quitConjugateRound,
   };
 
-  let backTrapArmed = false;
-  let ignoreNextPopstate = false; // set right before a programmatic history.back() we don't want to react to
+  let navDepth = 0; // how many of our own history entries currently exist beyond the floor
+  let ignoreNextPopstate = false; // set right before a programmatic history.back()/go() we don't want to react to
 
-  // Called at the end of every real screen change. Keeps the trap armed
-  // (exactly one extra history entry) whenever state.screen isn't the
-  // floor, and sheds it the moment the user lands back on the floor by any
-  // route (successive back presses, or a direct "Home" shortcut button).
-  function syncBackTrap() {
+  // Called at the end of every real screen change (see the render() hook
+  // below). Deliberately doesn't try to tell "going deeper" apart from
+  // "going back a level" - every non-floor transition just gets its own
+  // pushed entry either way, and reaching the floor sheds all of them in
+  // one jump. Depth can grow larger than the "true" menu depth over a long
+  // session (e.g. cycling in and out of a screen a few times) - that's
+  // harmless; it all collapses the moment the user reaches Home again.
+  function syncBackHistory() {
     if (BACK_FLOOR_SCREENS.has(state.screen)) {
-      if (backTrapArmed) {
-        backTrapArmed = false;
+      if (navDepth > 0) {
+        const steps = navDepth;
+        navDepth = 0;
         ignoreNextPopstate = true;
-        history.back();
+        history.go(-steps);
       }
       return;
     }
-    if (backTrapArmed) {
-      history.replaceState({ trapped: true }, '');
-    } else {
-      backTrapArmed = true;
-      history.pushState({ trapped: true }, '');
-    }
+    navDepth += 1;
+    history.pushState({ navDepth }, '');
   }
 
   window.addEventListener('popstate', () => {
     if (ignoreNextPopstate) { ignoreNextPopstate = false; return; }
-    if (!backTrapArmed) return; // already at the floor - let real back-navigation proceed
-    backTrapArmed = false; // the native entry we were relying on is already gone at this point
+    if (navDepth <= 0) return; // already at the floor - let real back-navigation proceed
+    navDepth -= 1; // the native entry is already gone at this point
 
     const screen = state.screen;
     if (BACK_SWALLOW_SCREENS.has(screen)) {
-      // Nothing should happen - re-arm so the trap is ready for next time.
-      syncBackTrap();
+      // Nothing should happen - re-arm so a trap entry exists for next time.
+      navDepth += 1;
+      history.pushState({ navDepth }, '');
       return;
     }
     if (BACK_QUIT_HANDLERS[screen]) {
-      BACK_QUIT_HANDLERS[screen](); // may show a confirm; if cancelled, state.screen is unchanged
-      syncBackTrap(); // resync regardless of outcome - re-arms if still here, releases if we left
+      const depthBeforeHandler = navDepth;
+      BACK_QUIT_HANDLERS[screen](); // may show a confirm; if confirmed this changes state.screen and calls render(), which re-arms itself via syncBackHistory()
+      if (navDepth === depthBeforeHandler) {
+        // Cancelled - nothing changed, so render() never got a chance to
+        // re-arm. Do it manually so the trap is still there next time.
+        navDepth += 1;
+        history.pushState({ navDepth }, '');
+      }
       return;
     }
     const backBtn = document.getElementById('back-btn');
-    if (backBtn) backBtn.click(); // triggers that screen's own existing back handler
-    else syncBackTrap(); // no known back action on this screen - stay safe rather than stuck untrapped
+    if (backBtn) backBtn.click(); // triggers that screen's own existing back handler, which re-arms normally via render()
+    else { navDepth += 1; history.pushState({ navDepth }, ''); } // no known back action on this screen - stay safe rather than stuck untrapped
   });
 
   function render() {
@@ -6206,7 +6221,7 @@
     else if (state.screen === 'xp-info') renderXPInfo();
 
     if (isNewScreen) window.scrollTo(0, 0);
-    if (isNewScreen) syncBackTrap();
+    if (isNewScreen) syncBackHistory();
   }
 
   // Single, stable listener for advancing on Enter from the feedback screen.
