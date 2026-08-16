@@ -6162,8 +6162,29 @@
 
   window.addEventListener('popstate', () => {
     if (ignoreNextPopstate) { ignoreNextPopstate = false; return; }
-    if (navDepth <= 0) return; // already at the floor - let real back-navigation proceed
-    navDepth -= 1; // the native entry is already gone at this point
+
+    // Ground truth for how deep we actually landed, read straight off the
+    // entry itself - never assumed. A single native back doesn't always
+    // consume exactly one of our pushed entries: fast back presses/gestures
+    // can get queued by the browser and resolved together against the
+    // position that existed before any of them fired, so one popstate can
+    // land us several of our entries deeper than navDepth (which only ever
+    // assumed "-1 per event") expects. Trusting the entry's own stored state
+    // instead of our running counter keeps us in sync no matter how many
+    // levels one popstate actually skipped - and stops the floor-collapse
+    // below from calling history.go() an extra, unwarranted time and
+    // overshooting past the real bottom of the stack (which is what was
+    // exiting the app/tab a press early).
+    const landedDepth = (history.state && typeof history.state.navDepth === 'number')
+      ? history.state.navDepth : 0;
+
+    if (landedDepth <= 0 && BACK_FLOOR_SCREENS.has(state.screen)) {
+      // Already home, and the browser already put us at (or before) the
+      // floor for real - nothing left to trap, let this one genuinely exit.
+      navDepth = 0;
+      return;
+    }
+    navDepth = landedDepth; // resync to reality before anything else touches it
 
     const screen = state.screen;
     if (BACK_SWALLOW_SCREENS.has(screen)) {
