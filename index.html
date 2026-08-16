@@ -6204,9 +6204,18 @@
 
     const screen = state.screen;
     if (BACK_SWALLOW_SCREENS.has(screen)) {
-      // Nothing should happen - re-arm so a trap entry exists for next time.
+      // Nothing should happen. The real back press just moved the browser
+      // one entry behind this screen's own entry (pushed for real when we
+      // first arrived here) - that entry still exists ahead of us, untouched,
+      // so history.forward() re-occupies it instead of pushState()-ing a
+      // fresh one. Pushing a new entry here would be the same reactive,
+      // no-gesture-behind-it pattern that caused the original back-skip bug;
+      // forward() just moves within entries that already exist, so it
+      // shouldn't trip the same anti-abuse heuristic. ignoreNextPopstate
+      // means we don't have to do anything when that forward() lands.
       navDepth += 1;
-      history.pushState({ navDepth }, '');
+      ignoreNextPopstate = true;
+      history.forward();
       return;
     }
     if (BACK_QUIT_HANDLERS[screen]) {
@@ -6214,9 +6223,12 @@
       BACK_QUIT_HANDLERS[screen](); // may show a confirm; if confirmed this changes state.screen and calls render(), which re-arms itself via syncBackHistory()
       if (navDepth === depthBeforeHandler) {
         // Cancelled - nothing changed, so render() never got a chance to
-        // re-arm. Do it manually so the trap is still there next time.
+        // re-arm. Restore the entry the back press just moved past via
+        // forward() rather than pushing a new one - same reasoning as the
+        // swallow-screen case above.
         navDepth += 1;
-        history.pushState({ navDepth }, '');
+        ignoreNextPopstate = true;
+        history.forward();
       }
       return;
     }
@@ -6226,8 +6238,11 @@
       backBtn.click(); // triggers that screen's own existing back handler; render() runs synchronously inside this call
       reactingToPopstate = false;
     } else {
+      // No known back action on this screen - stay safe rather than stuck
+      // untrapped. Same forward()-over-pushState reasoning as above.
       navDepth += 1;
-      history.pushState({ navDepth }, ''); // no known back action on this screen - stay safe rather than stuck untrapped
+      ignoreNextPopstate = true;
+      history.forward();
     }
   });
 
