@@ -1072,6 +1072,33 @@
     background: rgba(201,168,255,0.14);
     border-color: var(--label);
   }
+  /* Cloze "hint" button - hears the full sentence (target word included),
+     unlike .speak-btn on a cloze question which deliberately only reads the
+     surrounding context. Same round-button family as .speak-btn, just wide
+     enough for a short text label instead of a single emoji glyph. */
+  .hint-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--outline);
+    color: var(--cream);
+    width: 46px;
+    height: 34px;
+    border-radius: 17px;
+    font-family: 'Sora', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .hint-btn.speaking {
+    border-color: var(--label);
+    color: var(--label);
+    animation: pulse 0.9s ease-in-out infinite;
+  }
   .audio-hint { font-size: 12px; color: var(--cream-dim); text-align: center; }
   .glow-orb-progress.streak-orb {
     background: radial-gradient(circle at 35% 30%, #FFF3DD, #FFC163 55%, #B97C1A 100%);
@@ -1708,6 +1735,7 @@
     streamCheckpoints50:    { name: 'Deep Diver',        desc: 'Reach 50 lifetime Stream checkpoints',                           icon: '🤿' },
     streamPerfectCheckpoint:{ name: 'Clean Sweep',       desc: 'A perfect checkpoint block, no mistakes',                        icon: '🧹' },
     streamAllFormats:       { name: 'Triple Threat',     desc: 'Answer correctly in choice, listen, and type — all in one session', icon: '🎛️' },
+    streamAllFormatsQuad:   { name: 'Quadruple Threat',  desc: 'Answer correctly in choice, listen, type, and fill-in-the-blank — all in one session', icon: '🎯' },
     streamAudio25:          { name: 'Good Ear',          desc: '25 lifetime correct audio answers in Stream',                    icon: '🎧' },
     streamStreak40:         { name: 'Locked In',         desc: 'A 40-answer streak within a single stream',                      icon: '🔒' },
     streamCorrect100:       { name: 'Stream Regular',    desc: '100 lifetime correct answers in Stream',                         icon: '🗺️' },
@@ -2344,6 +2372,7 @@
     isDailyDoubleRound: false,
     isStreamRound: false,
     lastRoundWasStream: false, // survives into the results screen (isStreamRound itself is cleared before then) so "Play again" knows to restart a stream, not a normal round
+    lastRoundWasSentences: false, // same idea as lastRoundWasStream, but for Sentences mode - Quiz and Sentences share the same results screen, so this is how "Play again" / "Change settings" know which one to restart
     streamCheckpointCount: 0, // answers since the last checkpoint (0-9), resets each checkpoint
     streamSessionStreak: 0,      // correct-in-a-row within THIS stream session only (Locked In) — same session-only pattern as taStreak
     streamSessionCheckpoints: 0, // checkpoints reached in one continuous sitting, without stopping (Marathon Session)
@@ -2468,6 +2497,14 @@
   // already excludes conjugation-only verbs - see isMainPoolEligible).
   function activePairs() {
     return state.activeCategory ? state.categoryPairs : state.mainPool;
+  }
+
+  // The pool for Sentences mode - only main-pool words with an actual
+  // usable sentence (findClozeBlank succeeds). Recomputed from state.mainPool
+  // each time rather than cached, so it automatically tracks new sentences
+  // added to words.xlsx without any extra wiring.
+  function sentencePairs() {
+    return state.mainPool.filter(p => findClozeBlank(p));
   }
 
   function getWeight(pair) {
@@ -3237,9 +3274,42 @@
     state.lastFlippedIndex = -1;
     state.resultMode = 'round';
     state.lastRoundWasStream = false;
+    state.lastRoundWasSentences = false;
     state.effectiveAnswerMode = (settings.answerMode === 'choice' && pool.length >= 3) ? 'choice' : 'type';
     prepareQuestion();
     state.screen = 'quiz';
+    render();
+  }
+
+  // Sentences mode - every question is cloze, drawn only from words that
+  // have a sentence (see sentencePairs()). Reuses the exact same round
+  // engine, renderer, submit/record/next-question flow, and results screen
+  // as Quiz - direction and answerMode settings don't apply to cloze (see
+  // targetFieldFor / renderQuiz), so this mode has neither. Round length is
+  // the one setting it does share with every other mode.
+  function startSentences() {
+    const settings = state.progress.settings;
+    const pool = sentencePairs();
+    const roundLen = settings.roundLength === 'all' ? pool.length : Math.min(parseInt(settings.roundLength, 10), pool.length);
+    state.questions = buildRound(pool, roundLen, 'es-en').map(q => ({ ...q, format: 'cloze' }));
+    state.index = 0;
+    state.results = [];
+    state.input = '';
+    state.checked = false;
+    state.newBestThisRound = false;
+    state.lastFlippedIndex = -1;
+    state.resultMode = 'round';
+    state.lastRoundWasStream = false;
+    state.lastRoundWasSentences = true;
+    state.activeCategory = null; // Sentences draws from the whole word list, never a category
+    state.effectiveAnswerMode = 'type'; // cloze is always typed, never multiple choice
+    prepareQuestion();
+    state.screen = 'quiz';
+    render();
+  }
+
+  function backToSentencesSetup() {
+    state.screen = 'sentences-setup';
     render();
   }
 
@@ -3319,6 +3389,9 @@
       if (state.streamSessionStreak >= 40) unlockAchievement('streamStreak40');
       if (state.streamFormatsCorrect.mc && state.streamFormatsCorrect.audio && state.streamFormatsCorrect.type) {
         unlockAchievement('streamAllFormats');
+      }
+      if (state.streamFormatsCorrect.mc && state.streamFormatsCorrect.audio && state.streamFormatsCorrect.type && state.streamFormatsCorrect.cloze) {
+        unlockAchievement('streamAllFormatsQuad');
       }
       saveProgress();
     }
@@ -3655,6 +3728,11 @@
     if (perfect) unlockAchievement('timeAttackFlawless');
     suppressAchievementFX = false;
     showCelebration(perfect ? 'perfect' : 'finished', 'result');
+  }
+
+  function quitTimeAttack() {
+    if (!confirm('Quit this round? Your progress on it will be scored as-is.')) return;
+    endTimeAttack();
   }
 
   function backToMemorySetup() {
@@ -4584,18 +4662,20 @@
     const taBest = state.progress.timeAttackBest || 0;
     const memBest = state.progress.memoryBest[settings.memoryGridSize];
     const noWords = state.pairs.length === 0;
+    const sentenceCount = sentencePairs().length;
+    const noSentenceWords = sentenceCount === 0;
 
     const tiles = [
       { id: 'quiz', icon: '🔤', name: 'Quiz', meta: 'Type or choose', color: 'rgba(255,107,74,0.18)', locked: false, gate: true },
+      { id: 'sentences', icon: '📝', name: 'Sentences', meta: sentenceCount + ' sentences', color: 'rgba(201,168,255,0.18)', locked: false, gate: false, disabled: noSentenceWords },
       { id: 'timeattack', icon: '⏱', name: 'Time Attack', meta: taBest > 0 ? `Best: ${taBest}` : '60 seconds', color: 'rgba(45,212,191,0.18)', locked: false, gate: true },
       { id: 'memory', icon: '🧩', name: 'Memory Match', meta: memBest ? `Best: ${memBest} moves` : 'Find the pairs', color: 'rgba(217,70,239,0.18)', locked: false, gate: true },
       { id: 'verbs', icon: '📖', name: 'Conjugate', meta: 'Present tense', color: 'rgba(52,211,153,0.18)', locked: false, gate: false },
       { id: 'categories', icon: '🏷️', name: 'Categories', meta: CATEGORIES.length + ' topics', color: 'rgba(255,107,74,0.18)', locked: false, gate: false },
-      { id: 'mystery', icon: '❓', name: 'Exciting New Game', meta: 'Coming soon', color: 'rgba(255,255,255,0.06)', locked: true, gate: false },
     ];
 
     const tilesHtml = tiles.map(t => `
-      <button class="game-tile ${t.locked ? 'locked' : ''}" data-tile="${t.id}" ${(!t.locked && t.gate && noWords) ? 'disabled' : ''}>
+      <button class="game-tile ${t.locked ? 'locked' : ''}" data-tile="${t.id}" ${(!t.locked && ((t.gate && noWords) || t.disabled)) ? 'disabled' : ''}>
         ${t.locked ? '<div class="tile-soon">Soon</div>' : ''}
         <div class="tile-icon-wrap" style="background:${t.color};">${t.icon}</div>
         <div class="tile-name">${esc(t.name)}</div>
@@ -4627,6 +4707,7 @@
         }
         if (tile.disabled) return;
         if (id === 'quiz') { state.screen = 'quiz-setup'; render(); }
+        else if (id === 'sentences') { state.screen = 'sentences-setup'; render(); }
         else if (id === 'timeattack') { state.screen = 'timeattack-setup'; render(); }
         else if (id === 'memory') { state.screen = 'memory-setup'; render(); }
         else if (id === 'categories') { state.screen = 'categories'; render(); }
@@ -4693,6 +4774,51 @@
     document.querySelectorAll('#answermode-group .seg-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         state.progress.settings.answerMode = btn.dataset.val;
+        saveProgress();
+        render();
+      });
+    });
+  }
+
+  // Sentences mode setup - deliberately only has a round-length picker.
+  // Direction and answer-mode settings don't apply to cloze: it's always
+  // Spanish-target (see targetFieldFor) and always typed, never multiple
+  // choice (a deliberate design decision - see the cloze feature notes).
+  function renderSentencesSetup() {
+    const app = document.getElementById('app');
+    const settings = state.progress.settings;
+    const sentenceCount = sentencePairs().length;
+
+    const lengthOptions = [['10', '10'], ['20', '20'], ['50', '50'], ['all', 'All']];
+    const lengthHtml = lengthOptions.map(([val, label]) =>
+      `<button class="seg-btn ${settings.roundLength === val ? 'active' : ''}" data-val="${val}">${label}</button>`
+    ).join('');
+
+    app.innerHTML = `
+      <div class="screen bg-quiz">
+        <div class="wrap wrap-centered">
+          <div class="screen-header">
+            <button id="back-btn" class="back-btn">←</button>
+          </div>
+          <div class="screen-body">
+            <div class="game-icon-badge" style="background:rgba(201,168,255,0.2);">📝</div>
+            <h1 style="font-size:30px; margin-bottom:8px;">Sentences</h1>
+            <p class="sub" style="margin-bottom:24px;">Fill in the blank, ${sentenceCount} words with sentences</p>
+            <div class="card" style="width:100%;">
+              <div class="segmented" id="length-group">${lengthHtml}</div>
+              <button id="start-btn" class="btn-primary" style="margin-top:22px;" ${sentenceCount === 0 ? 'disabled' : ''}>Start Sentences</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('back-btn').addEventListener('click', () => { state.screen = 'game-modes'; render(); });
+    document.getElementById('start-btn').addEventListener('click', startSentences);
+
+    document.querySelectorAll('#length-group .seg-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.progress.settings.roundLength = btn.dataset.val;
         saveProgress();
         render();
       });
@@ -5285,7 +5411,7 @@
     const streamQuestionNum = state.results.length + (state.checked ? 0 : 1);
     const progressLabel = state.isStreamRound
       ? `Question ${streamQuestionNum} · ${isAudioFormat ? 'LISTEN' : (current.format === 'cloze' && clozeBlank ? 'FILL IN THE BLANK' : (current.direction === 'es-en' ? 'ES → EN' : 'EN → ES'))}`
-      : `${state.index + 1} / ${state.questions.length} · ${current.direction === 'es-en' ? 'ES → EN' : 'EN → ES'}`;
+      : `${state.index + 1} / ${state.questions.length} · ${(current.format === 'cloze' && clozeBlank) ? 'FILL IN THE BLANK' : (current.direction === 'es-en' ? 'ES → EN' : 'EN → ES')}`;
 
     const orbHtml = state.isStreamRound
       ? `<div class="glow-orb-progress streak-orb"><div class="orb-num">🔥${state.progress.streak.current}</div><div class="orb-lbl">STREAK</div></div>`
@@ -5313,7 +5439,7 @@
     const promptRowHtml = isAudioFormat
       ? `<button id="speak-prompt-btn" class="speak-btn big" title="Hear it">🔊</button><div class="audio-hint">Listen, then choose the meaning</div>`
       : (current.format === 'cloze' && clozeBlank)
-      ? `<div class="audio-hint" style="margin-bottom:10px;">${instructionText}</div><div class="cloze-sentence">${esc(clozeBlank.before)}<span class="cloze-blank">____</span>${esc(clozeBlank.after)}</div><button id="speak-prompt-btn" class="speak-btn" title="Hear it" style="margin-top:10px;">🔊</button>`
+      ? `<div class="audio-hint" style="margin-bottom:10px;">${instructionText}</div><div class="cloze-sentence">${esc(clozeBlank.before)}<span class="cloze-blank">____</span>${esc(clozeBlank.after)}</div><div class="prompt-row" style="margin-top:10px;"><button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button><button id="hint-btn" class="hint-btn" title="Hear the full sentence">Hint</button></div>`
       : `<div class="audio-hint" style="margin-bottom:10px;">${instructionText}</div><div class="prompt-row"><div class="prompt-word">${esc(promptWord)}</div><button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button></div>${promptNote ? `<div class="prompt-note">${esc(promptNote)}</div>` : ''}`;
 
     let bottomHtml;
@@ -5389,6 +5515,12 @@
 
     const speakPromptBtn = document.getElementById('speak-prompt-btn');
     speakPromptBtn.addEventListener('click', () => speak(promptWord, promptLang, speakPromptBtn));
+    const hintBtn = document.getElementById('hint-btn');
+    // Using this doesn't affect scoring, streaks, or SRS progress in any
+    // way - hearing the word and still being able to type it correctly is
+    // treated exactly like any other correct answer (deliberate decision;
+    // most players are expected to only reach for it when needed).
+    if (hintBtn) hintBtn.addEventListener('click', () => speak(current.sentence, 'es-ES', hintBtn));
     const shouldAutoSpeak = isAudioFormat || state.progress.settings.autoSpeak;
 
     if (useChoice) {
@@ -5575,9 +5707,13 @@
       </div>
     `;
     document.getElementById('back-btn').addEventListener('click', () => leaveResults(goHome));
-    document.getElementById('again-btn').addEventListener('click', () => leaveResults(state.lastRoundWasStream ? startStream : startQuiz));
+    document.getElementById('again-btn').addEventListener('click', () => leaveResults(
+      state.lastRoundWasStream ? startStream : (state.lastRoundWasSentences ? startSentences : startQuiz)
+    ));
     const settingsBtn = document.getElementById('settings-btn');
-    if (settingsBtn) settingsBtn.addEventListener('click', () => leaveResults(backToQuizSetup));
+    if (settingsBtn) settingsBtn.addEventListener('click', () => leaveResults(
+      state.lastRoundWasSentences ? backToSentencesSetup : backToQuizSetup
+    ));
   }
 
   function renderAchievements() {
@@ -5906,9 +6042,7 @@
       document.getElementById('ta-check-btn').addEventListener('click', handleTaTypedSubmit);
     }
 
-    document.getElementById('ta-quit-btn').addEventListener('click', () => {
-      if (confirm('Quit this round? Your progress on it will be scored as-is.')) endTimeAttack();
-    });
+    document.getElementById('ta-quit-btn').addEventListener('click', quitTimeAttack);
   }
 
   function renderTimeAttackResult() {
@@ -5963,6 +6097,82 @@
   // checking a quiz answer or toggling the menu (scroll should stay put).
   let lastScreen = null;
 
+  // ---- Hardware/browser back button ------------------------------------
+  // By default a phone's back button/gesture has nothing of this app's own
+  // to act on (no history entries are pushed anywhere), so it falls straight
+  // through to whatever's underneath - the previous website in a normal
+  // browser tab, or closing the Activity entirely in the APK. This section
+  // makes back navigate within the app instead, using the History API.
+  //
+  // Design: rather than modelling exact menu depth, we maintain at most ONE
+  // extra history entry ("the trap") at any time. Any screen that isn't the
+  // floor (start/login) keeps that one entry armed; landing back on the
+  // floor sheds it. Every screen falls into exactly one of three buckets:
+  //   - floor: start, login - never trapped, so a further back press here
+  //     genuinely exits (closes the APK / leaves to the previous page).
+  //   - swallow: round-end / celebration screens - back does nothing at
+  //     all. These are reached automatically (timers, round completion),
+  //     never chosen by the user, so there's nothing sensible to return to.
+  //   - quit: the four active-play screens - back triggers the exact same
+  //     "quit this round?" confirm as the on-screen Quit button, not real
+  //     navigation.
+  // Everything else (menu/setup/detail screens) already has its own
+  // "back-btn" wired by its render function - hardware back just clicks it,
+  // so behavior is guaranteed identical to tapping the on-screen arrow.
+  const BACK_FLOOR_SCREENS = new Set(['start', 'login']);
+  const BACK_SWALLOW_SCREENS = new Set(['celebrate', 'level-up', 'stream-checkpoint', 'result', 'conjugate-result', 'memory-result']);
+  const BACK_QUIT_HANDLERS = {
+    quiz: quitQuiz,
+    timeattack: quitTimeAttack,
+    'memory-play': quitMemoryMatch,
+    conjugate: quitConjugateRound,
+  };
+
+  let backTrapArmed = false;
+  let ignoreNextPopstate = false; // set right before a programmatic history.back() we don't want to react to
+
+  // Called at the end of every real screen change. Keeps the trap armed
+  // (exactly one extra history entry) whenever state.screen isn't the
+  // floor, and sheds it the moment the user lands back on the floor by any
+  // route (successive back presses, or a direct "Home" shortcut button).
+  function syncBackTrap() {
+    if (BACK_FLOOR_SCREENS.has(state.screen)) {
+      if (backTrapArmed) {
+        backTrapArmed = false;
+        ignoreNextPopstate = true;
+        history.back();
+      }
+      return;
+    }
+    if (backTrapArmed) {
+      history.replaceState({ trapped: true }, '');
+    } else {
+      backTrapArmed = true;
+      history.pushState({ trapped: true }, '');
+    }
+  }
+
+  window.addEventListener('popstate', () => {
+    if (ignoreNextPopstate) { ignoreNextPopstate = false; return; }
+    if (!backTrapArmed) return; // already at the floor - let real back-navigation proceed
+    backTrapArmed = false; // the native entry we were relying on is already gone at this point
+
+    const screen = state.screen;
+    if (BACK_SWALLOW_SCREENS.has(screen)) {
+      // Nothing should happen - re-arm so the trap is ready for next time.
+      syncBackTrap();
+      return;
+    }
+    if (BACK_QUIT_HANDLERS[screen]) {
+      BACK_QUIT_HANDLERS[screen](); // may show a confirm; if cancelled, state.screen is unchanged
+      syncBackTrap(); // resync regardless of outcome - re-arms if still here, releases if we left
+      return;
+    }
+    const backBtn = document.getElementById('back-btn');
+    if (backBtn) backBtn.click(); // triggers that screen's own existing back handler
+    else syncBackTrap(); // no known back action on this screen - stay safe rather than stuck untrapped
+  });
+
   function render() {
     const isNewScreen = state.screen !== lastScreen;
     lastScreen = state.screen;
@@ -5971,6 +6181,7 @@
     else if (state.screen === 'start') renderStart();
     else if (state.screen === 'game-modes') renderGameModes();
     else if (state.screen === 'quiz-setup') renderQuizSetup();
+    else if (state.screen === 'sentences-setup') renderSentencesSetup();
     else if (state.screen === 'categories') renderCategories();
     else if (state.screen === 'category-setup') renderCategorySetup();
     else if (state.screen === 'conjugate-setup') renderConjugateSetup();
@@ -5995,6 +6206,7 @@
     else if (state.screen === 'xp-info') renderXPInfo();
 
     if (isNewScreen) window.scrollTo(0, 0);
+    if (isNewScreen) syncBackTrap();
   }
 
   // Single, stable listener for advancing on Enter from the feedback screen.
