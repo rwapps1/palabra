@@ -6138,6 +6138,7 @@
 
   let navDepth = 0; // how many of our own history entries currently exist beyond the floor
   let ignoreNextPopstate = false; // set right before a programmatic history.back()/go() we don't want to react to
+  let reactingToPopstate = false; // true only while synchronously re-rendering in direct reaction to a real back press
 
   // Called at the end of every real screen change (see the render() hook
   // below). Deliberately doesn't try to tell "going deeper" apart from
@@ -6154,6 +6155,21 @@
         ignoreNextPopstate = true;
         history.go(-steps);
       }
+      return;
+    }
+    if (reactingToPopstate) {
+      // A real back press already moved the browser to this exact real
+      // entry - it was created earlier when the user first tapped into this
+      // screen, so there's nothing to (re-)push. Pushing another entry here
+      // would be a same-document history entry created reactively by our
+      // own JS, with no direct user gesture behind this specific call -
+      // browsers can treat that as trap-the-back-button abuse and skip
+      // straight over it on the next real back press, landing outside the
+      // app entirely. Not pushing avoids creating that entry in the first
+      // place: every reachable screen already has exactly one real,
+      // gesture-created entry from when the user first tapped into it, so
+      // native back alone - no JS involvement - correctly walks back out
+      // one level per press, all the way to the floor.
       return;
     }
     navDepth += 1;
@@ -6205,8 +6221,14 @@
       return;
     }
     const backBtn = document.getElementById('back-btn');
-    if (backBtn) backBtn.click(); // triggers that screen's own existing back handler, which re-arms normally via render()
-    else { navDepth += 1; history.pushState({ navDepth }, ''); } // no known back action on this screen - stay safe rather than stuck untrapped
+    if (backBtn) {
+      reactingToPopstate = true;
+      backBtn.click(); // triggers that screen's own existing back handler; render() runs synchronously inside this call
+      reactingToPopstate = false;
+    } else {
+      navDepth += 1;
+      history.pushState({ navDepth }, ''); // no known back action on this screen - stay safe rather than stuck untrapped
+    }
   });
 
   function render() {
