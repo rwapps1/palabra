@@ -1,27 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-```html
-<head>
-
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9EFLSPZFZ"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-Z9EFLSPZFZ');
-  </script>
-
-  <!-- The rest of your existing head content goes below -->
-
-  
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Palabra — Learn Spanish Vocabulary, One Word at a Time</title>
-<meta name="description" content="Palabra is a free, installable web app for reinforcing Spanish vocabulary and verb conjugation through five game modes, spaced repetition, and visual progress tracking — a companion to your other learning resources." />
+<meta name="description" content="Palabra is a free, installable web app built around Stream — an endless mix of Spanish vocabulary questions — plus five focused game modes, achievements, and visual progress tracking. A companion to your other learning resources." />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
 
@@ -39,6 +22,7 @@
     --label: #C9A8FF;
     --memory: #E879F9;
     --conjugate: #34D399;
+    --stream: #FFC163;
   }
 
   * { box-sizing: border-box; }
@@ -78,6 +62,18 @@
   .menu-dot { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--outline); background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; color: var(--cream); font-weight: 700; font-size: 13px; }
   .streak-line { font-size: 12px; color: var(--cream-dim); margin: 9px 0 12px; font-variant-numeric: tabular-nums; }
   .streak-line b { color: var(--cream); }
+  .header-left { display: flex; align-items: center; gap: 9px; }
+  .stat-strip { display: flex; align-items: center; gap: 10px; margin: 10px 0 12px; }
+  .streak-text { font-size: 12px; color: var(--cream-dim); font-variant-numeric: tabular-nums; }
+  .streak-text b { color: var(--cream); }
+  .stat-divider { width: 1px; height: 12px; background: var(--outline); }
+  .level-mini { display: flex; align-items: center; gap: 5px; margin-left: auto; }
+  .level-mini-text { font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--label); }
+  .level-ring { --pct: 0%; width: 26px; height: 26px; border-radius: 50%; background: conic-gradient(var(--ochre) var(--pct), rgba(255,255,255,0.14) 0); display: flex; align-items: center; justify-content: center; }
+  .level-ring-inner { width: 20px; height: 20px; border-radius: 50%; background: #1a1330; display: flex; align-items: center; justify-content: center; }
+  .level-ring-num { font-size: 10px; font-weight: 700; color: var(--cream); }
+  /* phone-demo buttons look like divs, not browser buttons */
+  .phone-screen button, .screen-content-static button { background: none; border: none; padding: 0; margin: 0; font: inherit; color: inherit; text-align: inherit; cursor: pointer; }
 
   .card {
     background: var(--bg-card);
@@ -106,8 +102,11 @@
   .banner .tile-icon-wrap { margin-bottom: 0; }
   .banner-name { font-weight: 700; font-size: 12.5px; color: var(--cream); }
   .banner-meta { font-size: 10.5px; color: var(--cream-dim); margin-top: 1px; }
+  .banner-text { flex: 1; }
+  .banner-arrow { color: var(--ochre); font-size: 15px; flex-shrink: 0; }
   .achievements-banner { border-color: rgba(255,193,99,0.35); }
   .progress-banner { border-color: rgba(201,168,255,0.35); }
+  .modes-banner { border-color: rgba(255,255,255,0.16); }
 
   .eyebrow { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 10px; letter-spacing: 2px; color: var(--label); text-transform: uppercase; text-align: center; }
 
@@ -154,12 +153,14 @@
   .tap-c { animation: tapPulse 0.7s ease 700ms; }
   .tap-d { animation: tapPulse 0.7s ease 2900ms; }
   .tap-e { animation: tapPulse 0.7s ease 3150ms; }
-  .tap-hub { animation: tapPulse 0.7s ease 3150ms; }
+  .tap-hub { animation: tapPulse 0.7s ease 2600ms; }
   .tap-conj { animation: tapPulse 0.7s ease 1900ms; }
   @keyframes tapPulse { 0% { transform: scale(0.3); opacity: 0; } 35% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.5); opacity: 0; } }
 
   .hub-tile-press { animation: pressIt 0.35s ease 3200ms; }
   @keyframes pressIt { 0% { transform: scale(1); border-color: var(--outline); } 50% { transform: scale(0.94); border-color: var(--terracotta); } 100% { transform: scale(1); border-color: var(--outline); } }
+  .press-it { animation: pressIt2 0.35s ease 2650ms; }
+  @keyframes pressIt2 { 0% { transform: scale(1); border-color: var(--outline); } 50% { transform: scale(0.94); border-color: var(--ochre); } 100% { transform: scale(1); border-color: var(--outline); } }
 
   .option-btn.pending-correct { animation: growCorrect 0.35s ease 2000ms forwards; position: relative; }
   @keyframes growCorrect { to { background: rgba(45,212,191,0.22); border-color: var(--green); color: #B8FFF3; transform: scale(1.02); } }
@@ -212,6 +213,67 @@
   .progress-bar-label { font-size: 8.5px; color: var(--cream-dim); }
   .grow-bar { animation: growBar 0.6s ease forwards; }
   @keyframes growBar { from { height: 0%; } }
+  .progress-bar-count { font-size: 8.5px; color: var(--cream-dim); font-weight: 700; }
+  .progress-bar.conjugate { background: linear-gradient(180deg, var(--conjugate), rgba(52,211,153,0.25)); }
+  .progress-summary-stat { display: flex; justify-content: space-between; font-size: 10px; color: var(--cream-dim); padding: 3px 0; border-top: 1px solid rgba(255,255,255,0.08); }
+  .progress-summary-stat span:last-child { color: var(--cream); font-weight: 600; }
+  .progress-section-sub { font-size: 10px; color: var(--cream-dim); margin-bottom: 10px; }
+  .progress-review-list { display: flex; flex-direction: column; gap: 6px; }
+  .progress-review-item { display: flex; align-items: center; justify-content: space-between; padding: 7px 2px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .progress-review-item:last-child { border-bottom: none; }
+  .progress-review-word { font-weight: 700; font-size: 12.5px; color: var(--cream); }
+  .progress-review-en { font-size: 10px; color: var(--cream-dim); margin-top: 1px; }
+  .progress-box-tag { font-size: 9px; font-weight: 700; color: var(--label); background: rgba(201,168,255,0.14); border-radius: 6px; padding: 3px 7px; flex-shrink: 0; }
+
+  /* ============ Stream mode ============ */
+  .stream-hero { position: relative; margin: 4px 0 14px; padding: 20px; text-align: center; border-color: rgba(255,193,99,0.35); }
+  .stream-hero .format-row { display: flex; gap: 8px; margin-bottom: 14px; justify-content: center; }
+  .stream-hero .fchip { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,193,99,0.16); border: 1px solid rgba(255,193,99,0.3); display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .stream-hero h2 { font-family: 'Sora', sans-serif; font-weight: 800; font-size: 20px; margin: 0 0 6px; color: var(--cream); }
+  .stream-hero p { font-size: 12.5px; color: var(--cream-dim); margin: 0 0 16px; line-height: 1.45; }
+  .btn-primary { width: 100%; padding: 13px; border-radius: 14px; border: none; background: linear-gradient(135deg, var(--ochre), #FF8A4D); color: #1B1030; font-weight: 800; font-size: 14px; font-family: 'Inter', sans-serif; box-shadow: 0 8px 20px rgba(255,193,99,0.3); position: relative; }
+  .link-btn { background: none; border: none; color: var(--cream-dim); font-size: 12.5px; font-weight: 600; padding: 10px; }
+
+  .checkpoint-tiles { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; margin-bottom: 14px; }
+  .checkpoint-tiles .tile { height: 6px; border-radius: 50%; background: var(--outline); }
+  .glow-orb-progress { width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); border: 1px solid var(--outline); }
+  .glow-orb-progress.streak-orb { border-color: rgba(255,193,99,0.5); box-shadow: 0 0 18px rgba(255,193,99,0.35); }
+  .orb-num { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 14px; color: var(--cream); }
+  .orb-lbl { font-size: 7px; letter-spacing: 1px; color: var(--cream-dim); font-weight: 700; }
+  .stream-progress-label { text-align: center; font-size: 10.5px; letter-spacing: 1.5px; color: var(--ochre); font-weight: 700; text-transform: uppercase; margin-bottom: 10px; }
+  .instruction-line { font-size: 11px; color: var(--cream-dim); text-align: center; margin-bottom: 8px; letter-spacing: 0.3px; }
+
+  .speak-btn.big { width: 74px; height: 74px; border-radius: 50%; border: 1px solid rgba(255,193,99,0.4); background: rgba(255,193,99,0.12); font-size: 30px; display: flex; align-items: center; justify-content: center; margin: 10px auto 14px; position: relative; }
+  .audio-hint { font-size: 12px; color: var(--cream-dim); text-align: center; }
+  .audio-format-wrap { text-align: center; padding: 6px 0 4px; }
+
+  .cloze-sentence { font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 700; color: var(--cream); line-height: 1.6; text-align: center; padding: 4px 6px; }
+  .cloze-blank { display: inline-block; min-width: 46px; border-bottom: 2px solid var(--ochre); color: var(--ochre); margin: 0 3px; }
+  .check-btn { width: 100%; padding: 12px; border-radius: 13px; border: none; background: var(--ochre); color: #1B1030; font-weight: 700; font-size: 13.5px; font-family: 'Inter', sans-serif; position: relative; }
+
+  .stream-checkpoint-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
+  .celebrate-wrap { display: flex; flex-direction: column; align-items: center; opacity: 0; animation: fbIn 0.5s ease 150ms forwards; }
+  .celebrate-badge-ring { width: 84px; height: 84px; border-radius: 50%; margin-bottom: 16px; background: conic-gradient(var(--ochre) 0turn, rgba(255,255,255,0.1) 0); display: flex; align-items: center; justify-content: center; animation: ringFill 1.1s ease 250ms forwards; }
+  @keyframes ringFill { from { background: conic-gradient(var(--ochre) 0turn, rgba(255,255,255,0.1) 0); } to { background: conic-gradient(var(--ochre) 1turn, rgba(255,255,255,0.1) 0); } }
+  .celebrate-badge-disc { width: 68px; height: 68px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #FFF3D6, #FFC163 55%, #B4750C 100%); box-shadow: 0 0 26px rgba(255,193,99,0.55); display: flex; align-items: center; justify-content: center; font-size: 28px; }
+  .celebrate-headline { font-family: 'Sora', sans-serif; font-weight: 800; font-size: 21px; color: var(--cream); margin-bottom: 6px; }
+  .celebrate-subline { font-size: 12.5px; color: var(--cream-dim); margin: 0 0 20px; }
+  .checkpoint-actions { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+
+  .stream-achievement-banner { display: flex; align-items: center; gap: 12px; width: 100%; margin-bottom: 12px; padding: 14px; border-color: rgba(255,193,99,0.4); background: rgba(255,193,99,0.08); }
+  .stream-achievement-banner .tile-icon-wrap { width: 46px; height: 46px; font-size: 21px; margin-bottom: 0; flex-shrink: 0; }
+  .stream-achievement-banner .banner-name { font-size: 15px; }
+  .stream-achievement-banner .banner-meta { font-size: 11.5px; color: var(--cream-dim); margin-top: 3px; }
+  .stream-achievement-banner .banner-arrow { font-size: 18px; }
+  .tile-corner-arrow { position: absolute; top: 10px; right: 11px; color: var(--cream-dim); font-size: 11px; }
+
+  .achievement-item { display: flex; align-items: center; gap: 12px; padding: 10px 2px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .achievement-item:last-child { border-bottom: none; }
+  .achievement-item.locked { opacity: 0.4; }
+  .ach-icon { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,193,99,0.14); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .ach-text { flex: 1; }
+  .ach-name { font-weight: 700; font-size: 12.5px; color: var(--cream); }
+  .ach-desc-lg { font-size: 12px; color: var(--cream-dim); }
 
   .achievement-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--outline); }
   .achievement-row:last-child { border-bottom: none; }
@@ -234,6 +296,7 @@
 
   /* per-scene ambient backgrounds (as used inside the app) */
   .bg-quiz { background: radial-gradient(circle at 25% 10%, rgba(255,107,74,0.42), transparent 45%), radial-gradient(circle at 85% 70%, rgba(139,92,246,0.32), transparent 50%), linear-gradient(160deg, #1B1030 0%, #150C26 60%, #100A1E 100%); }
+  .bg-stream { background: radial-gradient(circle at 22% 12%, rgba(255,193,99,0.42), transparent 45%), radial-gradient(circle at 85% 72%, rgba(255,77,109,0.28), transparent 50%), linear-gradient(160deg, #241A12 0%, #1C130F 60%, #120B1E 100%); }
   .bg-timeattack { background: radial-gradient(circle at 20% 15%, rgba(45,212,191,0.4), transparent 45%), radial-gradient(circle at 85% 75%, rgba(56,120,255,0.3), transparent 50%), linear-gradient(160deg, #0D1B30 0%, #0B1626 60%, #0A121E 100%); }
   .bg-memory { background: radial-gradient(circle at 22% 14%, rgba(217,70,239,0.38), transparent 45%), radial-gradient(circle at 85% 72%, rgba(99,102,241,0.3), transparent 50%), linear-gradient(160deg, #240F35 0%, #180B28 60%, #100A1E 100%); }
   .bg-conjugate { background: radial-gradient(circle at 22% 14%, rgba(52,211,153,0.36), transparent 45%), radial-gradient(circle at 85% 72%, rgba(217,119,6,0.26), transparent 50%), linear-gradient(160deg, #0E2A22 0%, #0B1F1A 60%, #0A1512 100%); }
@@ -355,6 +418,35 @@
   @media (max-width: 900px) { .feature-grid { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 560px) { .feature-grid { grid-template-columns: 1fr; } }
 
+  /* featured tier — Stream (large) + Achievements/Progress (medium) */
+  .feature-tier-top { display: grid; grid-template-columns: 1.7fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .feature-card-lg {
+    background: rgba(255,193,99,0.07); border: 1px solid rgba(255,193,99,0.35); border-radius: 22px;
+    padding: 30px 28px; border-left: 4px solid var(--ochre); display: flex; flex-direction: column;
+  }
+  .feature-icon-lg { width: 54px; height: 54px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; background: rgba(255,193,99,0.18); }
+  .feature-card-lg h3 { font-family: 'Sora', sans-serif; font-size: 22px; margin: 0 0 8px; color: var(--cream); }
+  .feature-card-lg p { font-size: 14.5px; line-height: 1.6; color: var(--cream-dim); margin: 0 0 18px; }
+  .feature-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; }
+  .feature-tag { font-size: 11px; font-weight: 700; letter-spacing: 0.3px; color: var(--ochre); background: rgba(255,193,99,0.14); border: 1px solid rgba(255,193,99,0.3); border-radius: 999px; padding: 5px 10px; }
+
+  /* smaller tier — the other four modes */
+  .feature-tier-bottom { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .feature-card-sm { padding: 16px 14px; border-radius: 16px; }
+  .feature-card-sm .feature-icon { width: 34px; height: 34px; font-size: 15px; margin-bottom: 10px; }
+  .feature-card-sm h3 { font-size: 13px; margin: 0 0 4px; }
+  .feature-card-sm p { font-size: 11.5px; line-height: 1.45; }
+
+  @media (max-width: 900px) {
+    .feature-tier-top { grid-template-columns: 1fr 1fr; }
+    .feature-card-lg { grid-column: 1 / -1; }
+    .feature-tier-bottom { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .feature-tier-top { grid-template-columns: 1fr; }
+    .feature-tier-bottom { grid-template-columns: 1fr 1fr; }
+  }
+
   .under-hood {
     margin-top: 30px; padding: 18px 22px; border-radius: 18px; border: 1px dashed var(--outline);
     background: rgba(255,255,255,0.03); font-size: 13.5px; color: var(--cream-dim); line-height: 1.6; text-align: center;
@@ -440,18 +532,18 @@
       <div class="hero-eyebrow-row">
         <span class="hero-pill">Free</span>
         <span class="hero-pill">No install required</span>
-        <span class="hero-pill">Instant Registration Allows Progress To Be Saved</span>
+        <span class="hero-pill">4 question formats in one stream</span>
       </div>
-      <h1>Spanish vocabulary,<br><em>made to stick.</em></h1>
-      <p class="lede">Palabra is a browser-based Spanish vocabulary reinforcement app built around five game modes, quiet spaced repetition, and progress you can actually see. It's designed to complement your course, classes, or other learning resources — not replace them. Open a link, start playing, remember what you learn.</p>
+      <h1>Open the Stream,<br><em>keep the words coming.</em></h1>
+      <p class="lede">Palabra's Stream mode is an endless run of mixed Spanish vocabulary questions — pick the translation, listen and choose, or type it yourself. No setup, no picking a mode: just open it and keep going, with a soft checkpoint every 20 questions to catch your breath. It's built to sit alongside your course, classes, or other learning resources, with achievements and a full progress view tracking every word as it sinks in.</p>
       <div class="hero-stats">
+        <div class="hero-stat"><b>4</b><span>question formats</span></div>
         <div class="hero-stat"><b>1,000+</b><span>words</span></div>
-        <div class="hero-stat"><b>16</b><span>categories</span></div>
-        <div class="hero-stat"><b>150</b><span>verbs</span></div>
+        <div class="hero-stat"><b>30+</b><span>achievements</span></div>
         <div class="hero-stat"><b>5</b><span>game modes</span></div>
       </div>
       <div class="hero-ctas">
-        <a class="btn-play" href="https://rwapps1.github.io/palabra/" target="_blank" rel="noopener">Play Palabra now →</a>
+        <a class="btn-play" href="https://rwapps1.github.io/palabra/" target="_blank" rel="noopener">Start the Stream →</a>
         <a class="btn-ghost" href="#features">See what it does</a>
       </div>
     </div>
@@ -482,7 +574,7 @@
 
 <section class="about reveal">
   <div class="wrapper">
-    <p>Palabra turns vocabulary reinforcement into something you actually want to open. Quiz yourself, race the clock, flip cards, conjugate verbs — while a <b>6-box spaced-repetition engine</b> quietly tracks what's sticking and resurfaces what isn't. Use it alongside your classes, textbook, or favorite language app to help new words stick.</p>
+    <p>Palabra turns vocabulary reinforcement into something you actually want to open. Drop into the <b>Stream</b> for endless mixed-format practice, chase down achievements, or pick a specific mode — Quiz, Time Attack, Memory Match, Conjugate — while a <b>6-box spaced-repetition engine</b> quietly tracks what's sticking and resurfaces what isn't. Use it alongside your classes, textbook, or favorite language app to help new words stick.</p>
   </div>
 </section>
 
@@ -490,46 +582,62 @@
   <div class="wrapper">
     <div class="section-head reveal">
       <div class="section-eyebrow">Different ways to learn</div>
-      <h2 class="section-title">One app, every angle</h2>
-      <p class="section-sub">Different modes suit different moods — and different words. Palabra gives you all of them in the same place.</p>
+      <h2 class="section-title">Open a stream, keep it going</h2>
+      <p class="section-sub">Stream is home base — an endless mix of question formats with checkpoints, streaks, and achievements built in. Everything else is there when you want to focus in.</p>
     </div>
-    <div class="feature-grid">
-      <div class="feature-card reveal" style="--f-color: var(--terracotta); --f-bg: rgba(255,107,74,0.16);">
-        <div class="feature-icon">🔤</div>
-        <h3>Quiz</h3>
-        <p>Type the translation or pick it from choices — Spanish to English and back again.</p>
-      </div>
-      <div class="feature-card reveal" style="--f-color: var(--green); --f-bg: rgba(45,212,191,0.16);">
-        <div class="feature-icon">⏱</div>
-        <h3>Time Attack</h3>
-        <p>60 seconds on the clock. Answer fast, chain correct answers, beat your best score.</p>
-      </div>
-      <div class="feature-card reveal" style="--f-color: var(--memory); --f-bg: rgba(217,70,239,0.16);">
-        <div class="feature-icon">🧩</div>
-        <h3>Memory Match</h3>
-        <p>Flip cards, find the pairs, and let visual recall do the heavy lifting.</p>
-      </div>
-      <div class="feature-card reveal" style="--f-color: var(--conjugate); --f-bg: rgba(52,211,153,0.16);">
-        <div class="feature-icon">📖</div>
-        <h3>Conjugate</h3>
-        <p>Practice present-tense verbs across every pronoun — reflexive verbs included.</p>
-      </div>
-      <div class="feature-card reveal" style="--f-color: var(--terracotta); --f-bg: rgba(255,107,74,0.16);">
-        <div class="feature-icon">🏷️</div>
-        <h3>Categories</h3>
-        <p>16 themed word lists — food, animals, family, weather, clothing, and more.</p>
+
+    <div class="feature-tier-top">
+      <div class="feature-card-lg reveal">
+        <div class="feature-icon-lg">🌊</div>
+        <h3>Stream</h3>
+        <p>One continuous run of mixed vocabulary questions — choose the translation, listen and pick the meaning, type it, or fill in the blank. No setup, no menus: open it and it just keeps going, with a soft checkpoint every 20 questions to keep going or call it a day.</p>
+        <div class="feature-tags">
+          <span class="feature-tag">🔤 Choose</span>
+          <span class="feature-tag">🔊 Listen</span>
+          <span class="feature-tag">✎ Type</span>
+          <span class="feature-tag">📝 Fill the blank</span>
+        </div>
       </div>
       <div class="feature-card reveal" style="--f-color: var(--ochre); --f-bg: rgba(255,193,99,0.16);">
         <div class="feature-icon">🏆</div>
         <h3>Achievements</h3>
-        <p>Unlock badges as your streaks, scores, and word counts add up over time.</p>
+        <p>Streak milestones, checkpoint counts, perfect blocks, marathon sessions — Stream has its own achievement set, plus badges for every other mode.</p>
       </div>
       <div class="feature-card reveal" style="--f-color: var(--label); --f-bg: rgba(201,168,255,0.16);">
         <div class="feature-icon">📊</div>
         <h3>My Progress</h3>
-        <p>See exactly which words and verb combos are locked in — and which need review.</p>
+        <p>A full breakdown of vocabulary and conjugation accuracy, box-by-box progress, and exactly which words and verb combos need review next.</p>
       </div>
     </div>
+
+    <div class="feature-tier-bottom">
+      <div class="feature-card feature-card-sm reveal" style="--f-color: var(--terracotta); --f-bg: rgba(255,107,74,0.16);">
+        <div class="feature-icon">🔤</div>
+        <h3>Quiz</h3>
+        <p>Type or choose — Spanish to English and back again.</p>
+      </div>
+      <div class="feature-card feature-card-sm reveal" style="--f-color: var(--green); --f-bg: rgba(45,212,191,0.16);">
+        <div class="feature-icon">⏱</div>
+        <h3>Time Attack</h3>
+        <p>60 seconds on the clock, chase your best score.</p>
+      </div>
+      <div class="feature-card feature-card-sm reveal" style="--f-color: var(--memory); --f-bg: rgba(217,70,239,0.16);">
+        <div class="feature-icon">🧩</div>
+        <h3>Memory Match</h3>
+        <p>Flip cards, find the pairs, recall visually.</p>
+      </div>
+      <div class="feature-card feature-card-sm reveal" style="--f-color: var(--conjugate); --f-bg: rgba(52,211,153,0.16);">
+        <div class="feature-icon">📖</div>
+        <h3>Conjugate</h3>
+        <p>Present-tense verbs, every pronoun, reflexives included.</p>
+      </div>
+      <div class="feature-card feature-card-sm reveal" style="--f-color: var(--terracotta); --f-bg: rgba(255,107,74,0.16);">
+        <div class="feature-icon">🏷️</div>
+        <h3>Categories</h3>
+        <p>16 themed word lists to focus your practice.</p>
+      </div>
+    </div>
+
     <div class="under-hood reveal">
       <b>Install it like an app.</b> Palabra is a Portable Web App — add it to your home screen and it opens like any other app, no store required.
     </div>
@@ -553,23 +661,149 @@
             <div class="phone-screen">
               <div class="screen-content-static bg-quiz" style="position:absolute; inset:0; padding:16px 18px 18px;">
                 <div class="header-row" style="display:flex;align-items:center;justify-content:space-between;">
-                  <div style="display:flex;align-items:center;gap:9px;"><span class="badge"></span><h1 class="applogo">Palabra</h1></div>
+                  <div class="header-left"><span class="badge"></span><h1 class="applogo">Palabra</h1></div>
                   <div class="menu-dot">⋯</div>
                 </div>
-                <div class="streak-line">🔥 <b>12</b> · Best <b>34</b> · <b>248</b> words</div>
-                <div class="game-grid">
-                  <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(255,107,74,0.18);">🔤</div><div class="tile-name">Quiz</div><div class="tile-meta">Type or choose</div></div>
-                  <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(45,212,191,0.18);">⏱</div><div class="tile-name">Time Attack</div><div class="tile-meta">Best: 21</div></div>
-                  <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(217,70,239,0.18);">🧩</div><div class="tile-name">Memory Match</div><div class="tile-meta">Best: 14 moves</div></div>
-                  <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(52,211,153,0.18);">📖</div><div class="tile-name">Conjugate</div><div class="tile-meta">Present tense</div></div>
+                <div class="stat-strip">
+                  <span class="streak-text">🔥 <b>12</b> &nbsp;·&nbsp; <b>248</b> words</span>
+                  <span class="level-mini"><span class="level-mini-text">XP</span><span class="level-ring" style="--pct:64%;"><span class="level-ring-inner"><span class="level-ring-num">7</span></span></span></span>
                 </div>
-                <div class="card banner achievements-banner"><div class="tile-icon-wrap" style="background:rgba(255,193,99,0.18);">🏆</div><div><div class="banner-name">Achievements</div><div class="banner-meta">18 of 30 unlocked</div></div></div>
-                <div class="card banner progress-banner"><div class="tile-icon-wrap" style="background:rgba(201,168,255,0.18);">📊</div><div><div class="banner-name">My Progress</div><div class="banner-meta">Box breakdown</div></div></div>
+                <div class="card stream-hero">
+                  <div class="format-row"><span class="fchip">🔤</span><span class="fchip">🔊</span><span class="fchip">✎</span></div>
+                  <h2>Your Learning Stream</h2>
+                  <p>Mixed questions — choose, listen, or type. Learn the words you need most, one after another.</p>
+                  <button class="btn-primary">Start Stream →</button>
+                </div>
+                <div class="card banner modes-banner"><div class="tile-icon-wrap" style="background:rgba(255,255,255,0.08);">🎮</div><div class="banner-text"><div class="banner-name">Choose a specific mode</div><div class="banner-meta">5 more modes to choose from</div></div><div class="banner-arrow">→</div></div>
+                <div class="card banner achievements-banner"><div class="tile-icon-wrap" style="background:rgba(255,193,99,0.18);">🏆</div><div class="banner-text"><div class="banner-name">Achievements</div><div class="banner-meta">18/30 unlocked</div></div><div class="banner-arrow">→</div></div>
+                <div class="card banner progress-banner"><div class="tile-icon-wrap" style="background:rgba(201,168,255,0.18);">📊</div><div class="banner-text"><div class="banner-name">My Progress</div><div class="banner-meta">612 answers logged</div></div><div class="banner-arrow">→</div></div>
               </div>
             </div>
           </div>
         </div>
-        <div class="gallery-caption">Home</div>
+        <div class="gallery-caption">Home — Stream front and centre</div>
+      </div>
+
+      <!-- Stream: Choice -->
+      <div class="gallery-item">
+        <div class="gallery-frame">
+          <div class="phone-shell">
+            <div class="phone-screen">
+              <div class="screen-content-static bg-stream" style="position:absolute; inset:0; padding:16px 18px 18px;">
+                <div class="checkpoint-tiles">
+                  <div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--red);"></div><div class="tile" style="background:var(--ochre);"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div>
+                </div>
+                <div class="glow-orb-progress streak-orb"><div class="orb-num">🔥13</div><div class="orb-lbl">STREAK</div></div>
+                <div class="stream-progress-label">Question 13 · EN → ES</div>
+                <div class="instruction-line">How do you say this in Spanish?</div>
+                <div class="prompt-card"><div class="prompt-word">the cat</div></div>
+                <div class="option-list">
+                  <div class="option-btn">perro</div>
+                  <div class="option-btn correct-choice">gato</div>
+                  <div class="option-btn">casa</div>
+                  <div class="option-btn">libro</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-caption">Stream — Choice</div>
+      </div>
+
+      <!-- Stream: Audio -->
+      <div class="gallery-item">
+        <div class="gallery-frame">
+          <div class="phone-shell">
+            <div class="phone-screen">
+              <div class="screen-content-static bg-stream" style="position:absolute; inset:0; padding:16px 18px 18px;">
+                <div class="checkpoint-tiles">
+                  <div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--red);"></div><div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--ochre);"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div>
+                </div>
+                <div class="glow-orb-progress streak-orb"><div class="orb-num">🔥14</div><div class="orb-lbl">STREAK</div></div>
+                <div class="stream-progress-label">Question 14 · LISTEN</div>
+                <div class="audio-format-wrap">
+                  <button class="speak-btn big">🔊</button>
+                  <div class="audio-hint">Listen, then choose the meaning</div>
+                </div>
+                <div class="option-list" style="margin-top:16px;">
+                  <div class="option-btn">to eat</div>
+                  <div class="option-btn correct-choice">to speak</div>
+                  <div class="option-btn">to live</div>
+                  <div class="option-btn">to write</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-caption">Stream — Listen</div>
+      </div>
+
+      <!-- Stream: Type -->
+      <div class="gallery-item">
+        <div class="gallery-frame">
+          <div class="phone-shell">
+            <div class="phone-screen">
+              <div class="screen-content-static bg-stream" style="position:absolute; inset:0; padding:16px 18px 18px;">
+                <div class="checkpoint-tiles">
+                  <div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--red);"></div><div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--ochre);"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div>
+                </div>
+                <div class="glow-orb-progress streak-orb"><div class="orb-num">🔥15</div><div class="orb-lbl">STREAK</div></div>
+                <div class="stream-progress-label">Question 15 · ES → EN</div>
+                <div class="instruction-line">Type the English translation</div>
+                <div class="prompt-card"><div class="prompt-word">el libro</div></div>
+                <div class="fake-input">book</div>
+                <button class="check-btn">Check</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-caption">Stream — Type</div>
+      </div>
+
+      <!-- Stream: Cloze -->
+      <div class="gallery-item">
+        <div class="gallery-frame">
+          <div class="phone-shell">
+            <div class="phone-screen">
+              <div class="screen-content-static bg-stream" style="position:absolute; inset:0; padding:16px 18px 18px;">
+                <div class="checkpoint-tiles">
+                  <div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--red);"></div><div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--green);"></div><div class="tile" style="background:var(--ochre);"></div><div class="tile"></div><div class="tile"></div>
+                </div>
+                <div class="glow-orb-progress streak-orb"><div class="orb-num">🔥16</div><div class="orb-lbl">STREAK</div></div>
+                <div class="stream-progress-label">Question 16 · FILL IN THE BLANK</div>
+                <div class="instruction-line">Type the missing word</div>
+                <div class="cloze-sentence">El perro <span class="cloze-blank">corre</span> en el parque.</div>
+                <div class="fake-input" style="margin-top:14px;">corre</div>
+                <button class="check-btn">Check</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-caption">Stream — Fill the blank</div>
+      </div>
+
+      <!-- Stream: Checkpoint -->
+      <div class="gallery-item">
+        <div class="gallery-frame">
+          <div class="phone-shell">
+            <div class="phone-screen">
+              <div class="screen-content-static bg-stream" style="position:absolute; inset:0; padding:16px 18px 18px;">
+                <div class="stream-checkpoint-screen">
+                  <div class="celebrate-wrap" style="opacity:1;">
+                    <div class="celebrate-badge-ring" style="background:conic-gradient(var(--ochre) 1turn, rgba(255,255,255,0.1) 0);"><div class="celebrate-badge-disc">🔥</div></div>
+                    <div class="celebrate-headline">18/20 in a row!</div>
+                    <p class="celebrate-subline">Keep going, or stop here for now.</p>
+                    <div class="checkpoint-actions">
+                      <button class="btn-primary">Keep going →</button>
+                      <button class="link-btn">Stop for today</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-caption">Stream — Checkpoint</div>
       </div>
 
       <!-- Quiz -->
@@ -676,28 +910,33 @@
           <div class="phone-shell">
             <div class="phone-screen">
               <div class="screen-content-static bg-progress" style="position:absolute; inset:0; padding:16px 18px 18px;">
-                <div class="back-row"><div class="back-btn">←</div><div class="screen-title">My Progress</div></div>
+                <div class="back-row"><div class="back-btn">←</div><div class="screen-title">📊 My Progress</div></div>
                 <div class="progress-summary-row">
                   <div class="card progress-summary-card">
                     <div class="progress-summary-eyebrow">Vocabulary</div>
-                    <div class="progress-summary-big">128</div>
-                    <div class="progress-summary-big-label">words tracked</div>
+                    <div class="progress-summary-big">612</div>
+                    <div class="progress-summary-big-label">words answered</div>
+                    <div class="progress-summary-stat"><span>Accuracy</span><span>81%</span></div>
+                    <div class="progress-summary-stat"><span>Streak</span><span>12 · best 34</span></div>
                   </div>
                   <div class="card progress-summary-card conjugate">
                     <div class="progress-summary-eyebrow">Conjugation</div>
-                    <div class="progress-summary-big">84%</div>
-                    <div class="progress-summary-big-label">accuracy</div>
+                    <div class="progress-summary-big">164</div>
+                    <div class="progress-summary-big-label">verb forms answered</div>
+                    <div class="progress-summary-stat"><span>Accuracy</span><span>77%</span></div>
+                    <div class="progress-summary-stat"><span>Streak</span><span>5 · best 19</span></div>
                   </div>
                 </div>
                 <div class="card">
                   <div class="progress-section-title">Box progress — Vocabulary</div>
+                  <div class="progress-section-sub">Box 6 words are the ones you've got locked in</div>
                   <div class="progress-bars">
-                    <div class="progress-bar-col"><div class="progress-bar" style="height:40%;"></div><div class="progress-bar-label">B1</div></div>
-                    <div class="progress-bar-col"><div class="progress-bar" style="height:55%;"></div><div class="progress-bar-label">B2</div></div>
-                    <div class="progress-bar-col"><div class="progress-bar" style="height:70%;"></div><div class="progress-bar-label">B3</div></div>
-                    <div class="progress-bar-col"><div class="progress-bar" style="height:50%;"></div><div class="progress-bar-label">B4</div></div>
-                    <div class="progress-bar-col"><div class="progress-bar" style="height:35%;"></div><div class="progress-bar-label">B5</div></div>
-                    <div class="progress-bar-col"><div class="progress-bar" style="height:85%;"></div><div class="progress-bar-label">B6</div></div>
+                    <div class="progress-bar-col"><div class="progress-bar-count">64</div><div class="progress-bar" style="height:40%;"></div><div class="progress-bar-label">1</div></div>
+                    <div class="progress-bar-col"><div class="progress-bar-count">88</div><div class="progress-bar" style="height:55%;"></div><div class="progress-bar-label">2</div></div>
+                    <div class="progress-bar-col"><div class="progress-bar-count">112</div><div class="progress-bar" style="height:70%;"></div><div class="progress-bar-label">3</div></div>
+                    <div class="progress-bar-col"><div class="progress-bar-count">80</div><div class="progress-bar" style="height:50%;"></div><div class="progress-bar-label">4</div></div>
+                    <div class="progress-bar-col"><div class="progress-bar-count">56</div><div class="progress-bar" style="height:35%;"></div><div class="progress-bar-label">5</div></div>
+                    <div class="progress-bar-col"><div class="progress-bar-count">136</div><div class="progress-bar" style="height:85%;"></div><div class="progress-bar-label">6</div></div>
                   </div>
                 </div>
               </div>
@@ -707,18 +946,56 @@
         <div class="gallery-caption">My Progress</div>
       </div>
 
+      <!-- Progress: words to review -->
+      <div class="gallery-item">
+        <div class="gallery-frame">
+          <div class="phone-shell">
+            <div class="phone-screen">
+              <div class="screen-content-static bg-progress" style="position:absolute; inset:0; padding:16px 18px 18px;">
+                <div class="back-row"><div class="back-btn">←</div><div class="screen-title">📊 My Progress</div></div>
+                <div class="card" style="margin-bottom:12px;">
+                  <div class="progress-section-title">Words to review</div>
+                  <div class="progress-section-sub">Lowest-box words right now</div>
+                  <div class="progress-review-list">
+                    <div class="progress-review-item"><div><div class="progress-review-word">esperar</div><div class="progress-review-en">to wait / hope</div></div><div class="progress-box-tag">Box 1</div></div>
+                    <div class="progress-review-item"><div><div class="progress-review-word">la ventana</div><div class="progress-review-en">the window</div></div><div class="progress-box-tag">Box 2</div></div>
+                    <div class="progress-review-item"><div><div class="progress-review-word">aunque</div><div class="progress-review-en">although</div></div><div class="progress-box-tag">Box 1</div></div>
+                    <div class="progress-review-item"><div><div class="progress-review-word">el suelo</div><div class="progress-review-en">the floor / ground</div></div><div class="progress-box-tag">Box 3</div></div>
+                  </div>
+                </div>
+                <div class="card">
+                  <div class="progress-section-title">Verb combos to review</div>
+                  <div class="progress-section-sub">Lowest-box verb + pronoun pairs</div>
+                  <div class="progress-review-list">
+                    <div class="progress-review-item"><div><div class="progress-review-word">nosotros hablamos</div><div class="progress-review-en">we speak</div></div><div class="progress-box-tag">Box 2</div></div>
+                    <div class="progress-review-item"><div><div class="progress-review-word">ella tiene</div><div class="progress-review-en">she has</div></div><div class="progress-box-tag">Box 1</div></div>
+                    <div class="progress-review-item"><div><div class="progress-review-word">yo fui</div><div class="progress-review-en">I went</div></div><div class="progress-box-tag">Box 1</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-caption">Progress — review list</div>
+      </div>
+
       <!-- Achievements -->
       <div class="gallery-item">
         <div class="gallery-frame">
           <div class="phone-shell">
             <div class="phone-screen">
               <div class="screen-content-static bg-achievements" style="position:absolute; inset:0; padding:16px 18px 18px;">
-                <div class="back-row"><div class="back-btn">←</div><div class="screen-title">Achievements</div></div>
-                <div class="card">
-                  <div class="achievement-row"><div class="ach-icon-sm" style="background:rgba(255,193,99,0.18);">🏆</div><div><div class="ach-name-sm">Century Club</div><div class="ach-desc-sm">Learn 100 words</div></div></div>
-                  <div class="achievement-row"><div class="ach-icon-sm" style="background:rgba(45,212,191,0.18);">⚡</div><div><div class="ach-name-sm">Quick Draw</div><div class="ach-desc-sm">Score 20+ in Time Attack</div></div></div>
-                  <div class="achievement-row"><div class="ach-icon-sm" style="background:rgba(217,70,239,0.18);">🧩</div><div><div class="ach-name-sm">Perfect Pairs</div><div class="ach-desc-sm">Clear Memory Match, no mismatches</div></div></div>
-                  <div class="achievement-row"><div class="ach-icon-sm" style="background:rgba(52,211,153,0.18);">📖</div><div><div class="ach-name-sm">Conjugator</div><div class="ach-desc-sm">100 correct conjugations</div></div></div>
+                <div class="back-row"><div class="back-btn">←</div><div class="screen-title">🏆 Achievements</div></div>
+                <div class="card stream-achievement-banner">
+                  <div class="tile-icon-wrap" style="background:rgba(255,193,99,0.22);">🌊</div>
+                  <div class="banner-text"><div class="banner-name">Stream</div><div class="banner-meta">7/11 unlocked</div></div>
+                  <div class="banner-arrow">→</div>
+                </div>
+                <div class="game-grid">
+                  <div class="game-tile" style="position:relative;"><div class="tile-icon-wrap" style="background:rgba(255,107,74,0.18);">🔤</div><div class="tile-name">Quiz</div><div class="tile-meta">6/8 unlocked</div><div class="tile-corner-arrow">→</div></div>
+                  <div class="game-tile" style="position:relative;"><div class="tile-icon-wrap" style="background:rgba(45,212,191,0.18);">⏱</div><div class="tile-name">Time Attack</div><div class="tile-meta">3/6 unlocked</div><div class="tile-corner-arrow">→</div></div>
+                  <div class="game-tile" style="position:relative;"><div class="tile-icon-wrap" style="background:rgba(217,70,239,0.18);">🧩</div><div class="tile-name">Memory</div><div class="tile-meta">2/5 unlocked</div><div class="tile-corner-arrow">→</div></div>
+                  <div class="game-tile" style="position:relative;"><div class="tile-icon-wrap" style="background:rgba(52,211,153,0.18);">📖</div><div class="tile-name">Conjugate</div><div class="tile-meta">0/4 unlocked</div><div class="tile-corner-arrow">→</div></div>
                 </div>
               </div>
             </div>
@@ -727,22 +1004,44 @@
         <div class="gallery-caption">Achievements</div>
       </div>
 
+      <!-- Achievements: Stream detail -->
+      <div class="gallery-item">
+        <div class="gallery-frame">
+          <div class="phone-shell">
+            <div class="phone-screen">
+              <div class="screen-content-static bg-achievements" style="position:absolute; inset:0; padding:16px 18px 18px;">
+                <div class="back-row"><div class="back-btn">←</div><div class="screen-title">🌊 Stream</div></div>
+                <div class="card">
+                  <div class="achievement-item"><div class="ach-icon">🚦</div><div class="ach-text"><div class="ach-name">First Stream</div><div class="ach-desc">Complete your first Stream checkpoint</div></div></div>
+                  <div class="achievement-item"><div class="ach-icon">🔁</div><div class="ach-text"><div class="ach-name">In The Flow</div><div class="ach-desc">Reach 10 lifetime Stream checkpoints</div></div></div>
+                  <div class="achievement-item"><div class="ach-icon">🎧</div><div class="ach-text"><div class="ach-name">Good Ear</div><div class="ach-desc">25 lifetime correct audio answers in Stream</div></div></div>
+                  <div class="achievement-item"><div class="ach-icon">🎛️</div><div class="ach-text"><div class="ach-name">Triple Threat</div><div class="ach-desc">Answer correctly in choice, listen, and type — all in one session</div></div></div>
+                  <div class="achievement-item locked"><div class="ach-icon">🔒</div><div class="ach-text"><div class="ach-name">Locked In</div><div class="ach-desc">A 40-answer streak within a single stream</div></div></div>
+                  <div class="achievement-item locked"><div class="ach-icon">🔒</div><div class="ach-text"><div class="ach-name">Stream Veteran</div><div class="ach-desc">500 lifetime correct answers in Stream</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-caption">Achievements — Stream detail</div>
+      </div>
+
     </div>
   </div>
 </section>
 
 <section class="cta-band reveal">
   <div class="wrapper">
-    <h2>Ready to learn some palabras?</h2>
+    <h2>Ready to open the Stream?</h2>
     <p>No install required — or add it to your home screen for the full app feel.</p>
-    <a class="btn-play" href="https://rwapps1.github.io/palabra/" target="_blank" rel="noopener">Play Palabra now →</a>
+    <a class="btn-play" href="https://rwapps1.github.io/palabra/" target="_blank" rel="noopener">Start the Stream →</a>
   </div>
 </section>
 
 <footer class="site-footer">
   <div class="wrapper">
     <div class="footer-brand"><span class="badge"></span><span>Palabra</span></div>
-    <div class="footer-meta"><img class="dev-logo" src="data:image/webp;base64,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" alt="Rwapps1 logo">Built for you by Rwapps1 · <a href="https://www.palabraword.uk/" target="_blank" rel="noopener">www.palabraword.uk/</a></div>
+    <div class="footer-meta"><img class="dev-logo" src="data:image/webp;base64,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" alt="Rwapps1 logo">Built for you by Rwapps1 · <a href="https://www.palabraword.uk/palabra" target="_blank" rel="noopener">www.palabraword.uk/palabra</a></div>
   </div>
 </footer>
 
@@ -764,131 +1063,228 @@
     return {
       bg: 'bg-quiz',
       html: `
-        <div class="header-row" style="display:flex;align-items:center;justify-content:space-between;">
-          <div style="display:flex;align-items:center;gap:9px;"><span class="badge"></span><h1 class="applogo">Palabra</h1></div>
+        <div class="header-row">
+          <div class="header-left"><span class="badge"></span><h1 class="applogo">Palabra</h1></div>
           <div class="menu-dot">⋯</div>
         </div>
-        <div class="streak-line">🔥 <b>12</b> &nbsp;·&nbsp; Best <b>34</b> &nbsp;·&nbsp; <b>248</b> words</div>
-        <div class="game-grid">
-          <div class="game-tile hub-tile-press" style="position:relative;">
-            <div class="tile-icon-wrap" style="background:rgba(255,107,74,0.18);">🔤</div>
-            <div class="tile-name">Quiz</div><div class="tile-meta">Type or choose</div>
-            <div class="tap-dot tap-hub"></div>
-          </div>
-          <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(45,212,191,0.18);">⏱</div><div class="tile-name">Time Attack</div><div class="tile-meta">Best: 21</div></div>
-          <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(217,70,239,0.18);">🧩</div><div class="tile-name">Memory Match</div><div class="tile-meta">Best: 14 moves</div></div>
-          <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(52,211,153,0.18);">📖</div><div class="tile-name">Conjugate</div><div class="tile-meta">Present tense</div></div>
-          <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(255,107,74,0.18);">🏷️</div><div class="tile-name">Categories</div><div class="tile-meta">16 topics</div></div>
-          <div class="game-tile locked"><div class="tile-soon">Soon</div><div class="tile-icon-wrap" style="background:rgba(255,255,255,0.06);">❓</div><div class="tile-name">New Game</div><div class="tile-meta">Coming soon</div></div>
+        <div class="stat-strip">
+          <span class="streak-text">🔥 <b>12</b> &nbsp;·&nbsp; <b>248</b> words</span>
+          <span class="level-mini">
+            <span class="level-mini-text">XP</span>
+            <span class="level-ring" style="--pct:64%;"><span class="level-ring-inner"><span class="level-ring-num">7</span></span></span>
+          </span>
         </div>
-        <div class="card banner achievements-banner"><div class="tile-icon-wrap" style="background:rgba(255,193,99,0.18);">🏆</div><div><div class="banner-name">Achievements</div><div class="banner-meta">18 of 30 unlocked</div></div></div>
-        <div class="card banner progress-banner"><div class="tile-icon-wrap" style="background:rgba(201,168,255,0.18);">📊</div><div><div class="banner-name">My Progress</div><div class="banner-meta">Box breakdown &amp; review list</div></div></div>
+        <div class="card stream-hero press-it" style="position:relative;">
+          <div class="format-row"><span class="fchip">🔤</span><span class="fchip">🔊</span><span class="fchip">✎</span></div>
+          <h2>Your Learning Stream</h2>
+          <p>Mixed questions — choose, listen, or type. Learn the words you need most, one after another.</p>
+          <button class="btn-primary" style="position:relative;">Start Stream →<div class="tap-dot tap-hub"></div></button>
+        </div>
+        <button class="game-tile modes-banner banner">
+          <div class="tile-icon-wrap" style="background:rgba(255,255,255,0.08);">🎮</div>
+          <div class="banner-text"><div class="banner-name">Choose a specific mode</div><div class="banner-meta">5 more modes to choose from</div></div>
+          <div class="banner-arrow">→</div>
+        </button>
+        <button class="game-tile achievements-banner banner">
+          <div class="tile-icon-wrap" style="background:rgba(255,193,99,0.18);">🏆</div>
+          <div class="banner-text"><div class="banner-name">Achievements</div><div class="banner-meta">18/30 unlocked</div></div>
+          <div class="banner-arrow">→</div>
+        </button>
+        <button class="game-tile progress-banner banner">
+          <div class="tile-icon-wrap" style="background:rgba(201,168,255,0.18);">📊</div>
+          <div class="banner-text"><div class="banner-name">My Progress</div><div class="banner-meta">612 answers logged</div></div>
+          <div class="banner-arrow">→</div>
+        </button>
       `
     };
   }
 
-  function sceneQuiz() {
-    return {
-      bg: 'bg-quiz',
-      html: `
-        <div class="back-row"><div class="back-btn">←</div><div class="screen-title">Quiz</div></div>
-        <div class="tiles" style="grid-template-columns:repeat(10,1fr);">
-          ${Array.from({length:10}).map((_,i)=>`<div class="tile-dot" style="background:${i<4?'#2DD4BF':(i===4?'#FFC163':'rgba(255,255,255,0.16)')}"></div>`).join('')}
-        </div>
-        <div class="prompt-card">
-          <div class="prompt-word">el perro</div>
-          <div class="prompt-sub">🔊 tap to hear it</div>
-        </div>
-        <div class="option-list">
-          <div class="option-btn dim-late">cat</div>
-          <div class="option-btn pending-correct">dog<div class="tap-dot tap-a"></div></div>
-          <div class="option-btn dim-late2">bird</div>
-          <div class="option-btn dim-late2">horse</div>
-        </div>
-        <div class="feedback correct fb-hidden fb-appear"><div class="fb-title">✅ Correct</div></div>
-      `
-    };
-  }
-
-  function sceneTimeAttack() {
-    return {
-      bg: 'bg-timeattack',
-      html: `
-        <div class="ta-header">
-          <div class="ta-timer-track"><div class="ta-timer-fill" id="taFill"></div></div>
-          <div class="ta-stats-row"><div>Score: <span id="taScore">7</span></div><div id="taTimer">44s</div></div>
-        </div>
-        <div class="prompt-card"><div class="prompt-word ta-word" id="taWord">gato</div></div>
-        <div class="option-list">
-          <div class="option-btn">house</div>
-          <div class="option-btn" style="position:relative;">cat<div class="tap-dot tap-c"></div></div>
-          <div class="option-btn">blue</div>
-          <div class="option-btn" style="position:relative;">book<div class="tap-dot tap-d"></div></div>
-        </div>
-      `,
-      mount: () => {
-        const fill = document.getElementById('taFill');
-        const scoreEl = document.getElementById('taScore');
-        const timerEl = document.getElementById('taTimer');
-        const wordEl = document.getElementById('taWord');
-        fill.style.width = '100%';
-        requestAnimationFrame(() => { fill.style.transition = 'width 4900ms linear'; fill.style.width = '18%'; });
-        let score = 7, t = 44;
-        const words = ['gato', 'casa', 'azul'];
-        addTimer(setInterval(() => { t = Math.max(0, t - 1); timerEl.textContent = t + 's'; }, 1000));
-        addTimer(setTimeout(() => { score += 2; scoreEl.textContent = score; wordEl.textContent = words[1]; }, 1750));
-        addTimer(setTimeout(() => { score += 3; scoreEl.textContent = score; wordEl.textContent = words[2]; }, 3450));
-        addTimer(setTimeout(() => { score += 2; scoreEl.textContent = score; }, 4700));
-      }
-    };
-  }
-
-  function sceneMemory() {
-    const revealMap = { 0: {cls:'mt-match-1', text:'gato'}, 5: {cls:'mt-match-2', text:'cat'}, 2: {cls:'mt-match-3', text:'libro'}, 6: {cls:'mt-match-4', text:'book'} };
-    let tilesHtml = '';
-    for (let i = 0; i < 8; i++) {
-      const r = revealMap[i];
-      tilesHtml += r ? `<div class="memory-tile ${r.cls}">${r.text}</div>` : `<div class="memory-tile">?</div>`;
+  function streamHeader(qNum, tag, checkpointFilled) {
+    let tiles = '';
+    for (let i = 0; i < 10; i++) {
+      const bg = i < checkpointFilled ? (i % 4 === 3 ? 'var(--red)' : 'var(--green)') : (i === checkpointFilled ? 'var(--ochre)' : 'var(--outline)');
+      tiles += `<div class="tile" style="background:${bg}"></div>`;
     }
+    return `
+      <div class="checkpoint-tiles">${tiles}</div>
+      <div class="glow-orb-progress streak-orb"><div class="orb-num">🔥${qNum}</div><div class="orb-lbl">STREAK</div></div>
+      <div class="stream-progress-label">Question ${qNum} · ${tag}</div>
+    `;
+  }
+
+  function sceneStreamChoice() {
     return {
-      bg: 'bg-memory',
+      bg: 'bg-stream',
       html: `
-        <div class="back-row"><div class="back-btn">←</div><div class="screen-title">Memory Match</div></div>
-        <div class="memory-stats-row"><div>Moves: <span>6</span></div><div>Matched: <span>3 / 8</span></div></div>
-        <div class="memory-grid" style="position:relative;">
-          ${tilesHtml}
-          <div class="tap-dot tap-c" style="left:12%;top:12%;"></div>
-          <div class="tap-dot tap-e" style="left:37%;top:62%;"></div>
+        ${streamHeader(13, 'EN → ES', 3)}
+        <div class="instruction-line">How do you say this in Spanish?</div>
+        <div class="prompt-card"><div class="prompt-word">the cat</div></div>
+        <div class="option-list">
+          <div class="option-btn dim-late">perro</div>
+          <div class="option-btn pending-correct" style="position:relative;">gato<div class="tap-dot tap-a"></div></div>
+          <div class="option-btn dim-late2">casa</div>
+          <div class="option-btn dim-late2">libro</div>
         </div>
-        <div class="card" style="margin-top:6px;"><div class="progress-section-title" style="margin-bottom:0;">Find every pair to clear the board</div></div>
+        <div class="feedback correct fb-appear"><div class="fb-title">✅ Correct</div></div>
       `
     };
   }
 
-  function sceneConjugate() {
+  function sceneStreamAudio() {
     return {
-      bg: 'bg-conjugate',
+      bg: 'bg-stream',
       html: `
-        <div class="back-row"><div class="back-btn">←</div><div class="screen-title">Conjugate</div></div>
-        <div class="prompt-card">
-          <div class="prompt-word">hablar</div>
-          <div class="pronoun-pill">tú ___</div>
+        ${streamHeader(14, 'LISTEN', 4)}
+        <div class="audio-format-wrap">
+          <button class="speak-btn big" style="position:relative;">🔊<div class="tap-dot tap-c"></div></button>
+          <div class="audio-hint">Listen, then choose the meaning</div>
         </div>
-        <div class="fake-input" id="conjInput"><span class="type-caret"></span></div>
-        <button class="conj-btn" style="position:relative;">Check<div class="tap-dot tap-conj"></div></button>
-        <div class="feedback conj-correct fb-hidden fb-appear2" style="margin-top:9px;"><div class="fb-title">✅ hablas — nice work</div></div>
+        <div class="option-list" style="margin-top:16px;">
+          <div class="option-btn dim-late2">to eat</div>
+          <div class="option-btn pending-correct">to speak</div>
+          <div class="option-btn dim-late">to live</div>
+          <div class="option-btn dim-late2">to write</div>
+        </div>
+      `
+    };
+  }
+
+  function sceneStreamType() {
+    return {
+      bg: 'bg-stream',
+      html: `
+        ${streamHeader(15, 'ES → EN', 5)}
+        <div class="instruction-line">Type the English translation</div>
+        <div class="prompt-card"><div class="prompt-word">el libro</div></div>
+        <div class="fake-input" id="streamTypeInput"><span class="type-caret"></span></div>
+        <button class="check-btn" style="position:relative;">Check<div class="tap-dot tap-a" style="animation-delay:2000ms;"></div></button>
+        <div class="feedback correct fb-appear2" style="margin-top:9px;"><div class="fb-title">✅ book — nice work</div></div>
       `,
       mount: () => {
-        const el = document.getElementById('conjInput');
-        const word = 'hablas';
+        const el = document.getElementById('streamTypeInput');
+        const word = 'book';
         let i = 0;
         const iv = setInterval(() => {
           i++;
           el.innerHTML = word.slice(0, i) + '<span class="type-caret"></span>';
           if (i >= word.length) clearInterval(iv);
-        }, 160);
+        }, 170);
         addTimer(iv);
       }
+    };
+  }
+
+  function sceneStreamCloze() {
+    return {
+      bg: 'bg-stream',
+      html: `
+        ${streamHeader(16, 'FILL IN THE BLANK', 6)}
+        <div class="instruction-line">Type the missing word</div>
+        <div class="cloze-sentence">El perro <span class="cloze-blank">____</span> en el parque.</div>
+        <div class="fake-input" id="clozeInput" style="margin-top:14px;"><span class="type-caret"></span></div>
+        <button class="check-btn" style="position:relative;">Check<div class="tap-dot tap-a" style="animation-delay:2100ms;"></div></button>
+      `,
+      mount: () => {
+        const el = document.getElementById('clozeInput');
+        const word = 'corre';
+        let i = 0;
+        const iv = setInterval(() => {
+          i++;
+          el.innerHTML = word.slice(0, i) + '<span class="type-caret"></span>';
+          if (i >= word.length) clearInterval(iv);
+        }, 190);
+        addTimer(iv);
+      }
+    };
+  }
+
+  function sceneStreamCheckpoint() {
+    return {
+      bg: 'bg-stream',
+      html: `
+        <div class="stream-checkpoint-screen">
+          <div class="celebrate-wrap">
+            <div class="celebrate-badge-ring"><div class="celebrate-badge-disc">🔥</div></div>
+            <div class="celebrate-headline">18/20 in a row!</div>
+            <p class="celebrate-subline">Keep going, or stop here for now.</p>
+            <div class="checkpoint-actions">
+              <button class="btn-primary" style="position:relative;">Keep going →<div class="tap-dot tap-hub" style="animation-delay:2300ms;"></div></button>
+              <button class="link-btn">Stop for today</button>
+            </div>
+          </div>
+        </div>
+      `
+    };
+  }
+
+  function sceneModes() {
+    const tiles = [
+      { icon: '🔤', name: 'Quiz', meta: 'Type or choose', color: 'rgba(255,107,74,0.18)' },
+      { icon: '📝', name: 'Sentences', meta: '86 sentences', color: 'rgba(201,168,255,0.18)' },
+      { icon: '⏱', name: 'Time Attack', meta: 'Best: 21', color: 'rgba(45,212,191,0.18)' },
+      { icon: '🧩', name: 'Memory Match', meta: 'Best: 14 moves', color: 'rgba(217,70,239,0.18)' },
+      { icon: '📖', name: 'Conjugate', meta: 'Present tense', color: 'rgba(52,211,153,0.18)' },
+      { icon: '🏷️', name: 'Categories', meta: '16 topics', color: 'rgba(255,107,74,0.18)' },
+    ];
+    const tilesHtml = tiles.map((t, i) => `
+      <div class="game-tile ${i === 2 ? 'press-it' : ''}" style="${i===2?'position:relative;':''}">
+        <div class="tile-icon-wrap" style="background:${t.color};">${t.icon}</div>
+        <div class="tile-name">${t.name}</div>
+        <div class="tile-meta">${t.meta}</div>
+        ${i === 2 ? '<div class="tap-dot tap-hub" style="animation-delay:1900ms;"></div>' : ''}
+      </div>
+    `).join('');
+    return {
+      bg: 'bg-quiz',
+      html: `
+        <div class="back-row"><div class="back-btn">←</div><div class="screen-title">Choose a mode</div></div>
+        <div class="game-grid">${tilesHtml}</div>
+      `
+    };
+  }
+
+  function sceneAchievements() {
+    return {
+      bg: 'bg-achievements',
+      html: `
+        <div class="back-row"><div class="back-btn">←</div><div class="screen-title">🏆 Achievements</div></div>
+        <button class="stream-achievement-banner" style="position:relative;">
+          <div class="tile-icon-wrap" style="background:rgba(255,193,99,0.22);">🌊</div>
+          <div class="banner-text"><div class="banner-name">Stream</div><div class="banner-meta">7/11 unlocked</div></div>
+          <div class="banner-arrow">→</div>
+          <div class="tap-dot tap-hub" style="animation-delay:2100ms;"></div>
+        </button>
+        <div class="game-grid">
+          <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(255,107,74,0.18);">🔤</div><div class="tile-name">Quiz</div><div class="tile-meta">6/8 unlocked</div><div class="tile-corner-arrow">→</div></div>
+          <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(45,212,191,0.18);">⏱</div><div class="tile-name">Time Attack</div><div class="tile-meta">3/6 unlocked</div><div class="tile-corner-arrow">→</div></div>
+          <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(217,70,239,0.18);">🧩</div><div class="tile-name">Memory</div><div class="tile-meta">2/5 unlocked</div><div class="tile-corner-arrow">→</div></div>
+          <div class="game-tile"><div class="tile-icon-wrap" style="background:rgba(52,211,153,0.18);">📖</div><div class="tile-name">Conjugate</div><div class="tile-meta">0/4 unlocked</div><div class="tile-corner-arrow">→</div></div>
+        </div>
+      `
+    };
+  }
+
+  function sceneAchievementDetail() {
+    const items = [
+      { icon: '🚦', name: 'First Stream', desc: 'Complete your first Stream checkpoint', unlocked: true },
+      { icon: '🔁', name: 'In The Flow', desc: 'Reach 10 lifetime Stream checkpoints', unlocked: true },
+      { icon: '🎧', name: 'Good Ear', desc: '25 lifetime correct audio answers in Stream', unlocked: true },
+      { icon: '🎛️', name: 'Triple Threat', desc: 'Answer correctly in choice, listen, and type — all in one session', unlocked: true },
+      { icon: '🔒', name: 'Locked In', desc: 'A 40-answer streak within a single stream', unlocked: false },
+      { icon: '⛰️', name: 'Stream Veteran', desc: '500 lifetime correct answers in Stream', unlocked: false },
+    ];
+    const itemsHtml = items.map(it => `
+      <div class="achievement-item ${it.unlocked ? '' : 'locked'}">
+        <div class="ach-icon">${it.unlocked ? it.icon : '🔒'}</div>
+        <div class="ach-text"><div class="ach-name">${it.name}</div><div class="ach-desc">${it.desc}</div></div>
+      </div>
+    `).join('');
+    return {
+      bg: 'bg-achievements',
+      html: `
+        <div class="back-row"><div class="back-btn">←</div><div class="screen-title">🌊 Stream</div></div>
+        <div class="card">${itemsHtml}</div>
+      `
     };
   }
 
@@ -896,73 +1292,131 @@
     const wordBoxes = [40, 55, 70, 50, 35, 85];
     const bars = arr => arr.map((h, i) => `
       <div class="progress-bar-col">
-        <div class="progress-bar grow-bar" style="animation-delay:${300 + i * 90}ms;" data-target="${h}"></div>
-        <div class="progress-bar-label">B${i + 1}</div>
+        <div class="progress-bar-count">${Math.round(h * 1.6)}</div>
+        <div class="progress-bar grow-bar" style="animation-delay:${300 + i * 90}ms; --target:${h}%;"></div>
+        <div class="progress-bar-label">${i + 1}</div>
       </div>`).join('');
     return {
       bg: 'bg-progress',
       html: `
-        <div class="back-row"><div class="back-btn">←</div><div class="screen-title">My Progress</div></div>
+        <div class="back-row"><div class="back-btn">←</div><div class="screen-title">📊 My Progress</div></div>
         <div class="progress-summary-row">
           <div class="card progress-summary-card">
             <div class="progress-summary-eyebrow">Vocabulary</div>
             <div class="progress-summary-big" id="pWords">0</div>
-            <div class="progress-summary-big-label">words tracked</div>
+            <div class="progress-summary-big-label">words answered</div>
+            <div class="progress-summary-stat"><span>Accuracy</span><span id="pAcc">0%</span></div>
+            <div class="progress-summary-stat"><span>Streak</span><span>12 · best 34</span></div>
           </div>
           <div class="card progress-summary-card conjugate">
             <div class="progress-summary-eyebrow">Conjugation</div>
-            <div class="progress-summary-big" id="pAcc">0%</div>
-            <div class="progress-summary-big-label">accuracy</div>
+            <div class="progress-summary-big">164</div>
+            <div class="progress-summary-big-label">verb forms answered</div>
+            <div class="progress-summary-stat"><span>Accuracy</span><span>77%</span></div>
+            <div class="progress-summary-stat"><span>Streak</span><span>5 · best 19</span></div>
           </div>
         </div>
         <div class="card">
           <div class="progress-section-title">Box progress — Vocabulary</div>
+          <div class="progress-section-sub">Box 6 words are the ones you've got locked in</div>
           <div class="progress-bars">${bars(wordBoxes)}</div>
         </div>
       `,
       mount: () => {
         document.querySelectorAll('.grow-bar').forEach(el => {
-          const target = el.dataset.target + '%';
-          const delay = parseFloat(el.style.animationDelay) || 0;
-          el.animate([{ height: '0%' }, { height: target }], { duration: 500, delay, easing: 'ease', fill: 'forwards' });
+          const target = el.style.getPropertyValue('--target');
+          el.animate([{ height: '0%' }, { height: target }], {
+            duration: 500,
+            delay: parseFloat(el.style.animationDelay) || 0,
+            easing: 'ease',
+            fill: 'forwards'
+          });
         });
         const wordsEl = document.getElementById('pWords');
         const accEl = document.getElementById('pAcc');
         let w = 0, a = 0;
-        addTimer(setInterval(() => { w = Math.min(128, w + 8); wordsEl.textContent = w; }, 60));
-        addTimer(setInterval(() => { a = Math.min(84, a + 6); accEl.textContent = a + '%'; }, 70));
+        addTimer(setInterval(() => { w = Math.min(612, w + 34); wordsEl.textContent = w; }, 50));
+        addTimer(setInterval(() => { a = Math.min(81, a + 5); accEl.textContent = a + '%'; }, 60));
       }
     };
   }
 
-  function sceneAchievement() {
-    const colors = ['#FFC163', '#FF4D6D', '#2DD4BF', '#C9A8FF', '#E879F9'];
+  function sceneProgressReview() {
+    const words = [
+      { es: 'esperar', en: 'to wait / hope', box: 1 },
+      { es: 'la ventana', en: 'the window', box: 2 },
+      { es: 'aunque', en: 'although', box: 1 },
+      { es: 'el suelo', en: 'the floor / ground', box: 3 },
+    ];
+    const combos = [
+      { es: 'nosotros hablamos', en: 'we speak', box: 2 },
+      { es: 'ella tiene', en: 'she has', box: 1 },
+      { es: 'yo fui', en: 'I went', box: 1 },
+    ];
+    const wHtml = words.map(w => `
+      <div class="progress-review-item">
+        <div><div class="progress-review-word">${w.es}</div><div class="progress-review-en">${w.en}</div></div>
+        <div class="progress-box-tag">Box ${w.box}</div>
+      </div>`).join('');
+    const cHtml = combos.map(c => `
+      <div class="progress-review-item">
+        <div><div class="progress-review-word">${c.es}</div><div class="progress-review-en">${c.en}</div></div>
+        <div class="progress-box-tag">Box ${c.box}</div>
+      </div>`).join('');
+    return {
+      bg: 'bg-progress',
+      html: `
+        <div class="back-row"><div class="back-btn">←</div><div class="screen-title">📊 My Progress</div></div>
+        <div class="card" style="margin-bottom:12px;">
+          <div class="progress-section-title">Words to review</div>
+          <div class="progress-section-sub">Lowest-box words right now</div>
+          <div class="progress-review-list">${wHtml}</div>
+        </div>
+        <div class="card">
+          <div class="progress-section-title">Verb combos to review</div>
+          <div class="progress-section-sub">Lowest-box verb + pronoun pairs</div>
+          <div class="progress-review-list">${cHtml}</div>
+        </div>
+      `
+    };
+  }
+
+  function sceneAchievementToast() {
     const confetti = Array.from({ length: 14 }).map((_, i) => {
-      const left = Math.random() * 100, delay = Math.random() * 400, dur = 1400 + Math.random() * 500;
-      return `<div class="confetti-piece" style="left:${left}%; background:${colors[i % colors.length]}; animation-duration:${dur}ms; animation-delay:${delay}ms;"></div>`;
+      const left = Math.random() * 100;
+      const delay = Math.random() * 400;
+      const dur = 1400 + Math.random() * 500;
+      const colors = ['#FFC163', '#FF4D6D', '#2DD4BF', '#C9A8FF', '#E879F9'];
+      const color = colors[i % colors.length];
+      return `<div class="confetti-piece" style="left:${left}%; background:${color}; animation-duration:${dur}ms; animation-delay:${delay}ms;"></div>`;
     }).join('');
     return {
       bg: 'bg-achievements',
       html: `
         ${confetti}
         <div class="ach-wrap">
-          <div class="ach-badge">🏆</div>
+          <div class="ach-badge">🌊</div>
           <div class="ach-eyebrow">Achievement Unlocked</div>
-          <div class="ach-title">Century Club</div>
-          <div class="ach-desc">Learned 100 words</div>
+          <div class="ach-title">Stream Regular</div>
+          <div class="ach-desc-lg">100 lifetime correct answers in Stream</div>
         </div>
       `
     };
   }
 
   const SCENES = [
-    { duration: 4000, build: sceneHub },
-    { duration: 5000, build: sceneQuiz },
-    { duration: 5000, build: sceneTimeAttack },
-    { duration: 4300, build: sceneMemory },
-    { duration: 4000, build: sceneConjugate },
-    { duration: 3400, build: sceneProgress },
-    { duration: 2400, build: sceneAchievement }
+    { duration: 4200, build: sceneHub },
+    { duration: 3400, build: sceneStreamChoice },
+    { duration: 3000, build: sceneStreamAudio },
+    { duration: 3600, build: sceneStreamType },
+    { duration: 3800, build: sceneStreamCloze },
+    { duration: 3800, build: sceneStreamCheckpoint },
+    { duration: 3200, build: sceneModes },
+    { duration: 3600, build: sceneAchievements },
+    { duration: 3600, build: sceneAchievementDetail },
+    { duration: 3600, build: sceneProgress },
+    { duration: 3600, build: sceneProgressReview },
+    { duration: 2600, build: sceneAchievementToast }
   ];
 
   SCENES.forEach(() => {
