@@ -372,6 +372,7 @@
           ${state.lastWasTypo ? `<div class="answer">✓ Close enough — small typo forgiven. Correct spelling: <strong>${esc(answerWord)}</strong>${answerNote ? ` (${esc(answerNote)})` : ''} <button id="speak-answer-btn" class="speak-btn" title="Hear it" style="width:26px;height:26px;font-size:12px;">🔊</button></div>` : ''}
           ${clozeRevealHtml}
         </div>
+        ${current.format === 'cloze' ? `<button id="next-btn" class="btn-primary">${state.index + 1 >= state.questions.length ? 'See results' : 'Next word'}</button><div class="countdown-bar-track"><div class="countdown-bar-fill" id="countdown-fill"></div></div>` : ''}
       `;
     } else {
       bottomHtml = `
@@ -441,13 +442,32 @@
       if (speakAnswerBtn) speakAnswerBtn.addEventListener('click', () => speak(answerWord, answerLang, speakAnswerBtn));
       const fill = document.getElementById('countdown-fill');
       if (fill) {
+        // Matches the actual auto-advance delay (see submitAnswer) rather
+        // than assuming the CSS default 3s — cloze wrong answers now run
+        // longer, so the bar needs to finish emptying at the same moment
+        // the timer actually fires, not sooner.
+        fill.style.transitionDuration = (state.autoAdvanceDelay || 3000) + 'ms';
         requestAnimationFrame(() => { requestAnimationFrame(() => { fill.style.width = '0%'; }); });
       }
     } else {
-      // typed correct (possibly a forgiven near-miss) — no Next button,
-      // matches choice mode's silent auto-advance-only correct state.
+      // typed correct (possibly a forgiven near-miss) — no Next button for
+      // ordinary Quiz/Sentences words, matches choice mode's silent
+      // auto-advance-only correct state. Cloze is the one exception (see
+      // the bottomHtml above): its auto-advance runs several seconds
+      // longer so there's time to read the sentence + translation, so it
+      // gets a manual "Next word" + countdown bar the same as a wrong
+      // answer, letting a fast reader skip ahead instead of waiting it out.
       const speakAnswerBtn = document.getElementById('speak-answer-btn');
       if (speakAnswerBtn) speakAnswerBtn.addEventListener('click', () => speak(answerWord, answerLang, speakAnswerBtn));
+      if (current.format === 'cloze') {
+        const nextBtn = document.getElementById('next-btn');
+        if (nextBtn) nextBtn.addEventListener('click', nextQuestion);
+        const fill = document.getElementById('countdown-fill');
+        if (fill) {
+          fill.style.transitionDuration = (state.autoAdvanceDelay || 3000) + 'ms';
+          requestAnimationFrame(() => { requestAnimationFrame(() => { fill.style.width = '0%'; }); });
+        }
+      }
     }
 
     document.getElementById('quiz-quit-btn').addEventListener('click', quitQuiz);
