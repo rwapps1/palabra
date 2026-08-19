@@ -198,7 +198,6 @@
             </div>
             <button id="menu-btn" class="menu-btn">⋯</button>
           </div>
-          ${menuHtml}
           ${statusHtml}
           ${uploadHtml}
           <div class="card stream-hero hub-hero-pulse ${playedToday ? 'calm' : ''}">
@@ -310,6 +309,7 @@
 
           <input type="file" id="import-file" accept="application/json" style="display:none" />
         </div>
+        ${menuHtml}
       </div>
     `;
 
