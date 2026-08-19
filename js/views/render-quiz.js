@@ -496,7 +496,7 @@
           <p class="celebrate-subline">Keep going, or stop here for now.</p>
           <div class="checkpoint-actions">
             <button id="stream-continue-btn" class="btn-primary">Keep going →</button>
-            <button id="stream-stop-btn" class="link-btn">Stop for today</button>
+            <button id="stream-stop-btn" class="link-btn">Take a Break</button>
           </div>
         </div>
       </div>
