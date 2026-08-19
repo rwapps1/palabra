@@ -318,6 +318,15 @@
       ? `<div class="audio-hint" style="margin-bottom:10px;">${instructionText}</div><div class="cloze-sentence">${esc(clozeBlank.before)}<span class="cloze-blank">____</span>${esc(clozeBlank.after)}</div><div class="prompt-row" style="margin-top:10px;"><button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button><button id="hint-btn" class="hint-btn" title="Hear the full sentence">Hint</button></div>`
       : `<div class="audio-hint" style="margin-bottom:10px;">${instructionText}</div><div class="prompt-row"><div class="prompt-word">${esc(promptWord)}</div><button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button></div>${promptNote ? `<div class="prompt-note">${esc(promptNote)}</div>` : ''}`;
 
+    // Cloze answer reveal - the full sentence plus its English translation,
+    // shown after every cloze answer (correct, wrong, or a forgiven near
+    // miss) regardless of outcome. Only ever applies to cloze questions
+    // with a resolvable blank and a translation actually on the sheet -
+    // older/edited rows without one just don't show this line.
+    const clozeRevealHtml = (current.format === 'cloze' && clozeBlank && current.sentenceTranslation)
+      ? `<div class="cloze-reveal"><span class="cloze-reveal-es">${esc(current.sentence)}</span><span class="cloze-reveal-divider">—</span><span class="cloze-reveal-en">${esc(current.sentenceTranslation)}</span></div>`
+      : '';
+
     let bottomHtml;
 
     if (useChoice) {
@@ -361,6 +370,7 @@
         <div class="feedback correct">
           <div class="title">✅ Correct</div>
           ${state.lastWasTypo ? `<div class="answer">✓ Close enough — small typo forgiven. Correct spelling: <strong>${esc(answerWord)}</strong>${answerNote ? ` (${esc(answerNote)})` : ''} <button id="speak-answer-btn" class="speak-btn" title="Hear it" style="width:26px;height:26px;font-size:12px;">🔊</button></div>` : ''}
+          ${clozeRevealHtml}
         </div>
       `;
     } else {
@@ -368,6 +378,7 @@
         <div class="feedback wrong">
           <div class="title">❌ Not quite</div>
           <div class="answer">Correct answer: <strong>${esc(answerWord)}</strong>${answerNote ? ` (${esc(answerNote)})` : ''} <button id="speak-answer-btn" class="speak-btn" title="Hear it" style="width:26px;height:26px;font-size:12px;">🔊</button></div>
+          ${clozeRevealHtml}
         </div>
         <button id="next-btn" class="btn-primary">${state.index + 1 >= state.questions.length ? 'See results' : 'Next word'}</button>
         <div class="countdown-bar-track"><div class="countdown-bar-fill" id="countdown-fill"></div></div>
