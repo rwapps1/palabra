@@ -124,6 +124,35 @@
     border-bottom: 2px solid var(--ochre);
     color: var(--ochre);
   }
+  /* Cloze answer reveal: the full (un-blanked) Spanish sentence next to
+     its English translation, shown after every cloze answer regardless of
+     correct/wrong/near-miss. Flex-wrap so the pair sits side by side on
+     wider screens but drops to stacked lines on a narrow phone rather
+     than overflowing. */
+  .cloze-reveal {
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--outline);
+    border-radius: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .cloze-reveal-es {
+    color: var(--cream);
+    font-weight: 600;
+  }
+  .cloze-reveal-divider {
+    color: var(--outline);
+  }
+  .cloze-reveal-en {
+    color: var(--cream-dim);
+    font-style: italic;
+  }
   .speak-btn {
     background: rgba(255,255,255,0.06);
     border: 1px solid var(--outline);
