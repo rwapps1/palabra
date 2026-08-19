@@ -255,11 +255,18 @@
     // guessing the missing word, so speaking current.sentence verbatim
     // (which still contains it) would just hand it over. "..." gives
     // TTS engines a natural pause where the word would go.
+    // True/False speaks the fixed Spanish word; Scramble's "Hear it" plays
+    // the full unblanked sentence - safe here (unlike cloze) since the
+    // words are already visible in the bank, just unordered, so nothing is
+    // being given away by hearing them in their real order.
     const promptWord = (current.format === 'cloze' && clozeBlank) ? `${clozeBlank.before} ... ${clozeBlank.after}`.replace(/\s+/g, ' ').trim()
+      : current.format === 'truefalse' ? primaryText(current.es)
+      : current.format === 'scramble' ? current.sentence
       : clozeFallback ? primaryText(current.en)
       : primaryText(current.direction === 'es-en' ? current.es : current.en);
     const answerWord = current.format === 'cloze' ? primaryText(current.es) : primaryText(current.direction === 'es-en' ? current.en : current.es);
     const promptLang = (current.format === 'cloze' && clozeBlank) ? 'es-ES'
+      : (current.format === 'truefalse' || current.format === 'scramble') ? 'es-ES'
       : clozeFallback ? 'en-US'
       : (current.direction === 'es-en' ? 'es-ES' : 'en-US');
     const answerLang = current.format === 'cloze' ? 'es-ES' : (current.direction === 'es-en' ? 'en-US' : 'es-ES');
@@ -280,14 +287,22 @@
     const shouldFlip = state.lastFlippedIndex !== state.index;
     if (shouldFlip) state.lastFlippedIndex = state.index;
 
+    // Centralized per-format label, used by both the Stream and non-Stream
+    // progress-label variants below (truefalse/scramble are Stream-only
+    // formats today, but this keeps the two label branches in sync either way).
+    const formatLabel = (current.format === 'cloze' && clozeBlank) ? 'FILL IN THE BLANK'
+      : current.format === 'truefalse' ? 'TRUE OR FALSE'
+      : current.format === 'scramble' ? 'PLACE IN THE CORRECT ORDER'
+      : (current.direction === 'es-en' ? 'ES → EN' : 'EN → ES');
+
     // results.length already counts the just-answered question once
     // checked is true (recordAnswer pushed it before this render), so the
     // +1 only belongs while the question is still unanswered — otherwise
     // the feedback screen for question 10 briefly claims to be question 11.
     const streamQuestionNum = state.results.length + (state.checked ? 0 : 1);
     const progressLabel = state.isStreamRound
-      ? `Question ${streamQuestionNum} · ${isAudioFormat ? 'LISTEN' : (current.format === 'cloze' && clozeBlank ? 'FILL IN THE BLANK' : (current.direction === 'es-en' ? 'ES → EN' : 'EN → ES'))}`
-      : `${state.index + 1} / ${state.questions.length} · ${(current.format === 'cloze' && clozeBlank) ? 'FILL IN THE BLANK' : (current.direction === 'es-en' ? 'ES → EN' : 'EN → ES')}`;
+      ? `Question ${streamQuestionNum} · ${isAudioFormat ? 'LISTEN' : formatLabel}`
+      : `${state.index + 1} / ${state.questions.length} · ${formatLabel}`;
 
     const orbHtml = state.isStreamRound
       ? `<div class="glow-orb-progress streak-orb"><div class="orb-num">🔥${state.progress.streak.current}</div><div class="orb-lbl">STREAK</div></div>`
@@ -316,6 +331,10 @@
       ? `<button id="speak-prompt-btn" class="speak-btn big" title="Hear it">🔊</button><div class="audio-hint">Listen, then choose the meaning</div>`
       : (current.format === 'cloze' && clozeBlank)
       ? `<div class="audio-hint" style="margin-bottom:10px;">${instructionText}</div><div class="cloze-sentence">${esc(clozeBlank.before)}<span class="cloze-blank">____</span>${esc(clozeBlank.after)}</div><div class="prompt-row" style="margin-top:10px;"><button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button><button id="hint-btn" class="hint-btn" title="Hear the full sentence">Hint</button></div>`
+      : current.format === 'truefalse'
+      ? `<div class="audio-hint" style="margin-bottom:10px;">Does this mean the same thing?</div><div class="tf-claim"><span class="tf-claim-es">${esc(primaryText(current.es))}</span><span class="tf-claim-eq">=</span><span class="tf-claim-en">${esc(state.tfClaimEn)}</span></div><div class="prompt-row" style="margin-top:10px; justify-content:center;"><button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button></div>`
+      : current.format === 'scramble'
+      ? `<div class="audio-hint" style="margin-bottom:10px;">Tap the words in the right order</div><div class="scramble-strip" id="scramble-strip">${scrambleStripHtml}</div><div class="prompt-row" style="margin-top:10px; justify-content:center;"><button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button>${(!state.checked && state.scramblePlaced.length > 0) ? '<button id="scramble-clear-btn" class="hint-btn" title="Clear all">Clear</button>' : ''}</div>`
       : `<div class="audio-hint" style="margin-bottom:10px;">${instructionText}</div><div class="prompt-row"><div class="prompt-word">${esc(promptWord)}</div><button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button></div>${promptNote ? `<div class="prompt-note">${esc(promptNote)}</div>` : ''}`;
 
     // Cloze answer reveal - the full sentence plus its English translation,
@@ -327,9 +346,81 @@
       ? `<div class="cloze-reveal"><span class="cloze-reveal-es">${esc(current.sentence)}</span><span class="cloze-reveal-divider">—</span><span class="cloze-reveal-en">${esc(current.sentenceTranslation)}</span></div>`
       : '';
 
+    // Same reveal treatment for Scramble - shown after every answer
+    // (correct or wrong) so the sentence's meaning is visible either way,
+    // not just when the order was wrong.
+    const scrambleRevealHtml = (current.format === 'scramble' && current.sentenceTranslation)
+      ? `<div class="cloze-reveal"><span class="cloze-reveal-es">${esc(current.sentence)}</span><span class="cloze-reveal-divider">—</span><span class="cloze-reveal-en">${esc(current.sentenceTranslation)}</span></div>`
+      : '';
+
+    // The sentence strip: placed words as filled, tappable pills (tap to
+    // send back to the bank) and remaining slots as empty placeholders -
+    // gives a sense of progress without revealing sentence length/structure
+    // beyond word count. After a wrong answer, slots that landed in the
+    // wrong position are highlighted so the mistake is visible at a glance.
+    let scrambleStripHtml = '';
+    if (current.format === 'scramble') {
+      const totalSlots = state.scrambleBank.length;
+      for (let i = 0; i < totalSlots; i++) {
+        if (i < state.scramblePlaced.length) {
+          const origIndex = state.scramblePlaced[i];
+          const tile = state.scrambleBank.find(t => t.origIndex === origIndex);
+          const wrongPos = state.checked && !state.wasCorrect && origIndex !== i;
+          scrambleStripHtml += `<button class="scramble-slot filled ${state.checked ? '' : 'tappable'} ${wrongPos ? 'wrong-pos' : ''}" data-orig="${origIndex}" ${state.checked ? 'disabled' : ''}>${esc(tile ? tile.text : '')}</button>`;
+        } else {
+          scrambleStripHtml += `<div class="scramble-slot empty"></div>`;
+        }
+      }
+    }
+
     let bottomHtml;
 
-    if (useChoice) {
+    if (current.format === 'truefalse') {
+      let optionsHtml;
+      if (!state.checked) {
+        optionsHtml = `
+          <div class="option-list" id="tf-options">
+            <button class="option-btn" id="tf-true-btn">✅ True</button>
+            <button class="option-btn" id="tf-false-btn">❌ False</button>
+          </div>
+        `;
+      } else {
+        optionsHtml = `
+          <div class="option-list">
+            <button class="option-btn ${state.tfIsTrue ? 'correct-choice pop-anim' : (state.selectedOption === 'True' ? 'wrong-choice shake-anim' : '')}" disabled>✅ True</button>
+            <button class="option-btn ${!state.tfIsTrue ? 'correct-choice pop-anim' : (state.selectedOption === 'False' ? 'wrong-choice shake-anim' : '')}" disabled>❌ False</button>
+          </div>
+        `;
+      }
+      let feedbackHtml = '';
+      if (state.checked) {
+        feedbackHtml = state.wasCorrect
+          ? `<div class="feedback correct"><div class="title">✅ Correct</div></div>`
+          : `
+            <div class="feedback wrong"><div class="title">❌ Not quite</div><div class="answer">This was ${state.tfIsTrue ? 'True' : 'False'}.</div></div>
+            <button id="next-btn" class="btn-primary">Next word</button>
+            <div class="countdown-bar-track"><div class="countdown-bar-fill" id="countdown-fill"></div></div>
+          `;
+      }
+      bottomHtml = optionsHtml + feedbackHtml;
+    } else if (current.format === 'scramble') {
+      let bankHtml = '';
+      if (!state.checked) {
+        const bankTilesHtml = state.scrambleBank
+          .filter(t => !state.scramblePlaced.includes(t.origIndex))
+          .map(t => `<button class="scramble-pill" data-orig="${t.origIndex}">${esc(t.text)}</button>`)
+          .join('');
+        bankHtml = `<div class="scramble-bank" id="scramble-bank">${bankTilesHtml}</div>`;
+      }
+      let feedbackHtml = '';
+      if (state.checked) {
+        feedbackHtml = state.wasCorrect
+          ? `<div class="feedback correct"><div class="title">✅ Correct order</div>${scrambleRevealHtml}</div>`
+          : `<div class="feedback wrong"><div class="title">❌ Not quite the right order</div>${scrambleRevealHtml}</div>`;
+        feedbackHtml += `<button id="next-btn" class="btn-primary">${state.index + 1 >= state.questions.length ? 'See results' : 'Next word'}</button><div class="countdown-bar-track"><div class="countdown-bar-fill" id="countdown-fill"></div></div>`;
+      }
+      bottomHtml = bankHtml + feedbackHtml;
+    } else if (useChoice) {
       const acceptable = splitAnswers(current.direction === 'es-en' ? current.en : current.es).map(normalize);
       let optionsHtml = '<div class="option-list" id="options-container">';
       state.currentOptions.forEach((opt) => {
@@ -411,7 +502,39 @@
     if (hintBtn) hintBtn.addEventListener('click', () => speak(current.sentence, 'es-ES', hintBtn));
     const shouldAutoSpeak = isAudioFormat || state.progress.settings.autoSpeak;
 
-    if (useChoice) {
+    if (current.format === 'truefalse') {
+      if (!state.checked) {
+        document.getElementById('tf-true-btn').addEventListener('click', () => selectTrueFalse(true));
+        document.getElementById('tf-false-btn').addEventListener('click', () => selectTrueFalse(false));
+        if (shouldAutoSpeak) speak(promptWord, promptLang, speakPromptBtn);
+      } else if (!state.wasCorrect) {
+        document.getElementById('next-btn').addEventListener('click', nextQuestion);
+        const fill = document.getElementById('countdown-fill');
+        if (fill) {
+          requestAnimationFrame(() => { requestAnimationFrame(() => { fill.style.width = '0%'; }); });
+        }
+      }
+    } else if (current.format === 'scramble') {
+      if (!state.checked) {
+        document.querySelectorAll('#scramble-bank .scramble-pill').forEach(btn => {
+          btn.addEventListener('click', () => scramblePlaceTile(parseInt(btn.dataset.orig, 10)));
+        });
+        document.querySelectorAll('#scramble-strip .scramble-slot.filled').forEach(btn => {
+          btn.addEventListener('click', () => scrambleRemoveTile(parseInt(btn.dataset.orig, 10)));
+        });
+        const clearBtn = document.getElementById('scramble-clear-btn');
+        if (clearBtn) clearBtn.addEventListener('click', scrambleClearAll);
+        if (shouldAutoSpeak) speak(promptWord, promptLang, speakPromptBtn);
+      } else {
+        const nextBtn = document.getElementById('next-btn');
+        if (nextBtn) nextBtn.addEventListener('click', nextQuestion);
+        const fill = document.getElementById('countdown-fill');
+        if (fill) {
+          fill.style.transitionDuration = (state.autoAdvanceDelay || 3000) + 'ms';
+          requestAnimationFrame(() => { requestAnimationFrame(() => { fill.style.width = '0%'; }); });
+        }
+      }
+    } else if (useChoice) {
       if (!state.checked) {
         document.querySelectorAll('#options-container .option-btn').forEach((btn, i) => {
           btn.addEventListener('click', () => selectOption(state.currentOptions[i]));
