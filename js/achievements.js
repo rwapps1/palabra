@@ -27,6 +27,22 @@
     }, 2000);
   }
 
+  // One-time-per-day toast for hitting the Daily XP goal — see
+  // checkDailyGoalCrossed() in progress-xp.js. Deliberately quieter than
+  // an achievement unlock (no sound, no confetti): reaching a routine
+  // daily goal is a nice nudge, not a milestone worth the bigger fanfare.
+  function showDailyGoalToast() {
+    const toast = document.createElement('div');
+    toast.className = 'achievement-toast';
+    toast.innerHTML = `<div class="toast-icon">⚡</div><div><div class="toast-title">Daily goal reached</div><div class="toast-name">You hit your XP goal for today</div></div>`;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => { toast.classList.add('show'); });
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 400);
+    }, 2600);
+  }
+
   // While true, unlockAchievement() queues its toast/sound instead of
   // firing immediately — used around round-end achievement checks so an
   // achievement toast doesn't pop up on top of the full-screen celebration.
@@ -60,6 +76,31 @@
       setTimeout(() => showAchievementToast(id), delay);
       delay += 250;
     });
+  }
+
+  // Picks the locked achievement with the highest completion fraction, for
+  // the hub Today panel's "N away from X" teaser. Only achievements listed
+  // in ACHIEVEMENT_PROGRESS (config.js) are eligible — see that table's
+  // comment for why one-shot/session-only achievements are excluded.
+  // Returns null if every eligible achievement is already unlocked (or
+  // none exist yet, e.g. mid-migration).
+  function getAchievementTeaser() {
+    const progress = state.progress;
+    const unlocked = progress.achievements || {};
+    let best = null;
+    Object.keys(ACHIEVEMENT_PROGRESS).forEach(id => {
+      if (unlocked[id] && unlocked[id].unlocked) return;
+      const def = ACHIEVEMENTS[id];
+      const spec = ACHIEVEMENT_PROGRESS[id];
+      if (!def || !spec) return;
+      const value = spec.value(progress) || 0;
+      const fraction = Math.max(0, Math.min(1, value / spec.target));
+      const remaining = Math.max(0, Math.ceil(spec.target - value));
+      if (!best || fraction > best.fraction) {
+        best = { id, def, fraction, remaining };
+      }
+    });
+    return best;
   }
 
   function evaluateRoundAchievements() {
