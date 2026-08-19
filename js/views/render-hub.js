@@ -129,10 +129,10 @@
               </div>
             ` : ''}
             <button id="menu-export-btn" class="sheet-row actionable sheet-row-btn" type="button">
-              <span class="row-left"><span class="row-icon">⬇</span><span class="row-label">Download progress</span></span>
+              <span class="row-left"><span class="row-icon-badge dl">📥</span><span class="row-label">Download progress</span></span>
             </button>
             <button id="menu-import-btn" class="sheet-row actionable sheet-row-btn" type="button">
-              <span class="row-left"><span class="row-icon">⬆</span><span class="row-label">Upload progress</span></span>
+              <span class="row-left"><span class="row-icon-badge ul">📤</span><span class="row-label">Upload progress</span></span>
             </button>
           </div>
 
