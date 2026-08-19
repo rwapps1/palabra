@@ -271,7 +271,15 @@
     // read (see the near-miss feedback in renderQuiz) — a plain correct
     // answer's 750ms is too quick for that, but it's not as much to
     // absorb as a wrong answer's full "correct answer: X" breakdown either.
-    const delay = !correct ? 3000 : (wasTypo ? 1800 : 750);
+    // Cloze questions get noticeably longer on every outcome — there's a
+    // full sentence + English translation to read on top of the usual
+    // feedback, and a manual "Next word" button covers anyone who reads
+    // faster than that (see renderQuiz's cloze-only Next button).
+    const isCloze = current.format === 'cloze';
+    const delay = isCloze
+      ? (!correct ? 6000 : (wasTypo ? 4000 : 3000))
+      : (!correct ? 3000 : (wasTypo ? 1800 : 750));
+    state.autoAdvanceDelay = delay;
     state.autoAdvanceTimer = setTimeout(() => { nextQuestion(); }, delay);
   }
 
