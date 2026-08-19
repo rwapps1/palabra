@@ -265,6 +265,18 @@
       }
     }
     state.lastWasTypo = wasTypo;
+    // Computed and stored BEFORE render() — render() is what builds the
+    // countdown bar and reads state.autoAdvanceDelay to set its animation
+    // duration, so this has to already be the current question's value by
+    // the time that happens. Doing this after render() left the bar
+    // animating on the previous question's (usually shorter) delay for
+    // one question every time, then sitting empty until the real,
+    // longer timeout actually fired.
+    const isCloze = current.format === 'cloze';
+    const delay = isCloze
+      ? (!correct ? 6000 : (wasTypo ? 4000 : 3000))
+      : (!correct ? 3000 : (wasTypo ? 1800 : 750));
+    state.autoAdvanceDelay = delay;
     recordAnswer(current, correct, state.input);
     render();
     // A forgiven typo has a full sentence plus the correct spelling to
@@ -275,11 +287,6 @@
     // full sentence + English translation to read on top of the usual
     // feedback, and a manual "Next word" button covers anyone who reads
     // faster than that (see renderQuiz's cloze-only Next button).
-    const isCloze = current.format === 'cloze';
-    const delay = isCloze
-      ? (!correct ? 6000 : (wasTypo ? 4000 : 3000))
-      : (!correct ? 3000 : (wasTypo ? 1800 : 750));
-    state.autoAdvanceDelay = delay;
     state.autoAdvanceTimer = setTimeout(() => { nextQuestion(); }, delay);
   }
 
