@@ -193,7 +193,7 @@
   <div id="view-editor" class="hidden">
 
     <div class="toolbar">
-      <input type="text" class="search-input" id="searchInput" placeholder="Search Spanish, English, note, sentence…">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search Spanish, English, note, sentence, translation…">
       <select class="cat-select" id="catSelect">
         <option value="">All categories</option>
       </select>
@@ -238,10 +238,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
   const PAGE_SIZE = 50;
-  const COLUMNS = ['Spanish', 'English', 'Note', 'Category', 'Sentence'];
+  const COLUMNS = ['Spanish', 'English', 'Note', 'Category', 'Sentence', 'SentenceTranslation'];
 
   let workbook = null;   // full parsed workbook, kept so other sheets (Decisions Log) survive untouched
-  let words = [];        // [{es, en, note, cat, sentence}, ...] — the editable "Words" sheet
+  let words = [];        // [{es, en, note, cat, sentence, translation}, ...] — the editable "Words" sheet
   let page = 1;
   let isDirty = false;
 
@@ -285,7 +285,7 @@
       const aoa = XLSX.utils.sheet_to_json(workbook.Sheets['Words'], { header: 1, defval: '' });
       words = aoa.slice(1)
         .filter(r => (r[0] || r[1]))
-        .map(r => ({ es: String(r[0] || ''), en: String(r[1] || ''), note: String(r[2] || ''), cat: String(r[3] || ''), sentence: String(r[4] || '') }));
+        .map(r => ({ es: String(r[0] || ''), en: String(r[1] || ''), note: String(r[2] || ''), cat: String(r[3] || ''), sentence: String(r[4] || ''), translation: String(r[5] || '') }));
 
       populateCategoryFilter();
       isDirty = false;
@@ -321,15 +321,16 @@
       }
       if (!q) return true;
       return w.es.toLowerCase().includes(q) || w.en.toLowerCase().includes(q) ||
-             w.note.toLowerCase().includes(q) || w.sentence.toLowerCase().includes(q);
+             w.note.toLowerCase().includes(q) || w.sentence.toLowerCase().includes(q) ||
+             w.translation.toLowerCase().includes(q);
     });
   }
 
   // --- render ----------------------------------------------------------------
   // Note is now shown inline as an editable column (rarely populated, short
-  // when it is, so it fits without needing to hide it). Only the example
-  // Sentence — longer, and populated on ~half the words — stays behind the
-  // expand button.
+  // when it is, so it fits without needing to hide it). The example Sentence
+  // and its English translation — longer, and populated together on the same
+  // subset of words — both stay behind the expand button, edited as a pair.
 
   function renderTable() {
     els.headerCount.textContent = `${words.length.toLocaleString()} words`;
@@ -374,6 +375,10 @@
             <div class="detail-field">
               <label>Example sentence</label>
               <textarea data-field="sentence" data-idx="${idx}" rows="2">${escapeHtml(w.sentence)}</textarea>
+            </div>
+            <div class="detail-field">
+              <label>English translation</label>
+              <textarea data-field="translation" data-idx="${idx}" rows="2">${escapeHtml(w.translation)}</textarea>
             </div>
           </td>
         </tr>`;
@@ -430,7 +435,7 @@
   els.addBtn.addEventListener('click', () => {
     els.searchInput.value = '';
     els.catSelect.value = '';
-    words.unshift({ es: '', en: '', note: '', cat: '', sentence: '' });
+    words.unshift({ es: '', en: '', note: '', cat: '', sentence: '', translation: '' });
     setDirty();
     page = 1;
     renderTable();
@@ -477,7 +482,7 @@
   els.downloadBtn.addEventListener('click', () => {
     // Drop fully-blank rows (e.g. an "Add word" row left empty) before export.
     const cleanWords = words.filter(w => w.es.trim() || w.en.trim());
-    const aoa = [COLUMNS, ...cleanWords.map(w => [w.es, w.en, w.note, w.cat, w.sentence])];
+    const aoa = [COLUMNS, ...cleanWords.map(w => [w.es, w.en, w.note, w.cat, w.sentence, w.translation])];
     const newSheet = XLSX.utils.aoa_to_sheet(aoa);
     workbook.Sheets['Words'] = newSheet;
     XLSX.writeFile(workbook, 'words.xlsx');
