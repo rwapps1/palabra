@@ -1,0 +1,338 @@
+/* Home hub redesign: Today panel, hero pulse states, mode-picker tile,
+   merged Level+Progress card, quiet achievements row, settings bottom sheet.
+   Depends on tokens from base.css (--cream, --ochre, --outline, etc.) —
+   adds a few hub-only tokens below rather than touching base.css. */
+
+  :root {
+    --cream-faint: #8f84a3;
+    --flame-a: #ff8a4c;
+    --flame-b: #ff4d6d;
+    --hub-panel-line: rgba(247,243,237,0.12);
+  }
+
+  /* ---- Hero pulse: pulses the card's own border/shadow, not a background
+     blob. Strong before today's first Stream session, calm once played. ---- */
+  .hub-hero-pulse {
+    position: relative;
+    border-color: rgba(255,193,99,0.3);
+    animation: hubHeroPulseStrong 2.4s ease-in-out infinite;
+  }
+  .hub-hero-pulse.calm {
+    animation: hubHeroPulseCalm 4s ease-in-out infinite;
+  }
+  @keyframes hubHeroPulseStrong {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(255,178,80,0);
+      border-color: rgba(255,193,99,0.32);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 0 5px rgba(255,178,80,0.55), 0 0 46px 8px rgba(255,140,50,0.7);
+      border-color: rgba(255,201,120,1);
+      transform: scale(1.02);
+    }
+  }
+  @keyframes hubHeroPulseCalm {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(255,178,80,0);
+      border-color: rgba(255,193,99,0.26);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 0 4px rgba(255,178,80,0.34), 0 0 28px 5px rgba(255,145,55,0.4);
+      border-color: rgba(255,193,99,0.85);
+      transform: scale(1.012);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hub-hero-pulse, .hub-hero-pulse.calm { animation: none; }
+  }
+
+  .hub-start-btn { display: flex; align-items: center; justify-content: center; gap: 9px; }
+  .hub-play-chip {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(36,19,51,0.16);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; flex-shrink: 0;
+  }
+
+  /* ---- Today panel: borderless, hairline dividers between sub-sections ---- */
+  .today-panel { margin-top: 22px; padding: 4px 6px 0; }
+
+  .today-hero-row { display: flex; align-items: center; gap: 16px; padding: 0 8px 18px; }
+  .today-flame-wrap { flex-shrink: 0; }
+  .today-flame-num {
+    font-family: 'Sora', sans-serif; font-weight: 800; font-size: 30px;
+    background: linear-gradient(135deg, var(--flame-a), var(--flame-b));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .today-flame-emoji { font-size: 26px; filter: drop-shadow(0 0 10px rgba(255,120,60,0.55)); }
+  .today-streak-label {
+    font-size: 11.5px; letter-spacing: 1.1px; text-transform: uppercase;
+    color: var(--cream-faint); font-weight: 600; margin-top: 2px;
+  }
+  .today-week-pips { flex: 1; display: flex; justify-content: space-between; padding-left: 4px; }
+  .pip-col { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+  .pip-day { font-size: 10.5px; color: var(--cream-faint); font-weight: 600; }
+  .pip {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.16);
+    display: block;
+  }
+  .pip.filled {
+    background: linear-gradient(135deg, var(--flame-a), var(--flame-b));
+    border-color: transparent;
+    box-shadow: 0 0 8px rgba(255,110,70,0.55);
+  }
+  .pip.today { border: 1.5px solid var(--ochre); }
+
+  .today-divider { height: 1px; background: var(--hub-panel-line); margin: 0 8px; }
+
+  .today-stat-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    row-gap: 18px; column-gap: 12px;
+    padding: 18px 8px 4px;
+    max-width: 300px; margin: 0 auto;
+  }
+  .today-stat { text-align: center; }
+  .today-stat-icon { font-size: 15px; }
+  .today-stat-num {
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 18px;
+    color: var(--cream); display: block; margin-top: 6px;
+  }
+  .today-stat-lbl { font-size: 11px; color: var(--cream-faint); margin-top: 2px; display: block; }
+  .today-stat.goal-met .today-stat-num { color: var(--green); }
+  .today-stat.goal-met .today-stat-lbl { color: var(--green); }
+  .today-xp-bar {
+    height: 5px; border-radius: 3px; background: rgba(255,255,255,0.1);
+    margin: 9px auto 0; overflow: hidden; max-width: 110px;
+  }
+  .today-xp-bar-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, #FFC163, #FFDB96);
+  }
+  .today-xp-bar-fill.goal-met {
+    background: linear-gradient(90deg, #2DD4BF, #34D399);
+  }
+
+  .today-footer { margin-top: 4px; }
+  .today-foot-row {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    padding: 12px 8px; border-top: 1px solid var(--hub-panel-line);
+    background: none; border-left: none; border-right: none; border-bottom: none;
+    color: var(--cream); text-align: left; font-family: 'Inter', sans-serif;
+    cursor: pointer;
+  }
+  .today-foot-row:disabled { cursor: default; }
+  .today-foot-row .foot-icon {
+    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+    background: rgba(255,193,99,0.18);
+  }
+  .today-foot-row .foot-icon.claimed { background: rgba(45,212,191,0.18); color: var(--green); }
+  .today-foot-row .foot-icon.trophy { background: rgba(255,193,99,0.18); }
+  .today-foot-row .foot-text { flex: 1; }
+  .today-foot-row .foot-title { font-size: 13.5px; font-weight: 700; color: var(--cream); }
+  .today-foot-row .foot-sub { font-size: 12px; color: var(--cream-dim); margin-top: 2px; }
+  .today-foot-row .foot-cta {
+    flex-shrink: 0; font-size: 12.5px; font-weight: 700;
+    padding: 7px 14px; border-radius: 999px;
+    background: var(--ochre); color: #241608;
+  }
+  .today-foot-row .foot-cta.claimed {
+    background: none; border: 1px solid var(--green); color: var(--green);
+  }
+
+  /* ---- Mode-picker tile ---- */
+  .mode-tile {
+    display: block; width: 100%; text-align: left;
+    margin-top: 18px; font-family: 'Inter', sans-serif; color: var(--cream);
+    background: linear-gradient(135deg, rgba(155,110,220,0.10), rgba(255,255,255,0.03));
+    border: 1px solid rgba(180,140,230,0.28);
+    border-radius: 20px; padding: 16px 16px 14px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .mode-tile:active { transform: scale(0.985); }
+  .mode-tile-top { display: flex; align-items: center; margin-bottom: 14px; }
+  .mode-tile-top h3 { margin: 0; font-family: 'Sora', sans-serif; font-size: 16px; color: var(--cream); font-weight: 700; }
+  .mode-tile-chip { margin-left: auto; background: rgba(190,150,240,0.85); color: #241333; }
+  .mode-preview { display: flex; gap: 8px; }
+  .mode-chip {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.05); border-radius: 14px; padding: 10px 4px;
+  }
+  .mode-chip .mico { font-size: 17px; }
+  .mode-chip .mlabel { font-size: 9.5px; color: var(--cream-faint); font-weight: 600; text-align: center; line-height: 1.2; }
+
+  /* ---- Merged Level + Progress card ---- */
+  .progress-card {
+    display: flex; align-items: center; gap: 16px; width: 100%; text-align: left;
+    margin-top: 12px; font-family: 'Inter', sans-serif; color: var(--cream);
+    background: linear-gradient(135deg, rgba(255,193,99,0.10), rgba(255,255,255,0.03));
+    border: 1px solid rgba(255,193,99,0.32);
+    border-radius: 20px; padding: 16px 16px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .progress-card:active { transform: scale(0.985); }
+  .ring-wrap { position: relative; width: 76px; height: 76px; flex-shrink: 0; }
+  .ring-wrap svg { transform: rotate(-90deg); }
+  .ring-track { fill: none; stroke: rgba(255,255,255,0.09); stroke-width: 7; }
+  .ring-fill { fill: none; stroke: url(#hubRingGrad); stroke-width: 7; stroke-linecap: round; }
+  .ring-level {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-family: 'Sora', sans-serif; font-weight: 800; font-size: 21px; color: var(--cream);
+  }
+  .progress-info { flex: 1; min-width: 0; }
+  .progress-info-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .progress-info h3 { margin: 0 0 4px; font-family: 'Sora', sans-serif; font-size: 16px; color: var(--cream); font-weight: 700; }
+  .progress-chevron { flex-shrink: 0; color: var(--cream-dim); opacity: 0.6; transition: transform 0.15s ease; }
+  .progress-card:active .progress-chevron { transform: translateX(2px); }
+  .progress-info .xp-line { font-size: 12.5px; color: var(--cream-dim); margin-bottom: 8px; }
+  .progress-info .xp-line b { color: var(--ochre); font-weight: 700; }
+
+  /* Box-distribution teaser: mastery shape at a glance, one segment per SRS
+     box (index 0-5, shown as Box 1-6). Deliberately no due/overdue count —
+     word selection is a soft weighted pick (see utils.js getWeight()), not
+     a hard due-list, so a count here would promise more than the app does
+     and would spike (and demoralise) after any break from practice. */
+  .box-strip-label {
+    font-size: 10.5px; letter-spacing: 0.03em; text-transform: uppercase;
+    color: var(--cream-faint); margin-bottom: 5px;
+  }
+  .box-strip { display: flex; gap: 3px; height: 8px; }
+  .box-seg { border-radius: 3px; background: rgba(255,255,255,0.09); min-width: 3px; }
+  .box-seg-1 { background: #4a3b63; }
+  .box-seg-2 { background: #5c4877; }
+  .box-seg-3 { background: #7a5788; }
+  .box-seg-4 { background: #a8768a; }
+  .box-seg-5 { background: #d59a6e; }
+  .box-seg-6 { background: var(--ochre); }
+  .box-strip-foot { font-size: 11px; color: var(--cream-faint); margin-top: 6px; }
+
+  /* ---- Quiet achievements row ---- */
+  .ach-row {
+    display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+    margin-top: 6px; padding: 12px 8px; border-top: 1px solid var(--hub-panel-line);
+    background: none; border-left: none; border-right: none; border-bottom-width: 0;
+    font-family: 'Inter', sans-serif; color: var(--cream); cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+  .ach-row:active { opacity: 0.7; }
+  .ach-row .aico { font-size: 15px; }
+  .ach-row .atext { flex: 1; font-size: 13px; color: var(--cream-dim); }
+  .ach-row .atext b { color: var(--cream); font-weight: 700; }
+
+  /* ---- Settings bottom sheet (replaces the old .menu-dropdown/.menu-item
+     pattern in components.css, which is now unused — left in place there,
+     not deleted, since nothing else references it either). ---- */
+  .sheet-backdrop {
+    position: fixed; inset: 0; z-index: 60;
+    background: rgba(10,6,16,0.6);
+    -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+    animation: hubSheetBackdropIn 0.2s ease forwards;
+  }
+  @keyframes hubSheetBackdropIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .settings-sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 61;
+    max-width: 480px; margin: 0 auto;
+    background: linear-gradient(165deg, #3a2a52 0%, #221733 100%);
+    border: 1px solid rgba(255,193,99,0.22); border-bottom: none;
+    border-radius: 24px 24px 0 0;
+    padding: 10px 18px calc(20px + env(safe-area-inset-bottom, 0px));
+    max-height: 90vh; overflow-y: auto; overflow-x: hidden;
+    /* dvh (dynamic viewport height) accounts for Android system bars the
+       way plain vh doesn't — vh is measured against the browser/WebView's
+       maximum possible viewport, not what's actually visible, which is why
+       the sheet could render shorter than intended and cut off content that
+       scrolling couldn't reach. Falls back to the vh line above on anything
+       that doesn't understand dvh (the declaration is just ignored). */
+    max-height: 90dvh;
+    box-shadow: 0 -18px 50px rgba(0,0,0,0.45);
+    animation: hubSheetUp 0.28s cubic-bezier(.22,.9,.3,1) forwards;
+  }
+  @keyframes hubSheetUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .sheet-handle { width: 36px; height: 4px; border-radius: 3px; background: rgba(255,255,255,0.25); margin: 6px auto 14px; }
+  .sheet-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .sheet-title { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 17px; color: var(--cream); }
+  .sheet-close {
+    width: 30px; height: 30px; border-radius: 50%; border: none;
+    background: rgba(255,255,255,0.08); color: var(--cream-dim);
+    font-size: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+
+  .sheet-group-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--label); margin: 18px 2px 8px;
+  }
+  .sheet-group-label:first-of-type { margin-top: 0; }
+  .sheet-card { background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.09); border-radius: 16px; overflow: hidden; }
+  .sheet-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 13px 14px; border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .sheet-row:last-child { border-bottom: none; }
+  .sheet-row-stack { flex-direction: column; align-items: stretch; gap: 6px; }
+  .row-label { font-size: 14.5px; color: var(--cream); }
+  .row-left { display: flex; align-items: center; gap: 10px; }
+  .row-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+  .row-icon-badge {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 14px;
+  }
+  .row-icon-badge.dl { background: rgba(45,212,191,0.18); }
+  .row-icon-badge.ul { background: rgba(255,193,99,0.18); }
+
+  .sheet-row-btn { width: 100%; border: none; background: none; font-family: 'Inter', sans-serif; cursor: pointer; text-align: left; }
+  .sheet-row.actionable:active { background: rgba(255,255,255,0.04); }
+
+  /* Toggle switch — same on/off semantics as a checkbox, wraps the real
+     input (still id="autospeak-toggle" / "soundfx-toggle") so no JS changed. */
+  .switch { position: relative; width: 44px; height: 26px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .switch-track {
+    position: absolute; inset: 0; border-radius: 999px;
+    background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.12);
+    transition: background 0.18s ease, border-color 0.18s ease; cursor: pointer;
+  }
+  .switch-thumb {
+    position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--cream); box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    transition: transform 0.18s cubic-bezier(.4,0,.2,1);
+  }
+  .switch input:checked + .switch-track { background: linear-gradient(135deg, #FFC163, #FFA53E); border-color: transparent; }
+  .switch input:checked + .switch-track .switch-thumb { transform: translateX(18px); }
+
+  /* Editable value rows (XP goal, username) — same edit/save interaction
+     as before, restyled to match the sheet. */
+  .edit-row-static { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+  .edit-value { font-weight: 700; font-size: 14.5px; color: var(--cream); }
+  .edit-link-row { display: flex; justify-content: flex-end; }
+  .edit-form { display: flex; gap: 8px; width: 100%; margin-top: 2px; min-width: 0; }
+  .edit-form input {
+    flex: 1; min-width: 0; background: rgba(255,255,255,0.07); border: 1px solid var(--outline);
+    border-radius: 10px; padding: 9px 11px; color: var(--cream); font-size: 14px; font-family: 'Inter', sans-serif;
+  }
+  .edit-form input:focus { outline: none; border-color: var(--ochre); }
+  .edit-save-btn {
+    background: var(--ochre); color: #241608; border: none; border-radius: 10px;
+    padding: 9px 16px; font-weight: 700; font-size: 13.5px; cursor: pointer; flex-shrink: 0;
+  }
+
+  .account-email { font-size: 12.5px; color: var(--cream-faint); padding: 10px 14px 2px; }
+
+  .signout-card { margin-top: 18px; }
+  .signout-card .row-label { color: var(--red); font-weight: 600; }
+
+  .telegram-row {
+    margin-top: 14px; display: flex; align-items: center; gap: 10px;
+    padding: 12px 4px 6px; text-decoration: none; color: var(--cream);
+  }
+  .telegram-link-text { font-size: 13.5px; color: var(--label); font-weight: 600; text-decoration: underline; }
