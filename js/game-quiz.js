@@ -386,7 +386,13 @@
     if (!current || state.checked) return;
     const correct = answerIsTrue === state.tfIsTrue;
     state.selectedOption = answerIsTrue ? 'True' : 'False';
-    const delay = correct ? 750 : 3000;
+    // 1200ms rather than the usual 750ms "correct" speed used elsewhere -
+    // this is the only place in the app a countdown bar is shown on a
+    // correct answer at all (everywhere else, correct = silent auto-advance,
+    // no bar), and 750ms reads as an instant flash rather than a visible
+    // drain. The longer window also gives the auto-advance timer itself
+    // more margin.
+    const delay = correct ? 1200 : 3000;
     state.autoAdvanceDelay = delay; // set before render() — see submitAnswer's comment on why the ordering matters
     recordAnswer(current, correct, answerIsTrue ? 'True' : 'False');
     render();
