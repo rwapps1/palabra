@@ -396,7 +396,15 @@
     state.autoAdvanceDelay = delay; // set before render() — see submitAnswer's comment on why the ordering matters
     recordAnswer(current, correct, answerIsTrue ? 'True' : 'False');
     render();
-    state.autoAdvanceTimer = setTimeout(() => { nextQuestion(); }, delay);
+    // TEMPORARY DIAGNOSTIC (see window.__tfDiag in app-boot.js) - remove
+    // once the auto-advance issue is settled. Optional-chained so removing
+    // the readout from app-boot.js leaves this a harmless no-op.
+    const scheduledAt = Date.now();
+    if (window.__tfDiag) window.__tfDiag(`scheduled: ${answerIsTrue ? 'True' : 'False'} / ${correct ? 'correct' : 'wrong'} / ${delay}ms`);
+    state.autoAdvanceTimer = setTimeout(() => {
+      if (window.__tfDiag) window.__tfDiag(`FIRED after ${Date.now() - scheduledAt}ms → nextQuestion()`);
+      nextQuestion();
+    }, delay);
   }
 
   // Sentence Scramble: tap-to-place. Tapping a bank word appends it to
