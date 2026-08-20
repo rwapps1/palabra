@@ -440,7 +440,24 @@
   function submitScramble() {
     const current = state.questions[state.index];
     if (!current || state.checked) return;
-    const correct = state.scramblePlaced.every((origIndex, i) => origIndex === i);
+    // Correctness is judged by the WORD placed at each position, not by
+    // which physical tile it came from. When a sentence contains the same
+    // word twice (e.g. two "mi"), the two tiles are interchangeable - a
+    // player who places the "other" identical tile in a slot has still
+    // produced the correct sentence, so comparing tile origIndex to
+    // position would wrongly reject them. The original word at position i
+    // is the bank tile whose origIndex === i (origIndex was assigned in
+    // original token order in prepareQuestion), so we compare texts.
+    const originalTextAt = (pos) => {
+      const tile = state.scrambleBank.find(t => t.origIndex === pos);
+      return tile ? tile.text : '';
+    };
+    const placedTextAt = (pos) => {
+      const tile = state.scrambleBank.find(t => t.origIndex === state.scramblePlaced[pos]);
+      return tile ? tile.text : '';
+    };
+    const correct = state.scramblePlaced.length === state.scrambleBank.length
+      && state.scramblePlaced.every((_, i) => placedTextAt(i) === originalTextAt(i));
     const userAnswerDisplay = state.scramblePlaced
       .map(i => (state.scrambleBank.find(t => t.origIndex === i) || {}).text || '')
       .join(' ');
