@@ -403,7 +403,13 @@
     if (window.__tfDiag) window.__tfDiag(`scheduled: ${answerIsTrue ? 'True' : 'False'} / ${correct ? 'correct' : 'wrong'} / ${delay}ms`);
     state.autoAdvanceTimer = setTimeout(() => {
       if (window.__tfDiag) window.__tfDiag(`FIRED after ${Date.now() - scheduledAt}ms → nextQuestion()`);
-      nextQuestion();
+      try {
+        nextQuestion();
+        if (window.__tfDiag) window.__tfDiag(`nextQuestion() OK → now screen=${state.screen} idx=${state.index} checked=${state.checked}`);
+      } catch (err) {
+        if (window.__tfDiag) window.__tfDiag(`❌ THREW: ${err && err.message}`);
+        throw err;
+      }
     }, delay);
   }
 
