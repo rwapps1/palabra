@@ -319,6 +319,29 @@
       ? (current.direction === 'es-en' ? 'What does this mean?' : 'How do you say this in Spanish?')
       : (current.direction === 'es-en' ? 'Type the English translation' : 'Type the word in Spanish');
 
+    // The sentence strip: placed words as filled, tappable pills (tap to
+    // send back to the bank) and remaining slots as empty placeholders -
+    // gives a sense of progress without revealing sentence length/structure
+    // beyond word count. After a wrong answer, slots that landed in the
+    // wrong position are highlighted so the mistake is visible at a glance.
+    // MUST be computed before promptRowHtml below, which references it in
+    // the scramble branch - a let can't be read before its declaration
+    // (temporal dead zone), so declaring it later threw at render time.
+    let scrambleStripHtml = '';
+    if (current.format === 'scramble') {
+      const totalSlots = state.scrambleBank.length;
+      for (let i = 0; i < totalSlots; i++) {
+        if (i < state.scramblePlaced.length) {
+          const origIndex = state.scramblePlaced[i];
+          const tile = state.scrambleBank.find(t => t.origIndex === origIndex);
+          const wrongPos = state.checked && !state.wasCorrect && origIndex !== i;
+          scrambleStripHtml += `<button class="scramble-slot filled ${state.checked ? '' : 'tappable'} ${wrongPos ? 'wrong-pos' : ''}" data-orig="${origIndex}" ${state.checked ? 'disabled' : ''}>${esc(tile ? tile.text : '')}</button>`;
+        } else {
+          scrambleStripHtml += `<div class="scramble-slot empty"></div>`;
+        }
+      }
+    }
+
     // Audio format hides the written word entirely — listening is the
     // exercise — and always speaks it (see the autoSpeak binding below),
     // regardless of the user's own "speak words aloud" setting. Cloze
@@ -352,26 +375,6 @@
     const scrambleRevealHtml = (current.format === 'scramble' && current.sentenceTranslation)
       ? `<div class="cloze-reveal"><span class="cloze-reveal-es">${esc(current.sentence)}</span><span class="cloze-reveal-divider">—</span><span class="cloze-reveal-en">${esc(current.sentenceTranslation)}</span></div>`
       : '';
-
-    // The sentence strip: placed words as filled, tappable pills (tap to
-    // send back to the bank) and remaining slots as empty placeholders -
-    // gives a sense of progress without revealing sentence length/structure
-    // beyond word count. After a wrong answer, slots that landed in the
-    // wrong position are highlighted so the mistake is visible at a glance.
-    let scrambleStripHtml = '';
-    if (current.format === 'scramble') {
-      const totalSlots = state.scrambleBank.length;
-      for (let i = 0; i < totalSlots; i++) {
-        if (i < state.scramblePlaced.length) {
-          const origIndex = state.scramblePlaced[i];
-          const tile = state.scrambleBank.find(t => t.origIndex === origIndex);
-          const wrongPos = state.checked && !state.wasCorrect && origIndex !== i;
-          scrambleStripHtml += `<button class="scramble-slot filled ${state.checked ? '' : 'tappable'} ${wrongPos ? 'wrong-pos' : ''}" data-orig="${origIndex}" ${state.checked ? 'disabled' : ''}>${esc(tile ? tile.text : '')}</button>`;
-        } else {
-          scrambleStripHtml += `<div class="scramble-slot empty"></div>`;
-        }
-      }
-    }
 
     let bottomHtml;
 
