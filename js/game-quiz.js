@@ -386,9 +386,10 @@
     if (!current || state.checked) return;
     const correct = answerIsTrue === state.tfIsTrue;
     state.selectedOption = answerIsTrue ? 'True' : 'False';
+    const delay = correct ? 750 : 3000;
+    state.autoAdvanceDelay = delay; // set before render() — see submitAnswer's comment on why the ordering matters
     recordAnswer(current, correct, answerIsTrue ? 'True' : 'False');
     render();
-    const delay = correct ? 750 : 3000;
     state.autoAdvanceTimer = setTimeout(() => { nextQuestion(); }, delay);
   }
 
