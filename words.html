@@ -178,7 +178,7 @@
   <div id="view-loading">
     <div class="panel center-panel">
       <div class="glyph">⏳</div>
-      <h2>Loading words.xlsx…</h2>
+      <h2 id="loadingHeading">Checking access…</h2>
     </div>
   </div>
 
@@ -269,9 +269,15 @@
   }
 
   // --- load ----------------------------------------------------------------
+  // Only called once the auth/authorization gate below (the type="module"
+  // script at the end of this file) has confirmed this is the authorized
+  // account. Never called on its own — an unauthorized visitor never
+  // reaches the point where words.xlsx gets fetched.
 
   async function load() {
     showView('loading');
+    const heading = document.getElementById('loadingHeading');
+    if (heading) heading.textContent = 'Loading words.xlsx…';
     try {
       const res = await fetch('words.xlsx', { cache: 'no-store' });
       if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
@@ -494,7 +500,65 @@
     return div.innerHTML;
   }
 
-  load();
+  // Deliberately no load() call here. Loading only ever starts once the
+  // auth/authorization gate below decides this visitor is allowed in.
+</script>
+
+<!--
+  Access gate. Mirrors admin.html exactly: sign-in is Firebase Auth (any
+  registered Palabra account can sign in), but actual authorization is
+  enforced by the Firestore Security Rules on the "users" collection, same
+  as admin.html's own dashboard read. So this page performs the identical
+  Firestore read admin.html does — if it's rejected (not signed in, or
+  signed in as a non-authorized account), we bounce to admin.html, same
+  as the real gate on the data itself. Only on success do we call the
+  existing load() above to fetch words.xlsx.
+
+  Note: this still only protects the page's UI. words.xlsx itself is a
+  plain static file at a public URL — this script can't stop someone who
+  already knows/guesses that URL from requesting it directly, since static
+  hosting doesn't check Firebase auth tokens. If words.xlsx needs to be
+  truly private, it would need to move behind Firebase Storage (with
+  Storage Security Rules) or a server endpoint that checks the ID token,
+  rather than being fetched as a plain file.
+-->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+
+  // Same project/config as admin.html — not a secret; access is enforced
+  // entirely by Firestore Security Rules, not by hiding this object.
+  const firebaseConfig = {
+    apiKey: "AIzaSyBa47dn0gfyqYtF07i7EEsUCJtYIPZs5NM",
+    authDomain: "palabra-f8778.firebaseapp.com",
+    projectId: "palabra-f8778",
+    storageBucket: "palabra-f8778.firebasestorage.app",
+    messagingSenderId: "291018112525",
+    appId: "1:291018112525:web:2e53769bf8952131e19f44"
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      // Not signed in at all — go sign in on admin.html.
+      location.href = 'admin.html';
+      return;
+    }
+    try {
+      // Same read admin.html relies on. Firestore Security Rules decide
+      // whether this succeeds — it will only succeed for the account(s)
+      // those rules actually grant read access to.
+      await getDocs(collection(db, 'users'));
+      window.load();
+    } catch (err) {
+      // Signed in, but not authorized (or a transient Firestore error) —
+      // send them to admin.html rather than showing this page half-open.
+      location.href = 'admin.html';
+    }
+  });
 </script>
 </body>
 </html>
