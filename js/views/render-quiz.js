@@ -394,8 +394,18 @@
       }
       let feedbackHtml = '';
       if (state.checked) {
+        // Both outcomes now get a manual escape hatch, not just wrong
+        // answers - correct used to be auto-advance-only (matching old
+        // MC/typed behavior), but that leaves no way to continue at all if
+        // the scheduled timer ever gets throttled/paused (a known risk for
+        // background JS timers in Android WebViews/TWAs). Scramble/cloze
+        // already had this fallback; True/False didn't.
         feedbackHtml = state.wasCorrect
-          ? `<div class="feedback correct"><div class="title">✅ Correct</div></div>`
+          ? `
+            <div class="feedback correct"><div class="title">✅ Correct</div></div>
+            <button id="next-btn" class="btn-primary">Next word</button>
+            <div class="countdown-bar-track"><div class="countdown-bar-fill" id="countdown-fill"></div></div>
+          `
           : `
             <div class="feedback wrong"><div class="title">❌ Not quite</div><div class="answer">This was ${state.tfIsTrue ? 'True' : 'False'}.</div></div>
             <button id="next-btn" class="btn-primary">Next word</button>
@@ -507,10 +517,12 @@
         document.getElementById('tf-true-btn').addEventListener('click', () => selectTrueFalse(true));
         document.getElementById('tf-false-btn').addEventListener('click', () => selectTrueFalse(false));
         if (shouldAutoSpeak) speak(promptWord, promptLang, speakPromptBtn);
-      } else if (!state.wasCorrect) {
-        document.getElementById('next-btn').addEventListener('click', nextQuestion);
+      } else {
+        const nextBtn = document.getElementById('next-btn');
+        if (nextBtn) nextBtn.addEventListener('click', nextQuestion);
         const fill = document.getElementById('countdown-fill');
         if (fill) {
+          fill.style.transitionDuration = (state.autoAdvanceDelay || (state.wasCorrect ? 750 : 3000)) + 'ms';
           requestAnimationFrame(() => { requestAnimationFrame(() => { fill.style.width = '0%'; }); });
         }
       }
