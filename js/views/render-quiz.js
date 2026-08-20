@@ -522,7 +522,7 @@
         if (nextBtn) nextBtn.addEventListener('click', nextQuestion);
         const fill = document.getElementById('countdown-fill');
         if (fill) {
-          fill.style.transitionDuration = (state.autoAdvanceDelay || (state.wasCorrect ? 750 : 3000)) + 'ms';
+          fill.style.transitionDuration = (state.autoAdvanceDelay || (state.wasCorrect ? 1200 : 3000)) + 'ms';
           requestAnimationFrame(() => { requestAnimationFrame(() => { fill.style.width = '0%'; }); });
         }
       }
