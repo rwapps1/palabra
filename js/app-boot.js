@@ -26,30 +26,6 @@
     }
   });
 
-  // ---- TEMPORARY DIAGNOSTIC (remove once the True/False auto-advance
-  // issue is resolved) ---------------------------------------------------
-  // Draws a small fixed readout at the bottom of the screen. game-quiz.js's
-  // selectTrueFalse() calls window.__tfDiag(...) when it schedules the
-  // auto-advance timer and again when the timer callback actually fires,
-  // so one live test run shows whether the callback fires at all, and how
-  // long after it was scheduled - distinguishing "timer never fired"
-  // (platform throttling) from "timer fired but advance was undone"
-  // (a logic/race issue).
-  window.__tfDiag = function (msg) {
-    let box = document.getElementById('tf-diag-box');
-    if (!box) {
-      box = document.createElement('div');
-      box.id = 'tf-diag-box';
-      box.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99999;max-width:92vw;'
-        + 'background:rgba(0,0,0,0.82);color:#8affc0;font:11px/1.4 monospace;'
-        + 'padding:6px 8px;border-radius:8px;white-space:pre-wrap;pointer-events:none;';
-      document.body.appendChild(box);
-    }
-    const t = new Date();
-    const stamp = t.toLocaleTimeString() + '.' + String(t.getMilliseconds()).padStart(3, '0');
-    box.textContent = (stamp + '  ' + msg + '\n' + box.textContent).split('\n').slice(0, 6).join('\n');
-  };
-
   // Checks for an existing signed-in session and decides login vs hub.
   // Independent of the word/verb list loading below — vocab data isn't
   // user-specific, so both can happen in parallel.

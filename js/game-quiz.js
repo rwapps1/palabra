@@ -9,23 +9,6 @@
     }
   }
 
-  // Forces a synchronous reflow AND a compositor update so a DOM change
-  // made inside a setTimeout callback repaints immediately, rather than
-  // waiting for the next user interaction (an Android WebView/TWA quirk -
-  // see the call site in nextQuestion). Reading offsetHeight forces
-  // layout; nudging a transform on the next frame and clearing it forces
-  // the compositor to actually re-paint the pixels, which the layout read
-  // alone doesn't always guarantee on affected WebView versions.
-  function forceRepaint() {
-    const app = document.getElementById('app');
-    if (!app) return;
-    void app.offsetHeight;
-    app.style.transform = 'translateZ(0)';
-    requestAnimationFrame(() => {
-      app.style.transform = '';
-    });
-  }
-
   function clearCelebrateTimer() {
     if (state.celebrateTimer) {
       clearTimeout(state.celebrateTimer);
@@ -413,21 +396,7 @@
     state.autoAdvanceDelay = delay; // set before render() — see submitAnswer's comment on why the ordering matters
     recordAnswer(current, correct, answerIsTrue ? 'True' : 'False');
     render();
-    // TEMPORARY DIAGNOSTIC (see window.__tfDiag in app-boot.js) - remove
-    // once the auto-advance issue is settled. Optional-chained so removing
-    // the readout from app-boot.js leaves this a harmless no-op.
-    const scheduledAt = Date.now();
-    if (window.__tfDiag) window.__tfDiag(`scheduled: ${answerIsTrue ? 'True' : 'False'} / ${correct ? 'correct' : 'wrong'} / ${delay}ms`);
-    state.autoAdvanceTimer = setTimeout(() => {
-      if (window.__tfDiag) window.__tfDiag(`FIRED after ${Date.now() - scheduledAt}ms → nextQuestion()`);
-      try {
-        nextQuestion();
-        if (window.__tfDiag) window.__tfDiag(`nextQuestion() OK → now screen=${state.screen} idx=${state.index} checked=${state.checked}`);
-      } catch (err) {
-        if (window.__tfDiag) window.__tfDiag(`❌ THREW: ${err && err.message}`);
-        throw err;
-      }
-    }, delay);
+    state.autoAdvanceTimer = setTimeout(() => { nextQuestion(); }, delay);
   }
 
   // Sentence Scramble: tap-to-place. Tapping a bank word appends it to
@@ -502,31 +471,8 @@
       state.index += 1;
       state.input = '';
       state.checked = false;
-      try {
-        prepareQuestion();
-      } catch (err) {
-        if (window.__tfDiag) window.__tfDiag(`❌ prepareQuestion THREW (fmt=${(state.questions[state.index]||{}).format}): ${err && err.message}`);
-        throw err;
-      }
-      if (window.__tfDiag) {
-        const nq = state.questions[state.index];
-        window.__tfDiag(`advanced → idx=${state.index} fmt=${nq && nq.format} es=${nq && nq.es}`);
-      }
-      try {
-        render();
-      } catch (err) {
-        if (window.__tfDiag) window.__tfDiag(`❌ render THREW (fmt=${(state.questions[state.index]||{}).format}): ${err && err.message}`);
-        throw err;
-      }
-      if (window.__tfDiag) window.__tfDiag(`render OK, screen now shows idx=${state.index}`);
-      // Android WebView (TWA) sometimes updates the DOM from inside a
-      // setTimeout callback without actually repainting until the next
-      // user interaction - the new question is in the DOM but the old one
-      // stays on screen, looking "stuck", until you tap (which is why the
-      // manual Next word button and Quit always worked). Touching a layout
-      // property forces a synchronous reflow/repaint so the advance is
-      // shown immediately. Harmless on platforms that already repaint.
-      forceRepaint();
+      prepareQuestion();
+      render();
       return;
     }
     if (state.index + 1 >= state.questions.length) {
