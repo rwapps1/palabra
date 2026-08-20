@@ -334,7 +334,13 @@
         if (i < state.scramblePlaced.length) {
           const origIndex = state.scramblePlaced[i];
           const tile = state.scrambleBank.find(t => t.origIndex === origIndex);
-          const wrongPos = state.checked && !state.wasCorrect && origIndex !== i;
+          // Compare by word text, not tile index, so a correctly-placed
+          // duplicate word (e.g. a second "mi") isn't flagged wrong just
+          // because it came from the other identical tile - mirrors the
+          // text-based correctness check in submitScramble.
+          const originalTile = state.scrambleBank.find(t => t.origIndex === i);
+          const originalText = originalTile ? originalTile.text : '';
+          const wrongPos = state.checked && !state.wasCorrect && (tile ? tile.text : '') !== originalText;
           scrambleStripHtml += `<button class="scramble-slot filled ${state.checked ? '' : 'tappable'} ${wrongPos ? 'wrong-pos' : ''}" data-orig="${origIndex}" ${state.checked ? 'disabled' : ''}>${esc(tile ? tile.text : '')}</button>`;
         } else {
           scrambleStripHtml += `<div class="scramble-slot empty"></div>`;
@@ -539,7 +545,12 @@
         });
         const clearBtn = document.getElementById('scramble-clear-btn');
         if (clearBtn) clearBtn.addEventListener('click', scrambleClearAll);
-        if (shouldAutoSpeak) speak(promptWord, promptLang, speakPromptBtn);
+        // Deliberately NO auto-speak for scramble: promptWord is the full
+        // sentence (the answer), so auto-speaking would read it aloud on
+        // load and again on every pill tap (each tap re-renders). The 🔊
+        // button stays wired via the shared speakPromptBtn listener above,
+        // so hearing the sentence is available only on explicit press,
+        // as a hint.
       } else {
         const nextBtn = document.getElementById('next-btn');
         if (nextBtn) nextBtn.addEventListener('click', nextQuestion);
