@@ -167,7 +167,7 @@
 <div class="wrap">
 
   <div class="header">
-    <a class="icon-btn" href="admin.html" aria-label="Back to admin">←</a>
+    <a class="icon-btn" href="index.html" aria-label="Back to admin">←</a>
     <div class="title-block">
       <div class="t">Word List</div>
       <div class="c" id="headerCount">Loading…</div>
@@ -543,8 +543,8 @@
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
-      // Not signed in at all — go sign in on admin.html.
-      location.href = 'admin.html';
+      // Not signed in at all — go sign in on index.html.
+      location.href = 'index.html';
       return;
     }
     try {
@@ -555,8 +555,8 @@
       window.load();
     } catch (err) {
       // Signed in, but not authorized (or a transient Firestore error) —
-      // send them to admin.html rather than showing this page half-open.
-      location.href = 'admin.html';
+      // send them to index.html rather than showing this page half-open.
+      location.href = 'index.html';
     }
   });
 </script>
