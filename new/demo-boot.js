@@ -78,7 +78,7 @@
   // undefined in JS, but there's no reason to carry fields nothing here
   // will ever look at.
   const state = {
-    screen: 'quiz',
+    screen: 'demo-intro',
     user: null,
     username: '',
     showMenu: false,
@@ -138,6 +138,19 @@
     isDemoMode: true,
   };
 
+  // The hub's "Today" panel (XP today / Words today) is a snapshot diff —
+  // computeXP() now minus computeXP() at the moment todaySnapshot was last
+  // baselined (progress-xp.js's ensureTodaySnapshot()/getTodayXP()). In
+  // the real app that baseline always gets set on the hub's very first
+  // render of the day, which always happens BEFORE Stream starts (Stream
+  // is launched from the hub). This demo runs the opposite order —
+  // questions happen before the hub is ever shown — so without this call,
+  // the baseline would only get set the first time the hub renders, i.e.
+  // AFTER the round, at the exact XP total just earned, making "today"
+  // net out to zero. Calling it here, before any answer is recorded,
+  // baselines it at the true starting point (0) instead.
+  ensureTodaySnapshot();
+
   // ---- Stubs for the two cross-file calls this page's included files
   // still make, whose real implementations live in files deliberately not
   // loaded here (auth.js). Both are no-ops-with-a-guard in the real app
@@ -146,6 +159,29 @@
   // present to define them.
   function pingActivity() {}
   function syncBackHistory() {}
+
+  // ---- Achievement gate ----
+  // The demo is meant to feel like one genuine, modest win - "First
+  // Steps" - not a fireworks show of every achievement a lucky perfect
+  // run happens to qualify for. With only 8 questions, a player who
+  // answers everything correctly (very possible - most of this lineup is
+  // deliberately easy) would also legitimately qualify for Perfect Round,
+  // Triple Threat, and Quadruple Threat all at once via the real
+  // evaluateRoundAchievements()/recordAnswer() logic (untouched, see
+  // below) - four unlocks' worth of bonus XP (20 each) stacked with the
+  // streak/correct-answer XP was enough on its own to blow straight past
+  // the real app's default 60 XP daily goal before the person even has an
+  // account. Gating to firstRound only keeps that first real hub view
+  // modest and genuine rather than looking already "maxed out" on day
+  // one. Declared as a plain reassignment, not a `function` declaration -
+  // a same-name function declaration here would hoist and shadow the
+  // real achievements.js version before this line even runs, capturing
+  // itself instead of the real implementation.
+  const realUnlockAchievement = unlockAchievement;
+  unlockAchievement = function (id) {
+    if (id !== 'firstRound') return false;
+    return realUnlockAchievement(id);
+  };
 
   // ---- Safe persistence override ----
   // Firestore push already no-ops with no state.user (see the real
@@ -197,10 +233,17 @@
 
   // ---- Signup handoff ----
   // Stashes exactly the fields auth.js's handleAuthSubmit() knows how to
-  // fold into a brand-new signup (see js/auth.js), then sends the person
-  // to the real app's signup tab. Read and cleared there, once — never
+  // fold into a brand-new signup (see js/auth.js), shows a brief message
+  // so the jump to signup doesn't feel abrupt, then sends the person to
+  // the real app's signup tab. Read and cleared there, once — never
   // touched by signing in to an existing account.
+  let signupHandoffStarted = false;
   function goToSignupFromDemo() {
+    // Guards against a double-tap on the hub (still possible during the
+    // toast's own delay below) stacking a second toast and redirect.
+    if (signupHandoffStarted) return;
+    signupHandoffStarted = true;
+
     try {
       const handoff = {
         wordStats: state.progress.wordStats,
@@ -217,7 +260,20 @@
       // normally on the other end, just without the carried-over demo
       // progress.
     }
-    window.location.href = '../index.html?signup=1';
+
+    // Reuses the exact same toast styling as the real achievement toasts
+    // (achievement-toast/.show, already loaded via progress.css) — just
+    // its own icon/copy, not an ACHIEVEMENTS lookup, since this isn't an
+    // achievement.
+    const toast = document.createElement('div');
+    toast.className = 'achievement-toast';
+    toast.innerHTML = '<div class="toast-icon">💾</div><div><div class="toast-title">Create your account</div><div class="toast-name">to save your progress</div></div>';
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => { toast.classList.add('show'); });
+
+    setTimeout(() => {
+      window.location.href = '../index.html?signup=1';
+    }, 1400);
   }
 
   // Sends someone straight to the real app, letting its own normal
@@ -228,12 +284,60 @@
     window.location.href = '../index.html';
   }
 
+  // ---- Intro screen ----
+  // Shown first, before any question. Deliberately hand-authored here
+  // rather than reusing renderStart() (render-hub.js) for this screen —
+  // renderStart() draws the whole hub (Today panel, mode picker, level
+  // ring, achievements row), all of which would show meaningless
+  // all-zero stats before a single question's been answered. This reuses
+  // the exact same CSS classes as renderStart()'s own hero card
+  // (stream-hero/format-row/fchip/hub-start-btn/etc., all already loaded
+  // via hub.css/components.css) so it's visually identical to the real
+  // one — just this one card, no menu button (nothing behind it would do
+  // anything meaningful pre-signup anyway), and the button always reads
+  // "Start Stream" rather than the real card's playedToday-dependent
+  // Continue/Start toggle, since this is always someone's first-ever
+  // visit here.
+  function renderDemoIntro() {
+    const app = document.getElementById('app');
+    app.innerHTML = `
+      <div class="screen upload-screen bg-quiz">
+        <div class="wrap">
+          <div class="header-row" style="justify-content: space-between;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span class="badge"></span>
+              <h1>Palabra</h1>
+            </div>
+          </div>
+          <div class="card stream-hero hub-hero-pulse">
+            <div class="format-row"><span class="fchip">🔤</span><span class="fchip">🔊</span><span class="fchip">✎</span></div>
+            <h2>Your Learning Stream</h2>
+            <p>Mixed questions — choose, listen, or type. Learn the words you need most, one after another.</p>
+            <button id="demo-start-btn" class="btn-primary hub-start-btn">
+              <span class="hub-play-chip">▶</span>Start Stream
+            </button>
+          </div>
+          <button id="demo-signin-link-intro" class="link-btn" type="button" style="display:block; text-align:center; width:100%; margin-top:14px;">Already have an account? Sign in</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('demo-start-btn').addEventListener('click', () => {
+      state.screen = 'quiz';
+      prepareQuestion();
+      render();
+    });
+    document.getElementById('demo-signin-link-intro').addEventListener('click', goToSignInFromDemo);
+  }
+
   // ---- render() wrapper ----
   // render-dispatch.js's render() itself is left completely untouched;
   // this wraps it rather than editing it, so every screen it already
   // knows how to draw (quiz/celebrate/result/start) keeps working exactly
-  // as in the real app. Only three small, purely additive things happen
-  // after the real render() returns, all gated on isDemoMode:
+  // as in the real app. One extra pseudo-screen ('demo-intro') is handled
+  // entirely here, before ever reaching the real dispatcher — it doesn't
+  // know that screen name and would silently render nothing for it.
+  // Beyond that, three small, purely additive things happen after the
+  // real render() returns, all gated on isDemoMode:
   //   1. quiz screen — an "Already have an account?" link under Quit.
   //   2. result screen — replace Play again/Change settings with a single
   //      "See your progress" button (agreed: only one path forward here).
@@ -242,10 +346,37 @@
   //      below, which handles this rather than this wrapper).
   const realRender = render;
   render = function () {
+    if (state.isDemoMode && state.screen === 'demo-intro') {
+      renderDemoIntro();
+      return;
+    }
     realRender();
     if (!state.isDemoMode) return;
 
     if (state.screen === 'quiz') {
+      // The top progress-tile row: render-quiz.js's own renderQuiz()
+      // builds this assuming a Stream round's 20-question checkpoint
+      // block (state.streamCheckpointCount), which this demo's
+      // nextQuestion() override deliberately never increments (see its
+      // own comment above) - so left untouched it always drew a static
+      // row of 20 slots with only the first one ever lit. Replaced here
+      // with an 8-slot version using the exact same fill logic
+      // render-quiz.js's own fixed-length (non-Stream) branch already
+      // uses elsewhere, just inlined rather than calling it, since it's
+      // markup generation, not a function this file can invoke directly.
+      const tilesEl = document.querySelector('.tiles');
+      if (tilesEl) {
+        tilesEl.style.gridTemplateColumns = `repeat(${state.questions.length}, 1fr)`;
+        let tilesHtml = '';
+        state.questions.forEach((_, i) => {
+          let bg = 'var(--outline)';
+          if (i < state.results.length) bg = state.results[i].correct ? COLORS.green : COLORS.red;
+          else if (i === state.index) bg = COLORS.ochre;
+          tilesHtml += `<div class="tile" style="background:${bg}"></div>`;
+        });
+        tilesEl.innerHTML = tilesHtml;
+      }
+
       const quitBtn = document.getElementById('quiz-quit-btn');
       if (quitBtn && !document.getElementById('demo-signin-link')) {
         const link = document.createElement('button');
@@ -300,5 +431,7 @@
   }, true);
 
   // ---- Go ----
-  prepareQuestion();
+  // Shows the intro card first (see renderDemoIntro() above) —
+  // prepareQuestion() is deferred until "Start Stream" is tapped, not run
+  // here.
   render();
