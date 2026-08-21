@@ -363,7 +363,7 @@
       : current.format === 'truefalse'
       ? `<div class="audio-hint" style="margin-bottom:10px;">Does this mean the same thing?</div><div class="tf-claim"><span class="tf-claim-es">${esc(primaryText(current.es))}</span><span class="tf-claim-eq">=</span><span class="tf-claim-en">${esc(state.tfClaimEn)}</span></div><div class="prompt-row" style="margin-top:10px; justify-content:center;"><button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button></div>`
       : current.format === 'scramble'
-      ? `<div class="audio-hint" style="margin-bottom:10px;">Tap the words in the right order</div><div class="scramble-strip" id="scramble-strip">${scrambleStripHtml}</div><div class="prompt-row" style="margin-top:10px; justify-content:center;"><button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button>${(!state.checked && state.scramblePlaced.length > 0) ? '<button id="scramble-clear-btn" class="hint-btn" title="Clear all">Clear</button>' : ''}</div>`
+      ? `<div class="audio-hint" style="margin-bottom:10px;">Tap the words in the right order</div><div class="scramble-strip" id="scramble-strip">${scrambleStripHtml}</div><div class="prompt-row" style="margin-top:10px; justify-content:center;"><button id="speak-prompt-btn" class="speak-btn stacked-hint" title="Hear the sentence (hint)"><span class="hint-icon-glyph">🔊</span><span class="hint-icon-label">Hint</span></button>${(!state.checked && state.scramblePlaced.length > 0) ? '<button id="scramble-clear-btn" class="hint-btn" title="Clear all">Clear</button>' : ''}</div>`
       : `<div class="audio-hint" style="margin-bottom:10px;">${instructionText}</div><div class="prompt-row"><div class="prompt-word">${esc(promptWord)}</div><button id="speak-prompt-btn" class="speak-btn" title="Hear it">🔊</button></div>${promptNote ? `<div class="prompt-note">${esc(promptNote)}</div>` : ''}`;
 
     // Cloze answer reveal - the full sentence plus its English translation,
@@ -425,9 +425,19 @@
     } else if (current.format === 'scramble') {
       let bankHtml = '';
       if (!state.checked) {
+        // Render every tile in state.scrambleBank's fixed shuffle-order
+        // slot always, rather than filtering placed ones out of the array.
+        // Filtering removed them from the flow entirely, so the remaining
+        // flex-wrap pills reflowed and visibly jumped every time one was
+        // placed. Placed tiles now stay put in the DOM as an invisible,
+        // non-interactive placeholder that still occupies their original
+        // space (see .scramble-pill.placed in quiz.css) - positions stay
+        // static for the whole question, in or out of the bank.
         const bankTilesHtml = state.scrambleBank
-          .filter(t => !state.scramblePlaced.includes(t.origIndex))
-          .map(t => `<button class="scramble-pill" data-orig="${t.origIndex}">${esc(t.text)}</button>`)
+          .map(t => {
+            const isPlaced = state.scramblePlaced.includes(t.origIndex);
+            return `<button class="scramble-pill${isPlaced ? ' placed' : ''}" data-orig="${t.origIndex}" ${isPlaced ? 'disabled' : ''}>${esc(t.text)}</button>`;
+          })
           .join('');
         bankHtml = `<div class="scramble-bank" id="scramble-bank">${bankTilesHtml}</div>`;
       }
