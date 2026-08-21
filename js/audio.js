@@ -1,5 +1,16 @@
 // Text-to-speech (speak) and all synthesised Web Audio sound effects.
 
+  // Holds whichever utterance is currently in flight. Never read anywhere
+  // else — its only job is to keep a JS-side reference alive for as long
+  // as speech might still be playing. Chrome/WebView has a documented bug
+  // where, if the utterance created inside speak() below is the *only*
+  // reference to it (a local variable, gone once speak() returns), the
+  // garbage collector can silently kill in-flight speech with no error.
+  // More likely to actually trigger in a memory-constrained context (like
+  // the Android APK's TWA process) than in a full browser tab — matches
+  // speech failing only in the APK, working fine in Chrome on the same
+  // device.
+  let activeUtterance = null;
 
   function speak(text, lang, btnEl) {
     if (!('speechSynthesis' in window)) return;
@@ -21,9 +32,13 @@
       utter.rate = 0.95;
       if (btnEl) {
         utter.onstart = () => btnEl.classList.add('speaking');
-        utter.onend = () => btnEl.classList.remove('speaking');
-        utter.onerror = () => btnEl.classList.remove('speaking');
+        utter.onend = () => { btnEl.classList.remove('speaking'); if (activeUtterance === utter) activeUtterance = null; };
+        utter.onerror = () => { btnEl.classList.remove('speaking'); if (activeUtterance === utter) activeUtterance = null; };
+      } else {
+        utter.onend = () => { if (activeUtterance === utter) activeUtterance = null; };
+        utter.onerror = () => { if (activeUtterance === utter) activeUtterance = null; };
       }
+      activeUtterance = utter;
       setTimeout(() => {
         try { window.speechSynthesis.speak(utter); } catch (e) {}
       }, 50);
