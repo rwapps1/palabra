@@ -279,7 +279,7 @@
     const heading = document.getElementById('loadingHeading');
     if (heading) heading.textContent = 'Loading words.xlsx…';
     try {
-      const res = await fetch('words.xlsx', { cache: 'no-store' });
+      const res = await fetch('../words.xlsx', { cache: 'no-store' });
       if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
       const buf = await res.arrayBuffer();
       workbook = XLSX.read(buf, { type: 'array' });
