@@ -230,20 +230,61 @@
       return;
     }
     if (BACK_QUIT_HANDLERS[screen]) {
-      const depthBeforeHandler = navDepth;
-      BACK_QUIT_HANDLERS[screen](); // may show a confirm; if confirmed this changes state.screen and calls render(), which re-arms itself via syncBackHistory()
-      if (navDepth === depthBeforeHandler) {
-        // Cancelled - nothing changed, so render() never got a chance to
-        // re-arm. Restore the entry the back press just moved past via
-        // forward() rather than pushing a new one - same reasoning as the
-        // swallow-screen case above. Routed through ownNavigation() (not a
-        // bare forward()) so a fast second "Quit" tap right after Cancel
-        // can't race this forward() with a fresh pushState() - see the
-        // ownNavigation/ownNavigationPending comments above. This is the
-        // fix for the confirmed "quit, cancel, quit again" bug.
-        navDepth += 1;
-        ownNavigation(1);
+      // The quit-confirm dialog is an in-app overlay (state.quitConfirmMode
+      // + a render()ed panel - see game-quiz.js), not a native confirm().
+      // That fixes the ORIGINAL "quit, cancel, quit again" bug: a native
+      // dialog sits outside the app's own DOM/history, so a hardware back
+      // press while it was open got handled by the WebView/OS chrome
+      // directly and never reached this listener at all.
+      //
+      // Confirmed live (2026-08) that the first attempt at this branch
+      // introduced a WORSE bug: it used history.replaceState() to mark
+      // "overlay open" on the current entry, on both the opening press and
+      // (originally) the cancelling press. replaceState() doesn't create a
+      // new entry, but it does overwrite whatever was already sitting at
+      // that position - and the entry sitting there by the time a back
+      // press reaches this branch is never one of ours, it's the real
+      // entry the browser just walked back to (the previous site, or the
+      // app's own earlier screen). A couple of replaceState() calls in a
+      // row was silently eating through genuine prior history, and once
+      // there was nothing legitimate left underneath, the next back press
+      // had nowhere to land and fell through to actually exiting - which
+      // is exactly the symptom reported (repeated back presses eventually
+      // left the site, in both a normal tab and Incognito).
+      //
+      // Fix: never call pushState() OR replaceState() anywhere in this
+      // branch. The overlay's open/closed state lives ENTIRELY in
+      // state.quitConfirmMode (plain in-memory app state, re-rendered on
+      // every popstate the normal way) - it never needs its own history
+      // entry, open or closed, because it isn't a distinct navigable
+      // screen, just a transient UI layer on top of the current one.
+      //   - Opening (back press, overlay not yet open): the browser has
+      //     already moved one entry back for real. Restore it with
+      //     forward() - same untouched-re-occupy pattern as the swallow-
+      //     screen branch above - then just set the in-memory flag and
+      //     render(). Nothing in history is created OR overwritten.
+      //   - Cancelling (back press, overlay already open): identical -
+      //     restore the entry with forward(), clear the flag, render().
+      //     The entry underneath was never touched by either press, so
+      //     however many times this cycles, real history stays intact.
+      // Tapping the on-screen Quit button is unaffected - that path calls
+      // showQuitConfirm() directly (not via popstate), so its render() goes
+      // through the normal non-reacting path and legitimately pushes a
+      // real, trusted entry, exactly as before.
+      if (state.quitConfirmMode === screen) {
+        state.quitConfirmMode = null;
+      } else {
+        state.quitConfirmMode = screen;
       }
+      // reactingToPopstate=true makes syncBackHistory() (called inside
+      // render()) take its no-op path - state.screen isn't changing, only
+      // the in-memory overlay flag, so there is nothing to push or replace
+      // in history for this render() at all.
+      reactingToPopstate = true;
+      render();
+      reactingToPopstate = false;
+      navDepth += 1;
+      ownNavigation(1);
       return;
     }
     const backBtn = document.getElementById('back-btn');
