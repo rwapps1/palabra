@@ -160,6 +160,20 @@
   function pingActivity() {}
   function syncBackHistory() {}
 
+  // navigation.js is deliberately not loaded on this page (see this
+  // file's own header comment) — there's no real back-button history to
+  // manage here. But game-quiz.js's showCelebration()/
+  // advanceFromCelebration() (unmodified, reused as-is) both call
+  // runAsTimerAdvance() directly, expecting navigation.js to have
+  // defined it. Without this stub, the very first call throws a
+  // ReferenceError the moment the round ends (tapping "Next word" on the
+  // last question) — silently, since nothing here was catching it —
+  // which froze the round-end flow entirely before state.screen ever
+  // changed to 'celebrate'. This just calls straight through, which is
+  // all that's needed since there's no real history state here for it
+  // to manage.
+  function runAsTimerAdvance(fn) { fn(); }
+
   // ---- Achievement gate ----
   // The demo is meant to feel like one genuine, modest win - "First
   // Steps" - not a fireworks show of every achievement a lucky perfect
