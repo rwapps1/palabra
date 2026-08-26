@@ -176,16 +176,19 @@
 
   // ---- Funnel telemetry ----
   // Starts the session record (see js/demo-telemetry.js) and logs the very
-  // first event immediately, before the intro screen has even been drawn.
-  // page_load is the one measurement that can't be inferred from anything
-  // else: without it there's no way to distinguish "clicked the ad and
-  // bounced instantly" from "clicked the ad, read the intro card, and
-  // decided not to start" — which are different problems with different
-  // fixes. Everything after this point is timed relative to this moment.
+  // first event. page_load is the one measurement that can't be inferred
+  // from anything else: without it there's no way to distinguish "clicked
+  // the ad and bounced instantly" from "clicked the ad, read the intro
+  // card, and decided not to start" — which are different problems with
+  // different fixes. Everything after this point is timed relative to it.
   //
-  // Both calls are wrapped internally and cannot throw. Neither is awaited.
-  startDemoTelemetrySession();
-  recordDemoEvent('page_load');
+  // Deliberately the visibility-aware variant, not startDemoTelemetrySession()
+  // plus a direct recordDemoEvent('page_load'): a background tab that Chrome
+  // discards and silently reloads would otherwise log a landing no human was
+  // present for. See the function's own comment for the full reasoning.
+  //
+  // Internally wrapped and cannot throw. Not awaited.
+  startDemoTelemetryWhenVisible();
 
   // How many answers have already been logged, so the render() wrapper
   // below can log each new one exactly once. Instrumenting via render()
