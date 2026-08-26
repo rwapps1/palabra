@@ -305,6 +305,47 @@
     } catch (e) { /* ignore */ }
   }
 
+  // The call /new actually makes at page load — NOT startDemoTelemetrySession()
+  // directly.
+  //
+  // Android Chrome discards background tabs under memory pressure and
+  // reloads them when you return to the browser. A tab sitting on /new in
+  // the background therefore fires a page load that no human was present
+  // for, and that phantom landing goes straight into the "landed but never
+  // started" bucket — precisely the number used to judge whether the intro
+  // card is doing its job. A handful of those makes the intro look worse
+  // than it is.
+  //
+  // So nothing is recorded, and no session even exists, until the page is
+  // genuinely visible. A restored background tab is hidden at load, so it
+  // stays silent until someone actually looks at it — at which point the
+  // session begins and every subsequent duration is measured from the
+  // moment the person really arrived, not from whenever Chrome happened to
+  // reload the tab.
+  //
+  // Nothing else needs a visibility guard: every later event follows a tap,
+  // and a hidden tab can't be tapped.
+  function startDemoTelemetryWhenVisible() {
+    try {
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+        startDemoTelemetrySession();
+        recordDemoEvent('page_load');
+        return;
+      }
+      let started = false;
+      const onVisible = function () {
+        try {
+          if (started || document.visibilityState !== 'visible') return;
+          started = true;
+          document.removeEventListener('visibilitychange', onVisible);
+          startDemoTelemetrySession();
+          recordDemoEvent('page_load');
+        } catch (e) { /* ignore */ }
+      };
+      document.addEventListener('visibilitychange', onVisible);
+    } catch (e) { /* telemetry must never affect the demo */ }
+  }
+
   // As recordDemoEvent(), but guaranteed to log a given key at most once per
   // session. Used for signup_screen_reached, which fires on a page load and
   // would otherwise log again every time someone refreshes the signup page
