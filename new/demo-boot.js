@@ -353,9 +353,45 @@
     // the shell and ring are reused — the eyebrow/headline/subline text
     // and icon are this modal's own, not Daily Double's multiplier
     // content.
+    //
+    // The progress bar below is deliberately cosmetic — it animates over
+    // exactly SIGNUP_MODAL_DWELL_MS, the same timer that drives the
+    // redirect, so it finishes as the navigation fires. It is NOT tied to
+    // the real app's load time, which continues after this page is gone.
+    // Its styles are inlined here (a scoped <style> tag) rather than added
+    // to daily-double.css on purpose: that file is shared with the real
+    // app and is in the service worker's precache list, so editing it
+    // would force a cache bump for a demo-only visual.
+    const SIGNUP_MODAL_DWELL_MS = 4500;
+
     const modal = document.createElement('div');
     modal.className = 'dd-modal-backdrop';
     modal.innerHTML = `
+      <style>
+        .demo-signup-bar {
+          margin: 18px auto 0;
+          width: 82%;
+          height: 4px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.14);
+          overflow: hidden;
+        }
+        .demo-signup-bar > i {
+          display: block;
+          height: 100%;
+          width: 0%;
+          border-radius: 999px;
+          background: linear-gradient(90deg, #FF6B4A, #FFC163);
+          animation: demoSignupBarFill ${SIGNUP_MODAL_DWELL_MS}ms linear forwards;
+        }
+        @keyframes demoSignupBarFill {
+          from { width: 0%; }
+          to   { width: 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .demo-signup-bar > i { animation-duration: 1ms; width: 100%; }
+        }
+      </style>
       <div class="dd-card">
         <div class="dd-ring-outer">
           <div class="dd-ring-disc">
@@ -364,14 +400,16 @@
         </div>
         <div class="dd-eyebrow">Almost there</div>
         <h2 class="dd-headline">Create your account</h2>
-        <p class="dd-subline">to save your progress</p>
+        <p class="dd-subline">Unlock over 1,100 words and 6 game modes along with genuine spaced repetition — and keep the progress and achievements you just earned.</p>
+        <p class="dd-subline">Free. No ads. No in-app purchases. Nothing to install.</p>
+        <div class="demo-signup-bar" aria-hidden="true"><i></i></div>
       </div>
     `;
     document.body.appendChild(modal);
 
     setTimeout(() => {
       window.location.href = '../index.html?signup=1';
-    }, 1600);
+    }, SIGNUP_MODAL_DWELL_MS);
   }
 
   // Sends someone straight to the real app, letting its own normal
