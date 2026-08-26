@@ -6,13 +6,19 @@ const WORDS_FILE = './words.xlsx';
 // (Category column), so there's nothing to list here anymore - one file to
 // cache instead of 17.
 
-// Bumped for the /new landing-page demo deploy — config.js, auth.js, and
-// app-boot.js all changed content (demo handoff support). /new itself is
-// deliberately NOT added to ASSETS_TO_CACHE below: it's a one-time, no-
-// account ad-funnel page for first-time visitors, not part of the
-// installed offline app shell, so it doesn't need precaching or offline
-// support the way the main app does.
-const CACHE_NAME = 'palabra-cache-v8';
+// Bumped for the /new demo-funnel telemetry deploy — index.html, config.js
+// and auth.js all changed content, and js/demo-telemetry.js is a new cached
+// file. /new itself is still deliberately NOT in ASSETS_TO_CACHE below:
+// it's a one-time, no-account ad-funnel page for first-time visitors, not
+// part of the installed offline app shell, so it doesn't need precaching or
+// offline support the way the main app does. admin/ is likewise absent on
+// purpose — it's a dashboard read on demand, never offline.
+//
+// demo-telemetry.js IS cached, unlike /new, because the real app loads it
+// on every page view: leaving it uncached would mean an extra network
+// request on every cold start for a file that does nothing for the vast
+// majority of users.
+const CACHE_NAME = 'palabra-cache-v9';
 const ASSETS_TO_CACHE = [
   './',
   APP_HTML,
@@ -32,6 +38,7 @@ const ASSETS_TO_CACHE = [
   './css/hub.css',
   './js/firebase-auth.js',
   './js/config.js',
+  './js/demo-telemetry.js',
   './js/utils.js',
   './js/audio.js',
   './js/progress-xp.js',

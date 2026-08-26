@@ -56,6 +56,12 @@
 <div id="app"></div>
 
 <script src="js/config.js"></script>
+<!-- /new demo-funnel telemetry. Loaded here as well as on /new because the
+     last two funnel events (reaching this signup page, and converting) can
+     only be observed from the real app. Defines functions only — it does
+     nothing at all unless a demo session exists in this tab's
+     sessionStorage, which only /new ever creates. -->
+<script src="js/demo-telemetry.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/progress-xp.js"></script>
