@@ -362,7 +362,7 @@
     // to daily-double.css on purpose: that file is shared with the real
     // app and is in the service worker's precache list, so editing it
     // would force a cache bump for a demo-only visual.
-    const SIGNUP_MODAL_DWELL_MS = 4500;
+    const SIGNUP_MODAL_DWELL_MS = 6000;
 
     const modal = document.createElement('div');
     modal.className = 'dd-modal-backdrop';
