@@ -174,6 +174,50 @@
   // to manage.
   function runAsTimerAdvance(fn) { fn(); }
 
+  // ---- Funnel telemetry ----
+  // Starts the session record (see js/demo-telemetry.js) and logs the very
+  // first event immediately, before the intro screen has even been drawn.
+  // page_load is the one measurement that can't be inferred from anything
+  // else: without it there's no way to distinguish "clicked the ad and
+  // bounced instantly" from "clicked the ad, read the intro card, and
+  // decided not to start" — which are different problems with different
+  // fixes. Everything after this point is timed relative to this moment.
+  //
+  // Both calls are wrapped internally and cannot throw. Neither is awaited.
+  startDemoTelemetrySession();
+  recordDemoEvent('page_load');
+
+  // How many answers have already been logged, so the render() wrapper
+  // below can log each new one exactly once. Instrumenting via render()
+  // rather than by wrapping submitAnswer() is deliberate: game-quiz.js and
+  // render-quiz.js are reused completely unmodified here, and the wrapper
+  // only reads state fields (state.results / state.questions) that are
+  // part of the shared state shape — so it can't be broken by an internal
+  // refactor of how answers get submitted, and doesn't need to know which
+  // of the several answer paths (typed, tapped option, true/false) ran.
+  let demoAnswersLogged = 0;
+  let demoResultsLogged = false;
+  let demoHubLogged = false;
+
+  // Best-effort label for which hub tile someone tapped before being sent
+  // to signup — the point being to learn what people actually wanted to
+  // look at. Falls back through data-mode, then element id, then trimmed
+  // text, then 'unknown'; never throws, and always returns a string short
+  // enough to satisfy the Firestore rule's 40-character cap.
+  function demoTileLabel(target) {
+    try {
+      const el = (target && target.closest)
+        ? target.closest('[data-mode], [id], button, a')
+        : null;
+      if (!el) return 'unknown';
+      const raw = el.getAttribute('data-mode') || el.id || (el.textContent || '');
+      const cleaned = String(raw).replace(/\s+/g, ' ').trim();
+      return (cleaned || 'unknown').slice(0, 40);
+    } catch (e) {
+      return 'unknown';
+    }
+  }
+
   // ---- Achievement gate ----
   // The demo is meant to feel like one genuine, modest win - "First
   // Steps" - not a fireworks show of every achievement a lucky perfect
@@ -279,6 +323,8 @@
     if (signupHandoffStarted) return;
     signupHandoffStarted = true;
 
+    recordDemoEvent('signup_modal_opened');
+
     try {
       const handoff = {
         wordStats: state.progress.wordStats,
@@ -372,6 +418,7 @@
     `;
     document.getElementById('demo-start-btn').addEventListener('click', () => {
       notifyDemoStarted();
+      recordDemoEvent('start_tapped');
       state.screen = 'quiz';
       prepareQuestion();
       render();
@@ -402,6 +449,43 @@
     }
     realRender();
     if (!state.isDemoMode) return;
+
+    // ---- Telemetry taps ----
+    // Run before the cosmetic DOM tweaks below so a thrown error in any of
+    // those can't cost us the event. Each is logged exactly once.
+    //
+    // Answers are drained as a loop rather than a single check because a
+    // round can end without a further render in between the last answer
+    // being recorded and the celebration screen replacing the quiz screen
+    // — the loop guarantees the eighth answer is logged even in that case.
+    while (demoAnswersLogged < state.results.length) {
+      const i = demoAnswersLogged;
+      const q = state.questions[i];
+      const res = state.results[i];
+      recordDemoEvent('question_answered', {
+        qIndex: i + 1,
+        format: q ? q.format : 'unknown',
+        correct: !!(res && res.correct),
+      });
+      demoAnswersLogged += 1;
+    }
+
+    // 'celebrate' is the screen that actually appears first at round end;
+    // 'result' follows it. Either one counts as "they finished all eight",
+    // and whichever arrives first is the honest timestamp for that.
+    if (!demoResultsLogged && (state.screen === 'celebrate' || state.screen === 'result')) {
+      demoResultsLogged = true;
+      let xp = null;
+      try {
+        if (typeof computeXP === 'function') xp = Math.round(computeXP(state.progress));
+      } catch (e) { /* xpEarned is a nice-to-have, not worth risking the event for */ }
+      recordDemoEvent('results_reached', (typeof xp === 'number' && isFinite(xp)) ? { xpEarned: xp } : null);
+    }
+
+    if (!demoHubLogged && state.screen === 'start') {
+      demoHubLogged = true;
+      recordDemoEvent('hub_viewed');
+    }
 
     if (state.screen === 'quiz') {
       // The top progress-tile row: render-quiz.js's own renderQuiz()
@@ -477,6 +561,9 @@
     if (!app || !app.contains(e.target)) return;
     e.preventDefault();
     e.stopImmediatePropagation();
+    // Logged before goToSignupFromDemo()'s own guard can swallow a
+    // double-tap, so the first tap's tile is always the one recorded.
+    recordDemoEvent('hub_tap', { tile: demoTileLabel(e.target) });
     goToSignupFromDemo();
   }, true);
 

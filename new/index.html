@@ -20,12 +20,18 @@
 <!-- No manifest/apple-touch-icon links here on purpose — this page is a
      one-time, no-account demo for first-time visitors, not something that
      should ever be offered for home-screen install as its own app
-     identity. No xlsx.full.min.js and no firebase-auth.js either — the
-     demo never parses a spreadsheet and never touches Firebase; its word
-     pool is hardcoded and its progress is a throwaway in-memory object
-     (see demo-boot.js). Deliberately left out of service-worker.js's
-     asset list too, and no service worker is registered from this page —
-     it's a one-time funnel page, not part of the installed offline app. -->
+     identity. No xlsx.full.min.js either — the demo never parses a
+     spreadsheet; its word pool is hardcoded and its progress is a
+     throwaway in-memory object (see demo-boot.js). Deliberately left out
+     of service-worker.js's asset list too, and no service worker is
+     registered from this page — it's a one-time funnel page, not part of
+     the installed offline app.
+
+     Still no firebase-auth.js and no Firebase SDK: there's no account here
+     to authenticate. The funnel telemetry added below does write to
+     Firestore, but over the plain REST API via fetch() precisely so this
+     page stays SDK-free — load time on an ad landing page is the thing
+     paid clicks are most sensitive to. -->
 
 <link rel="stylesheet" href="../css/base.css" />
 <link rel="stylesheet" href="../css/components.css" />
@@ -47,6 +53,11 @@
      ever shows the Stream-style quiz screen, the celebration screen, and
      the hub. -->
 <script src="../js/config.js"></script>
+<!-- Funnel telemetry — shared with the real app, which loads the same file
+     to record the last two events (signup page reached, account created)
+     after this page navigates away. Defines functions only; nothing runs
+     until demo-boot.js starts a session. -->
+<script src="../js/demo-telemetry.js"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/audio.js"></script>
 <script src="../js/progress-xp.js"></script>
@@ -58,8 +69,9 @@
 <script src="../js/views/render-dispatch.js"></script>
 
 <!-- Demo-only: builds the throwaway state object, the fixed 8-question
-     round, small safe overrides (saveProgress/nextQuestion), and the
-     signup handoff. Loads last — see its own top comment. -->
+     round, small safe overrides (saveProgress/nextQuestion), the funnel
+     telemetry taps, and the signup handoff. Loads last — see its own top
+     comment. -->
 <script src="demo-boot.js"></script>
 </body>
 </html>
