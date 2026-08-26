@@ -33,6 +33,17 @@
   // — sign-in never touches this, so it can't apply to an existing account.
   const DEMO_HANDOFF_KEY = 'palabraDemoHandoff_v1';
 
+  // sessionStorage key for the /new demo's funnel-telemetry record — the
+  // short session id, its start timestamp, the running sequence number, and
+  // any events not yet successfully written to Firestore. Managed entirely
+  // by js/demo-telemetry.js; kept here beside DEMO_HANDOFF_KEY purely so
+  // the two sessionStorage keys the demo funnel owns sit together and are
+  // easy to find. Deliberately a SEPARATE key from the handoff above,
+  // because the handoff is read-and-deleted exactly once on signup whereas
+  // this needs to survive that moment — the account_created event is
+  // written after the handoff has already been consumed.
+  const DEMO_SESSION_KEY = 'palabraDemoSession_v1';
+
   const COLORS = {
     green: '#2DD4BF',
     red: '#FF4D6D',

@@ -3,6 +3,24 @@
 
 
   function initAuth() {
+    // /new demo funnel: this load is the far side of the demo's redirect to
+    // signup. A stashed handoff means this visitor came from the demo and
+    // hasn't converted yet, which makes reaching this screen the last
+    // funnel step before the account itself — and the one that separates
+    // "saw the create-account prompt" from "actually arrived at the form".
+    // Recorded once per session; a refresh here is the same arrival.
+    //
+    // The flush is the second half of the point: any events stranded by a
+    // flaky connection back on /new get another attempt now, on a fresh
+    // page load with a fresh network stack. Both calls are internally
+    // wrapped and cannot throw, and neither is awaited.
+    try {
+      if (sessionStorage.getItem(DEMO_HANDOFF_KEY) && getDemoSessionId()) {
+        recordDemoEventOnce('signup_screen_reached');
+      }
+      flushDemoTelemetry();
+    } catch (e) { /* telemetry must never affect sign-in */ }
+
     function onReady() {
       // Picks up the result of a Google sign-in redirect, if this load is
       // the browser returning from one. No-op otherwise.
@@ -67,15 +85,23 @@
   // new account. Never awaited and never surfaces an error — a failed or
   // disabled notification must never get in the way of someone actually
   // signing up.
-  function notifyNewSignup(email, method) {
+  //
+  // demoSessionId is appended only when this signup followed a /new demo
+  // round. This is deliberately NOT a new notification — it's one extra
+  // line in the message that already fires, so a conversion can be traced
+  // straight back to its session in the admin funnel view without
+  // cross-referencing timestamps.
+  function notifyNewSignup(email, method, demoSessionId) {
     if (!TELEGRAM_CHAT_ID) return;
     try {
+      let text = `🎉 New Palabra signup\n${email || '(no email)'}\nvia ${method || 'email'}`;
+      if (demoSessionId) text += `\nfrom demo session ${demoSessionId}`;
       fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: TELEGRAM_CHAT_ID,
-          text: `🎉 New Palabra signup\n${email || '(no email)'}\nvia ${method || 'email'}`
+          text: text
         })
       }).catch(() => {});
     } catch (e) { /* ignore — notification is best-effort only */ }
@@ -194,7 +220,28 @@
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.progress)); } catch (e) {}
         state.username = username;
         state.lastSyncedMs = signupMs;
-        notifyNewSignup(email, 'email');
+
+        // The demo session id survives the handoff being consumed above —
+        // it lives under its own sessionStorage key precisely so it's still
+        // readable at this point. Null for every signup that didn't come
+        // through /new, in which case both calls below are no-ops.
+        const demoSessionId = getDemoSessionId();
+        notifyNewSignup(email, 'email', demoSessionId);
+
+        // account_created — the only funnel event the Firestore rules
+        // require to be authenticated, since it's the number the whole
+        // exercise exists to measure and must not be forgeable. Fetching
+        // the ID token is async, so it's deliberately left as a dangling
+        // promise rather than awaited: nothing about finishing signup may
+        // wait on telemetry.
+        if (demoSessionId) {
+          try {
+            cred.user.getIdToken()
+              .then((token) => recordDemoConversion(cred.user.uid, token))
+              .catch(() => {});
+          } catch (e) { /* ignore — telemetry is best-effort only */ }
+        }
+
         // Explicit render so the menu reflects the username immediately —
         // don't rely solely on onAuthStateChanged's own render(), since its
         // timing relative to this point isn't guaranteed.
