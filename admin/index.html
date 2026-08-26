@@ -319,6 +319,81 @@
     }
   }
 
+  /* ---------- demo funnel ---------- */
+  .funnel-hero { margin-bottom: 14px; }
+  .funnel-hero .num {
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 34px; line-height: 1;
+  }
+  .funnel-rows { display: flex; flex-direction: column; gap: 9px; }
+  .funnel-row { display: flex; align-items: center; gap: 10px; }
+  .funnel-row .fr-label {
+    font-size: 12.5px; width: 128px; flex: none; color: var(--cream-dim);
+  }
+  .funnel-row .fr-track {
+    flex: 1; height: 9px; border-radius: 999px;
+    background: rgba(255,255,255,0.07); overflow: hidden;
+  }
+  .funnel-row .fr-fill { height: 100%; border-radius: 999px; }
+  .funnel-row .fr-num {
+    font-size: 12px; font-variant-numeric: tabular-nums; width: 62px;
+    flex: none; text-align: right; color: var(--cream);
+  }
+  .funnel-row.is-cliff .fr-label { color: var(--terracotta); font-weight: 600; }
+
+  .cliff-note {
+    margin-top: 14px; padding: 12px 14px; border-radius: 14px;
+    background: rgba(255,77,109,0.12); border: 1px solid rgba(255,77,109,0.25);
+    font-size: 12.5px; line-height: 1.5;
+  }
+  .cliff-note b { color: var(--terracotta); }
+
+  .sess-row {
+    width: 100%; text-align: left; background: var(--bg-card-alt);
+    border: 1px solid rgba(255,255,255,0.07); border-radius: 14px;
+    padding: 12px 14px; margin-bottom: 9px; cursor: pointer;
+    font-family: 'Inter', sans-serif; color: var(--cream); display: block;
+  }
+  .sess-top {
+    display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px;
+  }
+  .sess-id {
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 14px;
+    letter-spacing: 0.04em;
+  }
+  .sess-when { font-size: 11.5px; color: var(--cream-dim); flex: 1; }
+  .sess-conv {
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em;
+    text-transform: uppercase; padding: 3px 8px; border-radius: 999px;
+    background: rgba(45,212,191,0.18); color: var(--green);
+  }
+  .sess-strip { display: flex; gap: 2px; margin-bottom: 7px; }
+  .sess-seg { flex: 1; height: 6px; border-radius: 2px; background: rgba(255,255,255,0.08); }
+  .sess-meta {
+    display: flex; gap: 10px; font-size: 11.5px; color: var(--cream-dim);
+  }
+  .sess-meta .reached { color: var(--cream); }
+
+  .sess-timeline {
+    margin: 2px 0 10px; padding: 12px 14px; border-radius: 14px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+  }
+  .tl-item {
+    display: flex; gap: 10px; align-items: baseline; font-size: 12px;
+    padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .tl-item:last-child { border-bottom: none; }
+  .tl-step { flex: 1; }
+  .tl-extra { color: var(--label); font-size: 11px; }
+  .tl-delta {
+    font-variant-numeric: tabular-nums; color: var(--cream-dim);
+    width: 62px; text-align: right; flex: none;
+  }
+  .tl-item.slow .tl-delta { color: var(--ochre); font-weight: 600; }
+  .tl-wrong .tl-extra { color: var(--terracotta); }
+
+  .funnel-actions { display: flex; gap: 10px; margin-top: 4px; }
+  .funnel-actions .btn { margin-top: 0; }
+
   .footnote {
     text-align: center; font-size: 11.5px; color: var(--cream-dim);
     margin-top: 18px; opacity: 0.7;
@@ -400,6 +475,16 @@
         <div>
           <div class="panel-title">All users</div>
           <div class="panel-sub">Full sortable list — tap to view</div>
+        </div>
+        <div class="nav-chevron">›</div>
+      </div>
+    </button>
+
+    <button id="openFunnelBtn" class="nav-panel fade-in" type="button">
+      <div class="nav-panel-inner">
+        <div>
+          <div class="panel-title">Demo funnel</div>
+          <div class="panel-sub">Who reached /new, how far they got, where they left</div>
         </div>
         <div class="nav-chevron">›</div>
       </div>
@@ -498,6 +583,74 @@
       </div>
     </div>
     <div class="landscape-hint">Tap a column to sort, tap again to reverse. Rotate your device for the full table — the "Landscape" button helps on Android Chrome, but isn't supported by every browser.</div>
+  </div>
+
+  <!-- demo funnel -->
+  <div id="view-demo" class="hidden">
+    <div class="users-header">
+      <button id="funnelBackBtn" class="icon-btn" type="button" aria-label="Back">←</button>
+      <div class="title-block">
+        <div class="t">Demo funnel</div>
+        <div class="c" id="funnelCount">—</div>
+      </div>
+      <button id="funnelReloadBtn" class="btn btn-ghost fs-btn" type="button">↻ Reload</button>
+    </div>
+
+    <div id="funnelLoading" class="panel center-panel">
+      <div class="glyph">⏳</div>
+      <h2>Loading sessions…</h2>
+    </div>
+
+    <div id="funnelError" class="panel center-panel hidden">
+      <div class="glyph">⚠️</div>
+      <h2>Couldn't load funnel data</h2>
+      <p id="funnelErrorText">Something went wrong talking to Firestore.</p>
+    </div>
+
+    <div id="funnelBody" class="hidden">
+
+      <div class="panel funnel-hero fade-in">
+        <div class="panel-title">Conversion</div>
+        <div class="panel-sub">Of everyone who landed on /new</div>
+        <div class="num" id="funnelConvRate">—</div>
+        <div class="panel-sub" style="margin: 6px 0 0;" id="funnelConvSub">—</div>
+      </div>
+
+      <div class="panel fade-in">
+        <div class="panel-title">Where people stop</div>
+        <div class="panel-sub">Each bar is the share of visitors who got that far</div>
+        <div class="funnel-rows" id="funnelRows"></div>
+        <div id="funnelCliff"></div>
+      </div>
+
+      <div class="panel fade-in">
+        <div class="panel-title">Timing</div>
+        <div class="panel-sub">Across sessions that finished all 8 questions</div>
+        <div class="stat-grid" style="margin-bottom:0;">
+          <div class="stat-card c-today">
+            <div class="icon-dot"></div>
+            <div class="num" id="funnelMedian">—</div>
+            <div class="label">Median run</div>
+          </div>
+          <div class="stat-card c-week">
+            <div class="icon-dot"></div>
+            <div class="num" id="funnelSlowest">—</div>
+            <div class="label">Slowest question</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel fade-in">
+        <div class="panel-title">Sessions</div>
+        <div class="panel-sub">Newest first — tap one to follow it step by step</div>
+        <div id="funnelSessions"></div>
+      </div>
+
+      <div class="funnel-actions">
+        <button class="btn btn-ghost" id="funnelWipeBtn" type="button">Delete all funnel data</button>
+      </div>
+      <div class="landscape-hint">Deleting clears every recorded session permanently. Useful for clearing your own test runs; it can't be undone.</div>
+    </div>
   </div>
 
 </div>
@@ -639,7 +792,8 @@
     denied: document.getElementById('view-denied'),
     error: document.getElementById('view-error'),
     dashboard: document.getElementById('view-dashboard'),
-    users: document.getElementById('view-users')
+    users: document.getElementById('view-users'),
+    demo: document.getElementById('view-demo')
   };
   function showView(name) {
     Object.keys(views).forEach(k => views[k].classList.toggle('hidden', k !== name));
@@ -1056,6 +1210,350 @@
       btn.disabled = false;
     }
   });
+
+  // --- demo funnel -------------------------------------------------------
+  // Reads the demoEvents collection (one document per event, written by
+  // js/demo-telemetry.js from /new and from the real app on conversion) and
+  // reassembles it into per-visitor journeys.
+  //
+  // Loaded lazily, only when this view is opened, so the main dashboard's
+  // first paint never waits on it.
+
+  // The canonical ladder every session is measured against. Order here IS
+  // the funnel order — the drop-off maths walks it in sequence.
+  //
+  // Note this is keyed on distinct STEPS, not on the raw seq number in the
+  // documents. Someone who reloads /new mid-demo continues the same session
+  // and keeps incrementing seq, so seq can exceed 16 while the person has
+  // genuinely only reached, say, question 3. Steps can't overcount that way.
+  const FUNNEL_STEPS = [
+    { id: 'page_load',            label: 'Landed on /new' },
+    { id: 'start_tapped',         label: 'Tapped Start' },
+    { id: 'q1',                   label: 'Answered Q1' },
+    { id: 'q2',                   label: 'Answered Q2' },
+    { id: 'q3',                   label: 'Answered Q3' },
+    { id: 'q4',                   label: 'Answered Q4' },
+    { id: 'q5',                   label: 'Answered Q5' },
+    { id: 'q6',                   label: 'Answered Q6' },
+    { id: 'q7',                   label: 'Answered Q7' },
+    { id: 'q8',                   label: 'Answered Q8' },
+    { id: 'results_reached',      label: 'Saw results' },
+    { id: 'hub_viewed',           label: 'Saw the hub' },
+    { id: 'hub_tap',              label: 'Tapped a tile' },
+    { id: 'signup_modal_opened',  label: 'Saw signup prompt' },
+    { id: 'signup_screen_reached',label: 'Reached signup form' },
+    { id: 'account_created',      label: 'Created account' }
+  ];
+  const FUNNEL_STEP_INDEX = {};
+  FUNNEL_STEPS.forEach((s, i) => { FUNNEL_STEP_INDEX[s.id] = i; });
+
+  // A question answered slowly enough to suggest someone was stuck rather
+  // than reading. Flagged in the per-session timeline only, never used in
+  // any aggregate.
+  const SLOW_STEP_MS = 45000;
+
+  let funnelSessions = [];
+  let funnelLoaded = false;
+  let funnelExpandedId = null;
+
+  function stepIdForEvent(ev) {
+    if (ev.key === 'question_answered') {
+      return (typeof ev.qIndex === 'number' && ev.qIndex >= 1 && ev.qIndex <= 8)
+        ? 'q' + ev.qIndex
+        : null;
+    }
+    return (ev.key in FUNNEL_STEP_INDEX) ? ev.key : null;
+  }
+
+  async function loadFunnel() {
+    document.getElementById('funnelLoading').classList.remove('hidden');
+    document.getElementById('funnelError').classList.add('hidden');
+    document.getElementById('funnelBody').classList.add('hidden');
+    try {
+      const snap = await getDocs(collection(db, 'demoEvents'));
+      const bySession = {};
+      snap.forEach((docSnap) => {
+        const d = docSnap.data() || {};
+        if (!d.sessionId) return;
+        (bySession[d.sessionId] = bySession[d.sessionId] || []).push({
+          docId: docSnap.id,
+          seq: typeof d.seq === 'number' ? d.seq : 0,
+          key: d.key || 'unknown',
+          atMs: typeof d.atMs === 'number' ? d.atMs : 0,
+          deltaMs: typeof d.deltaMs === 'number' ? d.deltaMs : 0,
+          epochMs: typeof d.epochMs === 'number' ? d.epochMs : 0,
+          qIndex: d.qIndex,
+          format: d.format,
+          correct: d.correct,
+          xpEarned: d.xpEarned,
+          tile: d.tile,
+          uid: d.uid
+        });
+      });
+
+      funnelSessions = Object.keys(bySession).map((id) => {
+        // Documents arrive in id order, which is also seq order, but sort
+        // explicitly rather than rely on that — seq is the field that
+        // guarantees true order regardless of how writes landed.
+        const events = bySession[id].sort((a, b) => a.seq - b.seq);
+
+        const stepsReached = {};
+        let maxStep = -1;
+        events.forEach((ev) => {
+          const sid = stepIdForEvent(ev);
+          if (sid == null) return;
+          stepsReached[sid] = ev;
+          maxStep = Math.max(maxStep, FUNNEL_STEP_INDEX[sid]);
+        });
+
+        // Session start in wall-clock terms. Each event knows both when it
+        // happened (epochMs) and how long after page load that was (atMs),
+        // so any single event can reconstruct the start — which matters
+        // because page_load itself may be missing from older sessions.
+        let startedAt = 0;
+        for (const ev of events) {
+          if (ev.epochMs) { startedAt = ev.epochMs - ev.atMs; break; }
+        }
+
+        const last = events[events.length - 1];
+        return {
+          id: id,
+          events: events,
+          stepsReached: stepsReached,
+          maxStep: maxStep,
+          startedAt: startedAt,
+          durationMs: last ? last.atMs : 0,
+          converted: !!stepsReached['account_created'],
+          reachedLabel: maxStep >= 0 ? FUNNEL_STEPS[maxStep].label : 'nothing recorded'
+        };
+      }).sort((a, b) => (b.startedAt - a.startedAt) || (a.id < b.id ? 1 : -1));
+
+      renderFunnel();
+      document.getElementById('funnelLoading').classList.add('hidden');
+      document.getElementById('funnelBody').classList.remove('hidden');
+      funnelLoaded = true;
+    } catch (err) {
+      document.getElementById('funnelLoading').classList.add('hidden');
+      document.getElementById('funnelErrorText').textContent =
+        (err && err.code === 'permission-denied')
+          ? 'Firestore rules haven\u2019t granted this account read access to demoEvents.'
+          : ((err && err.message) || 'Something went wrong talking to Firestore.');
+      document.getElementById('funnelError').classList.remove('hidden');
+    }
+  }
+
+  function renderFunnel() {
+    const total = funnelSessions.length;
+    document.getElementById('funnelCount').textContent =
+      total === 1 ? '1 session' : `${total.toLocaleString()} sessions`;
+
+    // --- conversion headline ---
+    const converted = funnelSessions.filter(s => s.converted).length;
+    document.getElementById('funnelConvRate').textContent =
+      total ? `${Math.round((converted / total) * 100)}%` : '—';
+    document.getElementById('funnelConvSub').textContent = total
+      ? `${converted} of ${total} created an account`
+      : 'No sessions recorded yet.';
+
+    // --- step-by-step drop-off ---
+    const counts = FUNNEL_STEPS.map((step, i) =>
+      funnelSessions.filter(s => s.maxStep >= i).length
+    );
+
+    // Biggest single drop between consecutive steps. This is the headline
+    // "what do I fix" number — the step where most people give up.
+    let cliffAt = -1, cliffSize = 0;
+    for (let i = 0; i < counts.length - 1; i++) {
+      const drop = counts[i] - counts[i + 1];
+      if (drop > cliffSize) { cliffSize = drop; cliffAt = i; }
+    }
+
+    const rowsEl = document.getElementById('funnelRows');
+    if (!total) {
+      rowsEl.innerHTML = '<div class="empty-note">No sessions recorded yet.</div>';
+      document.getElementById('funnelCliff').innerHTML = '';
+    } else {
+      rowsEl.innerHTML = FUNNEL_STEPS.map((step, i) => {
+        const n = counts[i];
+        const pct = Math.round((n / total) * 100);
+        // Ramp from ochre at the top of the funnel to green at conversion,
+        // so a healthy funnel reads as a colour gradient rather than
+        // needing the numbers parsed.
+        const hue = 38 + Math.round((i / (FUNNEL_STEPS.length - 1)) * 130);
+        const isCliff = (i === cliffAt && cliffSize > 0);
+        return `
+          <div class="funnel-row${isCliff ? ' is-cliff' : ''}">
+            <div class="fr-label">${escapeHtml(step.label)}</div>
+            <div class="fr-track">
+              <div class="fr-fill" style="width:${Math.max(pct, n ? 2 : 0)}%; background:hsl(${hue} 85% 62%);"></div>
+            </div>
+            <div class="fr-num">${n} · ${pct}%</div>
+          </div>`;
+      }).join('');
+
+      document.getElementById('funnelCliff').innerHTML = (cliffAt >= 0 && cliffSize > 0)
+        ? `<div class="cliff-note">Biggest drop-off: <b>${cliffSize}</b> of ${counts[cliffAt]} left between
+             <b>${escapeHtml(FUNNEL_STEPS[cliffAt].label)}</b> and
+             <b>${escapeHtml(FUNNEL_STEPS[cliffAt + 1].label)}</b>.</div>`
+        : '';
+    }
+
+    // --- timing ---
+    // Measured from the Start tap to the eighth answer, not from page load,
+    // so time spent reading the intro card doesn't inflate it.
+    const runTimes = funnelSessions
+      .filter(s => s.stepsReached['q8'] && s.stepsReached['start_tapped'])
+      .map(s => s.stepsReached['q8'].atMs - s.stepsReached['start_tapped'].atMs)
+      .filter(ms => ms > 0)
+      .sort((a, b) => a - b);
+    document.getElementById('funnelMedian').textContent =
+      runTimes.length ? shortDuration(runTimes[Math.floor(runTimes.length / 2)]) : '—';
+
+    // Which question number takes longest on average — a question that's
+    // consistently slow is either confusing or badly worded.
+    const perQ = {};
+    funnelSessions.forEach((s) => {
+      for (let q = 1; q <= 8; q++) {
+        const ev = s.stepsReached['q' + q];
+        if (ev && ev.deltaMs > 0) (perQ[q] = perQ[q] || []).push(ev.deltaMs);
+      }
+    });
+    let slowQ = null, slowAvg = 0;
+    Object.keys(perQ).forEach((q) => {
+      const avg = perQ[q].reduce((a, b) => a + b, 0) / perQ[q].length;
+      if (avg > slowAvg) { slowAvg = avg; slowQ = q; }
+    });
+    document.getElementById('funnelSlowest').textContent =
+      slowQ ? `Q${slowQ}` : '—';
+
+    renderFunnelSessions();
+  }
+
+  function renderFunnelSessions() {
+    const el = document.getElementById('funnelSessions');
+    if (!funnelSessions.length) {
+      el.innerHTML = '<div class="empty-note">Nothing recorded yet.</div>';
+      return;
+    }
+    el.innerHTML = funnelSessions.map((s) => {
+      const strip = FUNNEL_STEPS.map((step, i) => {
+        if (i > s.maxStep) return '<div class="sess-seg"></div>';
+        const hue = 38 + Math.round((i / (FUNNEL_STEPS.length - 1)) * 130);
+        return `<div class="sess-seg" style="background:hsl(${hue} 85% 62%)"></div>`;
+      }).join('');
+      return `
+        <button class="sess-row" type="button" data-session="${escapeHtml(s.id)}">
+          <div class="sess-top">
+            <span class="sess-id">${escapeHtml(s.id)}</span>
+            <span class="sess-when">${s.startedAt ? fmtWhen(s.startedAt) : 'date unknown'}</span>
+            ${s.converted ? '<span class="sess-conv">Signed up</span>' : ''}
+          </div>
+          <div class="sess-strip">${strip}</div>
+          <div class="sess-meta">
+            <span class="reached">${escapeHtml(s.reachedLabel)}</span>
+            <span>·</span>
+            <span>${shortDuration(s.durationMs)}</span>
+          </div>
+        </button>
+        ${funnelExpandedId === s.id ? renderFunnelTimeline(s) : ''}`;
+    }).join('');
+  }
+
+  function renderFunnelTimeline(s) {
+    const items = s.events.map((ev) => {
+      const stepId = stepIdForEvent(ev);
+      const label = stepId ? FUNNEL_STEPS[FUNNEL_STEP_INDEX[stepId]].label : ev.key;
+      const bits = [];
+      if (ev.format) bits.push(escapeHtml(ev.format));
+      if (typeof ev.correct === 'boolean') bits.push(ev.correct ? 'correct' : 'wrong');
+      if (typeof ev.xpEarned === 'number') bits.push(ev.xpEarned + ' XP');
+      if (ev.tile) bits.push('tapped “' + escapeHtml(ev.tile) + '”');
+      const wrong = ev.correct === false;
+      const slow = ev.deltaMs >= SLOW_STEP_MS;
+      return `
+        <div class="tl-item${slow ? ' slow' : ''}${wrong ? ' tl-wrong' : ''}">
+          <div class="tl-step">${escapeHtml(label)}${bits.length ? ` <span class="tl-extra">${bits.join(' · ')}</span>` : ''}</div>
+          <div class="tl-delta">${shortDuration(ev.deltaMs)}</div>
+        </div>`;
+    }).join('');
+    return `<div class="sess-timeline">${items}
+      <div class="tl-item"><div class="tl-step tl-extra">Times shown are how long that step took, not elapsed total.</div></div>
+    </div>`;
+  }
+
+  document.getElementById('funnelSessions').addEventListener('click', (e) => {
+    const row = e.target.closest('.sess-row');
+    if (!row) return;
+    const id = row.dataset.session;
+    funnelExpandedId = (funnelExpandedId === id) ? null : id;
+    renderFunnelSessions();
+  });
+
+  document.getElementById('openFunnelBtn').addEventListener('click', () => {
+    showView('demo');
+    if (!funnelLoaded) loadFunnel();
+  });
+
+  document.getElementById('funnelBackBtn').addEventListener('click', () => {
+    showView('dashboard');
+  });
+
+  document.getElementById('funnelReloadBtn').addEventListener('click', () => {
+    funnelExpandedId = null;
+    loadFunnel();
+  });
+
+  // Deletes every document in the collection, one at a time. Fine at the
+  // volumes this will ever see (a few hundred at most), and avoids pulling
+  // in writeBatch for a button pressed once in a blue moon. Mainly here so
+  // test runs can be cleared without deleting documents by hand on a phone.
+  document.getElementById('funnelWipeBtn').addEventListener('click', async () => {
+    const totalDocs = funnelSessions.reduce((n, s) => n + s.events.length, 0);
+    if (!totalDocs) return;
+    const ok = confirm(
+      `Delete all ${totalDocs} funnel events across ${funnelSessions.length} sessions?\n\n` +
+      `This permanently removes every recorded demo session and cannot be undone. ` +
+      `It does not affect user accounts or any other data.`
+    );
+    if (!ok) return;
+    const btn = document.getElementById('funnelWipeBtn');
+    btn.disabled = true;
+    btn.textContent = 'Deleting…';
+    try {
+      for (const s of funnelSessions) {
+        for (const ev of s.events) {
+          await deleteDoc(doc(db, 'demoEvents', ev.docId));
+        }
+      }
+      funnelExpandedId = null;
+      await loadFunnel();
+    } catch (err) {
+      alert('Could not delete: ' + ((err && err.message) || 'unknown error'));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Delete all funnel data';
+    }
+  });
+
+  // "3m 12s" / "48s" / "1.2s" — compact enough for a table cell, precise
+  // enough that a two-second gap and a two-minute one look different.
+  function shortDuration(ms) {
+    if (!ms || ms < 0) return '0s';
+    if (ms < 1000) return ms + 'ms';
+    if (ms < 10000) return (ms / 1000).toFixed(1) + 's';
+    const sec = Math.round(ms / 1000);
+    if (sec < 60) return sec + 's';
+    const min = Math.floor(sec / 60);
+    const rem = sec % 60;
+    if (min < 60) return rem ? `${min}m ${rem}s` : `${min}m`;
+    return `${Math.floor(min / 60)}h ${min % 60}m`;
+  }
+
+  function fmtWhen(ms) {
+    const d = new Date(ms);
+    return d.toLocaleDateString([], { day: 'numeric', month: 'short' }) +
+      ', ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
 
   function relativeTime(ms, now) {
     const diff = Math.max(0, now - ms);
