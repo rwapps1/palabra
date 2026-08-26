@@ -179,6 +179,14 @@
         key: key,
         atMs: Math.max(0, now - s.startedAt),
         deltaMs: Math.max(0, now - (s.lastAtMs || s.startedAt)),
+        // Wall-clock time, as well as the relative atMs above. Needed
+        // because Firestore's own document create-time isn't readable from
+        // the browser SDK, so without this the dashboard has no way to say
+        // when a session happened or to sort sessions newest-first. Taken
+        // from the visitor's device clock, so a badly-set clock gives a
+        // wrong date — acceptable, since atMs/deltaMs (which are what the
+        // durations are actually computed from) stay correct regardless.
+        epochMs: now,
       };
 
       if (extra && typeof extra === 'object') {
@@ -239,6 +247,7 @@
       key: { stringValue: ev.key },
       atMs: { integerValue: String(ev.atMs) },
       deltaMs: { integerValue: String(ev.deltaMs) },
+      epochMs: { integerValue: String(ev.epochMs) },
     };
     if (typeof ev.qIndex === 'number') f.qIndex = { integerValue: String(ev.qIndex) };
     if (typeof ev.format === 'string') f.format = { stringValue: ev.format };
