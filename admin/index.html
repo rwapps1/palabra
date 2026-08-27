@@ -391,6 +391,22 @@
   .tl-item.slow .tl-delta { color: var(--ochre); font-weight: 600; }
   .tl-wrong .tl-extra { color: var(--terracotta); }
 
+  .filter-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+  }
+  .filter-row:last-of-type { border-bottom: none; }
+  .filter-row input { width: 17px; height: 17px; accent-color: var(--violet); flex: none; }
+  .filter-row .fl-text { flex: 1; font-size: 13px; }
+  .filter-row .fl-count { font-size: 11.5px; color: var(--cream-dim); }
+  .filter-hint {
+    font-size: 11.5px; color: var(--label); line-height: 1.5; margin-top: 10px;
+  }
+  .filter-hint b { color: var(--cream-dim); font-weight: 600; }
+  .sess-src { color: var(--label); }
+  .sess-src.muted-src { font-style: italic; }
+
   .funnel-actions { display: flex; gap: 10px; margin-top: 4px; }
   .funnel-actions .btn { margin-top: 0; }
 
@@ -614,6 +630,22 @@
         <div class="panel-sub">Of everyone who landed on /new</div>
         <div class="num" id="funnelConvRate">—</div>
         <div class="panel-sub" style="margin: 6px 0 0;" id="funnelConvSub">—</div>
+      </div>
+
+      <div class="panel fade-in">
+        <div class="panel-title">Showing</div>
+        <div class="panel-sub">Both are excluded by default, so the numbers below describe real visitors</div>
+        <label class="filter-row">
+          <input type="checkbox" id="funnelFilterBots" />
+          <span class="fl-text">Hide crawlers and bots</span>
+          <span class="fl-count" id="funnelBotCount">—</span>
+        </label>
+        <label class="filter-row">
+          <input type="checkbox" id="funnelFilterDev" />
+          <span class="fl-text">Hide my own test visits</span>
+          <span class="fl-count" id="funnelDevCount">—</span>
+        </label>
+        <div class="filter-hint">To mark a device as yours, open <b>palabraword.uk/new?dev=1</b> on it once. Undo with <b>?dev=0</b>.</div>
       </div>
 
       <div class="panel fade-in">
@@ -1256,6 +1288,31 @@
   let funnelLoaded = false;
   let funnelExpandedId = null;
 
+  // Both default ON: the numbers people actually want are about real
+  // strangers, and a dashboard that silently mixes in crawler hits and the
+  // developer's own testing is worse than no dashboard, because it looks
+  // authoritative. Toggle either off to see everything.
+  let funnelHideBots = true;
+  let funnelHideDev = true;
+
+  function visibleFunnelSessions() {
+    return funnelSessions.filter((s) => {
+      if (funnelHideBots && s.isBot) return false;
+      if (funnelHideDev && s.dev) return false;
+      return true;
+    });
+  }
+
+  // Short human label for where a session came from.
+  function sourceLabel(s) {
+    if (s.dev) return 'your device';
+    if (s.isBot) return s.ua.slice(4) + ' (bot)';
+    if (s.utm) return 'ad: ' + s.utm;
+    if (s.unknownSource) return 'source unknown';
+    if (s.ref && s.ref !== 'direct' && s.ref !== 'unknown') return 'via ' + s.ref;
+    return 'direct';
+  }
+
   function stepIdForEvent(ev) {
     if (ev.key === 'question_answered') {
       return (typeof ev.qIndex === 'number' && ev.qIndex >= 1 && ev.qIndex <= 8)
@@ -1287,7 +1344,11 @@
           correct: d.correct,
           xpEarned: d.xpEarned,
           tile: d.tile,
-          uid: d.uid
+          uid: d.uid,
+          ref: d.ref,
+          ua: d.ua,
+          utm: d.utm,
+          dev: d.dev === true
         });
       });
 
@@ -1315,8 +1376,24 @@
           if (ev.epochMs) { startedAt = ev.epochMs - ev.atMs; break; }
         }
 
+        // Visit context rides on page_load, but read it from whichever
+        // event carries it — page_load can be missing from a session whose
+        // early events were dropped from the retry queue.
+        let ref = null, ua = null, utm = null, dev = false;
+        events.forEach((ev) => {
+          if (ev.ref && !ref) ref = ev.ref;
+          if (ev.ua && !ua) ua = ev.ua;
+          if (ev.utm && !utm) utm = ev.utm;
+          if (ev.dev) dev = true;
+        });
+
         const last = events[events.length - 1];
         return {
+          ref: ref, ua: ua, utm: utm, dev: dev,
+          isBot: !!(ua && ua.indexOf('bot:') === 0),
+          // Sessions recorded before 2026-08-27 carry no context at all.
+          // Treated as unknown rather than quietly counted as real.
+          unknownSource: !ua,
           id: id,
           events: events,
           stepsReached: stepsReached,
@@ -1343,12 +1420,24 @@
   }
 
   function renderFunnel() {
-    const total = funnelSessions.length;
+    const shown = visibleFunnelSessions();
+    const total = shown.length;
+    const hidden = funnelSessions.length - total;
     document.getElementById('funnelCount').textContent =
-      total === 1 ? '1 session' : `${total.toLocaleString()} sessions`;
+      (total === 1 ? '1 session' : `${total.toLocaleString()} sessions`) +
+      (hidden ? ` · ${hidden} filtered out` : '');
+
+    const botCount = funnelSessions.filter(x => x.isBot).length;
+    const devCount = funnelSessions.filter(x => x.dev).length;
+    document.getElementById('funnelFilterBots').checked = funnelHideBots;
+    document.getElementById('funnelFilterDev').checked = funnelHideDev;
+    document.getElementById('funnelBotCount').textContent =
+      botCount ? `${botCount} detected` : 'none detected';
+    document.getElementById('funnelDevCount').textContent =
+      devCount ? `${devCount} detected` : 'none detected';
 
     // --- conversion headline ---
-    const converted = funnelSessions.filter(s => s.converted).length;
+    const converted = shown.filter(s => s.converted).length;
     document.getElementById('funnelConvRate').textContent =
       total ? `${Math.round((converted / total) * 100)}%` : '—';
     document.getElementById('funnelConvSub').textContent = total
@@ -1357,7 +1446,7 @@
 
     // --- step-by-step drop-off ---
     const counts = FUNNEL_STEPS.map((step, i) =>
-      funnelSessions.filter(s => s.maxStep >= i).length
+      shown.filter(s => s.maxStep >= i).length
     );
 
     // Biggest single drop between consecutive steps. This is the headline
@@ -1401,7 +1490,7 @@
     // --- timing ---
     // Measured from the Start tap to the eighth answer, not from page load,
     // so time spent reading the intro card doesn't inflate it.
-    const runTimes = funnelSessions
+    const runTimes = shown
       .filter(s => s.stepsReached['q8'] && s.stepsReached['start_tapped'])
       .map(s => s.stepsReached['q8'].atMs - s.stepsReached['start_tapped'].atMs)
       .filter(ms => ms > 0)
@@ -1412,7 +1501,7 @@
     // Which question number takes longest on average — a question that's
     // consistently slow is either confusing or badly worded.
     const perQ = {};
-    funnelSessions.forEach((s) => {
+    shown.forEach((s) => {
       for (let q = 1; q <= 8; q++) {
         const ev = s.stepsReached['q' + q];
         if (ev && ev.deltaMs > 0) (perQ[q] = perQ[q] || []).push(ev.deltaMs);
@@ -1431,11 +1520,14 @@
 
   function renderFunnelSessions() {
     const el = document.getElementById('funnelSessions');
-    if (!funnelSessions.length) {
-      el.innerHTML = '<div class="empty-note">Nothing recorded yet.</div>';
+    const shown = visibleFunnelSessions();
+    if (!shown.length) {
+      el.innerHTML = funnelSessions.length
+        ? '<div class="empty-note">Every recorded session is filtered out. Untick a filter above to see them.</div>'
+        : '<div class="empty-note">Nothing recorded yet.</div>';
       return;
     }
-    el.innerHTML = funnelSessions.map((s) => {
+    el.innerHTML = shown.map((s) => {
       const strip = FUNNEL_STEPS.map((step, i) => {
         if (i > s.maxStep) return '<div class="sess-seg"></div>';
         const hue = 38 + Math.round((i / (FUNNEL_STEPS.length - 1)) * 130);
@@ -1453,6 +1545,8 @@
             <span class="reached">${escapeHtml(s.reachedLabel)}</span>
             <span>·</span>
             <span>${shortDuration(s.durationMs)}</span>
+            <span>·</span>
+            <span class="sess-src${s.isBot || s.dev ? ' muted-src' : ''}">${escapeHtml(sourceLabel(s))}</span>
           </div>
         </button>
         ${funnelExpandedId === s.id ? renderFunnelTimeline(s) : ''}`;
@@ -1494,6 +1588,18 @@
     if (!funnelLoaded) loadFunnel();
   });
 
+  document.getElementById('funnelFilterBots').addEventListener('change', (e) => {
+    funnelHideBots = e.target.checked;
+    funnelExpandedId = null;
+    renderFunnel();
+  });
+
+  document.getElementById('funnelFilterDev').addEventListener('change', (e) => {
+    funnelHideDev = e.target.checked;
+    funnelExpandedId = null;
+    renderFunnel();
+  });
+
   document.getElementById('funnelBackBtn').addEventListener('click', () => {
     showView('dashboard');
   });
@@ -1508,6 +1614,9 @@
   // in writeBatch for a button pressed once in a blue moon. Mainly here so
   // test runs can be cleared without deleting documents by hand on a phone.
   document.getElementById('funnelWipeBtn').addEventListener('click', async () => {
+    // Deliberately counts ALL sessions, including any hidden by the
+    // filters — a wipe that silently spared filtered-out data would be a
+    // nasty surprise next time the filter is toggled off.
     const totalDocs = funnelSessions.reduce((n, s) => n + s.events.length, 0);
     if (!totalDocs) return;
     const ok = confirm(
