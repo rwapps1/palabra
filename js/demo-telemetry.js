@@ -138,6 +138,10 @@
         seq: 0,
         lastAtMs: 0,
         converted: false,
+        // Captured once, at session start, so every event in the session
+        // agrees — and so the real app can still stamp it on the
+        // account_created event after the navigation.
+        dev: isDemoDevDevice(),
         pending: [],
       };
       demoTelemetryWriteState(s);
@@ -208,7 +212,21 @@
         if (typeof extra.uid === 'string' && extra.uid) {
           ev.uid = extra.uid;
         }
+        if (typeof extra.ref === 'string' && extra.ref) {
+          ev.ref = extra.ref.replace(/\s+/g, '').slice(0, 80);
+        }
+        if (typeof extra.ua === 'string' && extra.ua) {
+          ev.ua = extra.ua.replace(/\s+/g, '').slice(0, 24);
+        }
+        if (typeof extra.utm === 'string' && extra.utm) {
+          ev.utm = extra.utm.replace(/\s+/g, '').slice(0, 24);
+        }
       }
+
+      // Stamped on EVERY event rather than just page_load, so a session
+      // whose page_load was dropped from the retry queue is still
+      // identifiable as the developer's. One boolean; cheap insurance.
+      if (s.dev) ev.dev = true;
 
       s.seq = ev.seq;
       s.lastAtMs = now;
@@ -255,6 +273,10 @@
     if (typeof ev.xpEarned === 'number') f.xpEarned = { integerValue: String(ev.xpEarned) };
     if (typeof ev.tile === 'string') f.tile = { stringValue: ev.tile };
     if (typeof ev.uid === 'string') f.uid = { stringValue: ev.uid };
+    if (typeof ev.ref === 'string') f.ref = { stringValue: ev.ref };
+    if (typeof ev.ua === 'string') f.ua = { stringValue: ev.ua };
+    if (typeof ev.utm === 'string') f.utm = { stringValue: ev.utm };
+    if (ev.dev === true) f.dev = { booleanValue: true };
     return f;
   }
 
@@ -327,9 +349,10 @@
   // and a hidden tab can't be tapped.
   function startDemoTelemetryWhenVisible() {
     try {
+      applyDemoDevFlagFromUrl();
       if (typeof document === 'undefined' || document.visibilityState === 'visible') {
         startDemoTelemetrySession();
-        recordDemoEvent('page_load');
+        recordDemoEvent('page_load', demoVisitContext());
         return;
       }
       let started = false;
@@ -339,11 +362,122 @@
           started = true;
           document.removeEventListener('visibilitychange', onVisible);
           startDemoTelemetrySession();
-          recordDemoEvent('page_load');
+          recordDemoEvent('page_load', demoVisitContext());
         } catch (e) { /* ignore */ }
       };
       document.addEventListener('visibilitychange', onVisible);
     } catch (e) { /* telemetry must never affect the demo */ }
+  }
+
+  // ---- Visit context -----------------------------------------------------
+  // Added 2026-08-27, after seven overnight sessions arrived with fresh
+  // session ids and never got past the landing. Fresh ids meant separate
+  // browser contexts, which ruled out both Rob's own tabs and address-bar
+  // preloading — the signature of automated traffic. Without any of the
+  // below there was no way to tell a crawler from a real ad click from
+  // Rob testing, which made "landed but never started" — the single number
+  // this whole exercise exists to produce — unusable.
+
+  // localStorage, NOT sessionStorage: the point is to persist across tabs,
+  // browser restarts and days, so one visit to /new?dev=1 permanently marks
+  // this device as the developer's. Deliberately kept here rather than in
+  // config.js: it's internal to telemetry, and config.js changing would
+  // force a service-worker cache bump for no benefit.
+  const DEMO_DEV_FLAG_KEY = 'palabraDemoDev_v1';
+
+  // Known crawlers, scanners and link-preview fetchers. Not exhaustive and
+  // never will be — the generic /bot|crawler|spider/ catch below handles
+  // the long tail, and anything that lies about its user agent can't be
+  // caught this way at all. Good enough to keep the funnel numbers honest.
+  const DEMO_BOT_SIGNATURES = [
+    'googlebot', 'bingbot', 'yandex', 'duckduckbot', 'baiduspider',
+    'applebot', 'facebookexternalhit', 'twitterbot', 'slackbot',
+    'telegrambot', 'whatsapp', 'discordbot', 'linkedinbot', 'petalbot',
+    'ahrefsbot', 'semrushbot', 'mj12bot', 'dotbot', 'bytespider',
+    'gptbot', 'claudebot', 'perplexitybot', 'headlesschrome',
+    'phantomjs', 'python-requests', 'curl/', 'wget', 'scrapy'
+  ];
+
+  // Visiting /new?dev=1 once marks this device; /new?dev=0 unmarks it.
+  // Called before the session starts so the flag is already set when
+  // page_load is written.
+  function applyDemoDevFlagFromUrl() {
+    try {
+      const params = new URLSearchParams(window.location.search || '');
+      if (!params.has('dev')) return;
+      if (params.get('dev') === '0') localStorage.removeItem(DEMO_DEV_FLAG_KEY);
+      else localStorage.setItem(DEMO_DEV_FLAG_KEY, '1');
+    } catch (e) { /* localStorage may be unavailable; flag simply won't stick */ }
+  }
+
+  function isDemoDevDevice() {
+    try {
+      return localStorage.getItem(DEMO_DEV_FLAG_KEY) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // A bucket, not the raw user-agent string. The raw string is long, and
+  // storing it alongside behavioural data edges towards a device
+  // fingerprint — which is exactly what was rejected when this was scoped.
+  // A bucket answers the only question being asked: is this a bot, and if
+  // not, roughly what kind of device.
+  function coarseUserAgent() {
+    try {
+      const ua = (navigator.userAgent || '').toLowerCase();
+      // Set by Selenium, Puppeteer, Playwright and similar. Honest
+      // automation announces itself here.
+      if (navigator.webdriver === true) return 'bot:webdriver';
+      for (let i = 0; i < DEMO_BOT_SIGNATURES.length; i++) {
+        if (ua.indexOf(DEMO_BOT_SIGNATURES[i]) !== -1) {
+          return ('bot:' + DEMO_BOT_SIGNATURES[i].replace('/', '')).slice(0, 24);
+        }
+      }
+      if (/\bbot\b|crawler|spider|crawling|preview/.test(ua)) return 'bot:other';
+      if (ua.indexOf('android') !== -1) return 'android';
+      if (/iphone|ipad|ipod/.test(ua)) return 'ios';
+      if (!ua) return 'unknown';
+      return 'desktop';
+    } catch (e) {
+      return 'unknown';
+    }
+  }
+
+  // Where the visit came from. 'direct' covers a typed URL, a bookmark, an
+  // app-to-browser handoff, or a referrer the browser chose to withhold —
+  // those are genuinely indistinguishable from the page's point of view.
+  // Host and path only; the query string is dropped, since it can carry
+  // personal data from the referring site.
+  function referrerLabel() {
+    try {
+      const raw = document.referrer || '';
+      if (!raw) return 'direct';
+      const u = new URL(raw);
+      return (u.hostname + (u.pathname === '/' ? '' : u.pathname)).slice(0, 80);
+    } catch (e) {
+      return 'unknown';
+    }
+  }
+
+  // utm_source from the landing URL — the proper attribution signal, since
+  // Rob controls the ad's destination URL and can tag each campaign.
+  function utmSourceLabel() {
+    try {
+      const v = new URLSearchParams(window.location.search || '').get('utm_source');
+      return v ? v.slice(0, 24) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Everything worth knowing about where this visit came from, gathered
+  // once and attached to page_load only — it can't change mid-session.
+  function demoVisitContext() {
+    const ctx = { ref: referrerLabel(), ua: coarseUserAgent() };
+    const utm = utmSourceLabel();
+    if (utm) ctx.utm = utm;
+    return ctx;
   }
 
   // As recordDemoEvent(), but guaranteed to log a given key at most once per
