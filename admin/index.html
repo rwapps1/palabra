@@ -1307,7 +1307,9 @@
   function sourceLabel(s) {
     if (s.dev) return 'your device';
     if (s.isBot) return s.ua.slice(4) + ' (bot)';
-    if (s.utm) return 'ad: ' + s.utm;
+    if (s.utm) return 'ad: ' + s.utm + (s.ua === 'fb-app' ? ' (in FB app)' : s.ua === 'ig-app' ? ' (in IG app)' : '');
+    if (s.ua === 'fb-app') return 'Facebook app';
+    if (s.ua === 'ig-app') return 'Instagram app';
     if (s.unknownSource) return 'source unknown';
     if (s.ref && s.ref !== 'direct' && s.ref !== 'unknown') return 'via ' + s.ref;
     return 'direct';
@@ -1388,7 +1390,17 @@
         });
 
         const last = events[events.length - 1];
+        // "Stayed 5s+" — see dwell_5s in demo-telemetry.js. For a session
+        // that never got past the landing this is the ONLY thing that
+        // distinguishes a person reading the intro card from a prefetch or
+        // an accidental ad tap.
+        const dwelled = events.some(ev => ev.key === 'dwell_5s');
+        // Anything beyond page_load (dwell doesn't count — it's passive).
+        const interacted = events.some(ev =>
+          ev.key !== 'page_load' && ev.key !== 'dwell_5s');
         return {
+          dwelled: dwelled,
+          interacted: interacted,
           ref: ref, ua: ua, utm: utm, dev: dev,
           isBot: !!(ua && ua.indexOf('bot:') === 0),
           // Sessions recorded before 2026-08-27 carry no context at all.
@@ -1544,7 +1556,7 @@
           <div class="sess-meta">
             <span class="reached">${escapeHtml(s.reachedLabel)}</span>
             <span>·</span>
-            <span>${shortDuration(s.durationMs)}</span>
+            <span>${sessionDurationLabel(s)}</span>
             <span>·</span>
             <span class="sess-src${s.isBot || s.dev ? ' muted-src' : ''}">${escapeHtml(sourceLabel(s))}</span>
           </div>
@@ -1556,7 +1568,9 @@
   function renderFunnelTimeline(s) {
     const items = s.events.map((ev) => {
       const stepId = stepIdForEvent(ev);
-      const label = stepId ? FUNNEL_STEPS[FUNNEL_STEP_INDEX[stepId]].label : ev.key;
+      const label = stepId
+        ? FUNNEL_STEPS[FUNNEL_STEP_INDEX[stepId]].label
+        : (ev.key === 'dwell_5s' ? 'Still on the page after 5s' : ev.key);
       const bits = [];
       if (ev.format) bits.push(escapeHtml(ev.format));
       if (typeof ev.correct === 'boolean') bits.push(ev.correct ? 'correct' : 'wrong');
@@ -1643,6 +1657,21 @@
       btn.textContent = 'Delete all funnel data';
     }
   });
+
+  // What to show in the duration slot.
+  //
+  // durationMs is the timestamp of the LAST recorded event, which is only a
+  // meaningful "how long were they here" for a session that did something.
+  // For a session with page_load and nothing else it's just how long the
+  // page took to fire its first event — a few milliseconds — and showing
+  // "3ms" there reads as "they left instantly", which is not something the
+  // data actually knows. That misreading sent a real investigation down the
+  // wrong path on 2026-08-28, so the honest labels are used instead.
+  function sessionDurationLabel(s) {
+    if (s.interacted) return shortDuration(s.durationMs);
+    if (s.dwelled) return 'stayed 5s+, no tap';
+    return 'no interaction';
+  }
 
   // "3m 12s" / "48s" / "1.2s" — compact enough for a table cell, precise
   // enough that a two-second gap and a two-minute one look different.
