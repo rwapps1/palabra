@@ -428,8 +428,8 @@
           </div>
           <div class="card stream-hero hub-hero-pulse">
             <div class="format-row"><span class="fchip">🔤</span><span class="fchip">🔊</span><span class="fchip">✎</span></div>
-            <h2>Your Learning Stream</h2>
-            <p>Mixed questions — choose, listen, or type. Learn the words you need most, one after another.</p>
+            <h2>Try 8 questions</h2>
+            <p>About a minute, no account needed. Finish to see your progress and what's inside.</p>
             <button id="demo-start-btn" class="btn-primary hub-start-btn">
               <span class="hub-play-chip">▶</span>Start Stream
             </button>
