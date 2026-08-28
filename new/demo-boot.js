@@ -1,9 +1,12 @@
 // /new landing-page demo — boot script.
 //
 // Loads last, after config.js/utils.js/audio.js/progress-xp.js/
-// achievements.js/word-selection.js/game-quiz.js/render-quiz.js/
-// render-hub.js/render-dispatch.js (all reused completely unmodified —
-// see index.html's own comments for why each other file was left out).
+// achievements.js/word-selection.js/conjugation-engine.js/game-quiz.js/
+// game-timeattack.js/game-memory.js/game-conjugate.js/render-quiz.js/
+// render-hub.js/render-timeattack.js/render-memory.js/render-conjugate.js/
+// render-progress.js/render-dispatch.js/navigation.js (all reused
+// completely unmodified — see index.html's own comments for why each
+// other file was left out).
 //
 // This file supplies its own throwaway `state` object rather than loading
 // the real state.js, because state.js's progress field comes from
@@ -23,7 +26,25 @@
 // round after these fixed 8 questions instead of Stream's normal
 // 20-question checkpoint/infinite-topup behavior), and render() (wrapped,
 // not replaced — adds the demo-only "already have an account" escape
-// hatch, the results-screen single CTA, and the hub click-gate).
+// hatch and the results-screen single CTA).
+//
+// 2026-08-28 (read-only "explore the app" layer): previously every single
+// tap anywhere on the hub screen redirected straight to signup — nothing
+// beyond the initial 8-question round was ever actually visible. Agreed
+// with Rob: a demo visitor should now be free to browse the mode picker,
+// Time Attack/Memory Match setup, My Progress, and Achievements, and only
+// hit the signup wall the moment they'd actually start playing something
+// (Settings, Continue/Start Stream, any mode's Start button) or tap
+// something this demo's hardcoded word list has nothing real to show for
+// (the Sentences and Conjugate tiles, and any individual Categories
+// entry — see the click-gate at the bottom for the full reasoning).
+// navigation.js is now loaded (previously it wasn't — this page had NO
+// back-button history protection at all, for any screen, which is
+// exactly the "hole" Rob suspected) so hardware/gesture back now works
+// through every one of these newly-browsable screens the same proven way
+// it already works in the real app, right down to "back on the hub
+// closes the app" — no demo-specific back-button code needed anywhere in
+// this file; it all comes from loading the real, unmodified navigation.js.
 
   // ---- Word pool ----
   // The 8 curated target words plus filler so getDistractors() has real
@@ -66,17 +87,26 @@
     { es: 'familia', en: 'family', format: 'truefalse', direction: 'es-en' },
   ];
 
+  // 2026-08-28: now keeping .sentence/.sentenceTranslation (previously
+  // stripped down to just es/en). Needed so sentencePairs() finds the one
+  // real sentence this demo already has (hospital) — without it the
+  // Sentences tile renders `disabled` (see render-hub.js's noSentenceWords
+  // check) and a disabled button never fires a click event at all, which
+  // would make it impossible for the click-gate below to ever redirect a
+  // tap on it to signup, as agreed with Rob. This is not new content —
+  // just no longer discarding a field that was already there.
   const DEMO_WORD_POOL = DEMO_QUESTIONS
-    .map(q => ({ es: q.es, en: q.en }))
+    .map(q => ({ es: q.es, en: q.en, sentence: q.sentence, sentenceTranslation: q.sentenceTranslation }))
     .concat(DEMO_FILLER_WORDS);
 
   // ---- Throwaway state object ----
   // Same shape as the real state.js, minus loadProgress() (see header
-  // comment) and minus every field only ever read by modes this page
-  // never shows (Time Attack / Memory / Conjugate / category loading) —
-  // harmless either way since reading an absent field just returns
-  // undefined in JS, but there's no reason to carry fields nothing here
-  // will ever look at.
+  // comment). 2026-08-28: now carries the full shape, including the
+  // Time Attack / Memory Match / Conjugate / category-loading fields that
+  // used to be left out here — those modes' setup screens (and, for
+  // Conjugate, quitConjugateRound via navigation.js) are now reachable
+  // from this page's mode picker, so those fields need to actually exist
+  // rather than read back undefined.
   const state = {
     screen: 'demo-intro',
     user: null,
@@ -132,7 +162,54 @@
     scrambleSessionStreak: 0,
     activeCategory: null,
     categoryPairs: [],
+    categoryLoading: false,
+    categoryError: '',
     achievementGroup: null,
+    quitConfirmMode: null,
+    // ---- Added 2026-08-28 for the read-only "explore the app" layer ----
+    // Time Attack / Memory Match / Conjugate setup screens (and, for
+    // Conjugate, navigation.js's BACK_QUIT_HANDLERS referencing
+    // quitConjugateRound at parse time) now get loaded on this page — see
+    // index.html's comment — so these fields need to exist with the exact
+    // same defaults state.js gives them, copied straight from there.
+    taActive: false,
+    taScore: 0,
+    taStreak: 0,
+    taTimeLeft: 60,
+    taEndTime: 0,
+    taTimerHandle: null,
+    taFlashTimer: null,
+    taCurrentQuestion: null,
+    taCurrentOptions: null,
+    taInput: '',
+    taIsNewBest: false,
+    memoryTiles: [],
+    memoryFlipped: [],
+    memoryMatchedCount: 0,
+    memoryTotalPairs: 0,
+    memoryMoves: 0,
+    memoryBusy: false,
+    memoryStartTime: 0,
+    memorySeconds: 0,
+    memoryTimerHandle: null,
+    memoryFlipTimer: null,
+    memoryIsNewBest: false,
+    memoryJustFlipped: [],
+    memoryReacting: [],
+    verbPairs: [],
+    verbsLoaded: false,
+    verbsLoading: false,
+    verbsError: '',
+    conjugateQuestions: [],
+    conjugateIndex: 0,
+    conjugateResults: [],
+    conjugateInput: '',
+    conjugateChecked: false,
+    conjugateWasCorrect: false,
+    conjugateCurrentOptions: null,
+    conjugateSelectedOption: null,
+    conjugateNewBestStreak: false,
+    conjugateLastWasTypo: false,
     // Not part of the real app's state shape — checked only by this
     // file's own render() wrapper and click-gate below.
     isDemoMode: true,
@@ -151,28 +228,19 @@
   // baselines it at the true starting point (0) instead.
   ensureTodaySnapshot();
 
-  // ---- Stubs for the two cross-file calls this page's included files
-  // still make, whose real implementations live in files deliberately not
-  // loaded here (auth.js). Both are no-ops-with-a-guard in the real app
-  // too when there's no signed-in user, so functionally this changes
-  // nothing — it just avoids a ReferenceError since auth.js itself isn't
-  // present to define them.
+  // ---- Stub for the one remaining cross-file call this page's included
+  // files still make, whose real implementation lives in a file
+  // deliberately not loaded here (auth.js — no account exists yet). It's
+  // a no-op-with-a-guard in the real app too when there's no signed-in
+  // user, so functionally this changes nothing — it just avoids a
+  // ReferenceError since auth.js itself isn't present to define it.
+  //
+  // 2026-08-28: syncBackHistory() and runAsTimerAdvance() used to be
+  // stubbed here as well, back when navigation.js wasn't loaded on this
+  // page at all (see index.html's comment for why that changed — this
+  // page previously had no back-button history protection whatsoever).
+  // Both are now the real, unmodified functions navigation.js defines.
   function pingActivity() {}
-  function syncBackHistory() {}
-
-  // navigation.js is deliberately not loaded on this page (see this
-  // file's own header comment) — there's no real back-button history to
-  // manage here. But game-quiz.js's showCelebration()/
-  // advanceFromCelebration() (unmodified, reused as-is) both call
-  // runAsTimerAdvance() directly, expecting navigation.js to have
-  // defined it. Without this stub, the very first call throws a
-  // ReferenceError the moment the round ends (tapping "Next word" on the
-  // last question) — silently, since nothing here was catching it —
-  // which froze the round-end flow entirely before state.screen ever
-  // changed to 'celebrate'. This just calls straight through, which is
-  // all that's needed since there's no real history state here for it
-  // to manage.
-  function runAsTimerAdvance(fn) { fn(); }
 
   // ---- Funnel telemetry ----
   // Starts the session record (see js/demo-telemetry.js) and logs the very
@@ -451,18 +519,19 @@
   // ---- render() wrapper ----
   // render-dispatch.js's render() itself is left completely untouched;
   // this wraps it rather than editing it, so every screen it already
-  // knows how to draw (quiz/celebrate/result/start) keeps working exactly
-  // as in the real app. One extra pseudo-screen ('demo-intro') is handled
-  // entirely here, before ever reaching the real dispatcher — it doesn't
-  // know that screen name and would silently render nothing for it.
-  // Beyond that, three small, purely additive things happen after the
-  // real render() returns, all gated on isDemoMode:
+  // knows how to draw (quiz/celebrate/result/start/game-modes/my-progress/
+  // achievements/etc.) keeps working exactly as in the real app. One extra
+  // pseudo-screen ('demo-intro') is handled entirely here, before ever
+  // reaching the real dispatcher — it doesn't know that screen name and
+  // would silently render nothing for it. Beyond that, two small, purely
+  // additive things happen after the real render() returns, both gated on
+  // isDemoMode:
   //   1. quiz screen — an "Already have an account?" link under Quit.
   //   2. result screen — replace Play again/Change settings with a single
   //      "See your progress" button (agreed: only one path forward here).
-  //   3. start (hub) screen — every click redirects to signup instead of
-  //      performing its real action (see the capture-phase listener
-  //      below, which handles this rather than this wrapper).
+  // Which taps lead to signup vs. stay browsable (mode picker, category
+  // list, My Progress, Achievements, etc.) is handled entirely by the
+  // click-gate further below, not by this wrapper.
   const realRender = render;
   render = function () {
     if (state.isDemoMode && state.screen === 'demo-intro') {
@@ -568,24 +637,102 @@
     }
   };
 
-  // ---- Hub click-gate ----
-  // A single capture-phase listener on document, rather than editing
-  // render-hub.js's own click handlers one by one. Capture-phase
-  // listeners run before the bubble-phase listeners renderStart() attaches
-  // directly to each tile/button, so stopImmediatePropagation() here
-  // reliably stops the real handler (start stream, open settings, view
-  // achievements, etc.) from ever firing — every tap on the mocked hub
-  // leads to signup, exactly as agreed, with zero changes to render-hub.js
-  // itself.
+  // ---- "Disabled in demo mode" toast ----
+  // Daily Double claims a real bonus round the same way Start does, so by
+  // rights it should lead to signup too — but Rob asked for a plain,
+  // non-navigating notice instead, since a first-ever visitor being told
+  // to make an account just to see a returning-user bonus feature reads
+  // oddly. Reuses the exact same toast markup/CSS classes as
+  // achievements.js's showComingSoonToast()/showDailyGoalToast()
+  // (.achievement-toast/.toast-icon/.toast-title/.toast-name, defined in
+  // progress.css, already loaded) rather than introducing a new visual
+  // style just for this one case.
+  function showDemoDisabledToast() {
+    const toast = document.createElement('div');
+    toast.className = 'achievement-toast';
+    toast.innerHTML = `<div class="toast-icon">🎁</div><div><div class="toast-title">Daily Double</div><div class="toast-name">Disabled in demo mode</div></div>`;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => { toast.classList.add('show'); });
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 400);
+    }, 2000);
+  }
+
+  // ---- Read-only browse / signup click-gate ----
+  // Replaces the old blanket "any click on the hub redirects to signup"
+  // gate. Browsing is now allowed through render-hub.js's/render-quiz.js's/
+  // etc.'s own real, completely unmodified click handlers for everything
+  // EXCEPT the specific actions below, agreed with Rob:
+  //
+  //   - #menu-btn        — hub Settings (⋯)
+  //   - #start-stream-btn — hub Continue/Start Stream
+  //   - #start-btn        — every mode's own Start button. Reused
+  //                         verbatim by Quiz, Time Attack, Memory Match,
+  //                         and category-quiz setup screens alike, so
+  //                         gating this one id covers all of them
+  //                         regardless of how deep in the menu tree it's
+  //                         tapped from.
+  //   - [data-tile="sentences"] — the Sentences tile on the mode picker.
+  //                         Gated at the TILE itself, before ever opening
+  //                         sentences-setup: this demo's hardcoded word
+  //                         list has only one real sentence, so the setup
+  //                         screen would have nothing meaningful to show.
+  //   - [data-tile="verbs"]     — the Conjugate tile, same reasoning:
+  //                         none of this demo's words carry the
+  //                         "conjugation" category tag conjugate-setup
+  //                         needs, so it would only ever show a "No verbs
+  //                         found" error. Gated at the tile itself rather
+  //                         than shown broken, matching the Sentences
+  //                         treatment above — flagging this as an
+  //                         inference from Rob's Sentences/Categories
+  //                         answers, not something explicitly asked for,
+  //                         in case he'd rather it behaved differently.
+  //   - [data-cat]        — any individual category on the Categories
+  //                         list. The list ITSELF (CATEGORIES, from
+  //                         config.js) stays freely browsable — it's pure
+  //                         static config, no word data involved — but
+  //                         selecting one would hit the exact same "no
+  //                         words tagged" problem as Conjugate, so it's
+  //                         gated on selection rather than opening
+  //                         category-setup to show an empty state.
+  //
+  // Daily Double (#dd-row) is handled separately above — a toast, not a
+  // redirect, per Rob's decision.
+  const SIGNUP_GATE_SELECTOR = '#menu-btn, #start-stream-btn, #start-btn, [data-tile="sentences"], [data-tile="verbs"], [data-cat]';
+
   document.addEventListener('click', function (e) {
-    if (!state.isDemoMode || state.screen !== 'start') return;
+    if (!state.isDemoMode) return;
     const app = document.getElementById('app');
     if (!app || !app.contains(e.target)) return;
+
+    // Daily Double: notice, not a redirect. Checked first since #dd-row
+    // would otherwise fall through to the "let it through" branch below
+    // (it isn't in SIGNUP_GATE_SELECTOR) and run the real
+    // handleDailyDoublePlay() handler, actually starting a round.
+    if (e.target.closest('#dd-row')) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (state.screen === 'start') recordDemoEvent('hub_tap', { tile: demoTileLabel(e.target) });
+      showDemoDisabledToast();
+      return;
+    }
+
+    const gated = e.target.closest(SIGNUP_GATE_SELECTOR);
+    if (!gated) {
+      // Not a gated action — let the real handler run (browsing). Still
+      // worth recording which hub tile someone tapped, browsing or not:
+      // that's the funnel signal hub_tap exists to capture, and it's
+      // arguably more useful now paired with how far they get afterward.
+      if (state.screen === 'start') recordDemoEvent('hub_tap', { tile: demoTileLabel(e.target) });
+      return;
+    }
+
     e.preventDefault();
     e.stopImmediatePropagation();
     // Logged before goToSignupFromDemo()'s own guard can swallow a
     // double-tap, so the first tap's tile is always the one recorded.
-    recordDemoEvent('hub_tap', { tile: demoTileLabel(e.target) });
+    if (state.screen === 'start') recordDemoEvent('hub_tap', { tile: demoTileLabel(e.target) });
     goToSignupFromDemo();
   }, true);
 

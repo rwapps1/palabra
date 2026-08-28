@@ -47,11 +47,28 @@
 
 <!-- Reused, completely unmodified from the main app. Deliberately NOT
      loaded: auth.js, cloud-sync.js, firebase-auth.js (no account exists
-     yet), data-loading.js (word pool is hardcoded below, never fetched),
-     navigation.js, app-boot.js (replaced by demo-boot.js), and the three
-     other game engines (timeattack/memory/conjugate) — this page only
-     ever shows the Stream-style quiz screen, the celebration screen, and
-     the hub. -->
+     yet), data-loading.js (word pool is hardcoded below, never fetched,
+     and the read-only browse layer below never calls into any of the
+     data-loading-dependent functions that would otherwise need it),
+     render-auth.js (signup is a real page navigation to ../index.html,
+     never rendered in-page here), app-boot.js (replaced by demo-boot.js).
+
+     2026-08-28 (read-only "explore the app" layer): now ALSO loading
+     conjugation-engine.js, game-timeattack.js, game-memory.js,
+     game-conjugate.js, render-timeattack.js, render-memory.js,
+     render-conjugate.js, render-progress.js, and navigation.js — all
+     completely unmodified from the main app, same files it uses. Needed
+     so a demo visitor can freely browse Time Attack/Memory Match setup,
+     My Progress, and Achievements, and so hardware/gesture back-button
+     history works the same proven way it does in the real app (see
+     navigation.js's own header comment — it must load after all four
+     game-*.js files, which is why it's placed last below, right before
+     demo-boot.js). Conjugate's own setup/play screens are loaded for
+     parity and because navigation.js's BACK_QUIT_HANDLERS references
+     quitConjugateRound by name at parse time, but demo-boot.js's click-
+     gate never actually lets a demo visitor reach conjugate-setup (see
+     its own comment) — this demo's hardcoded word list has no
+     conjugation-tagged data for that screen to show. -->
 <script src="../js/config.js"></script>
 <!-- Funnel telemetry — shared with the real app, which loads the same file
      to record the last two events (signup page reached, account created)
@@ -63,15 +80,27 @@
 <script src="../js/progress-xp.js"></script>
 <script src="../js/achievements.js"></script>
 <script src="../js/word-selection.js"></script>
+<script src="../js/conjugation-engine.js"></script>
 <script src="../js/game-quiz.js"></script>
+<script src="../js/game-timeattack.js"></script>
+<script src="../js/game-memory.js"></script>
+<script src="../js/game-conjugate.js"></script>
 <script src="../js/views/render-quiz.js"></script>
 <script src="../js/views/render-hub.js"></script>
+<script src="../js/views/render-timeattack.js"></script>
+<script src="../js/views/render-memory.js"></script>
+<script src="../js/views/render-conjugate.js"></script>
+<script src="../js/views/render-progress.js"></script>
 <script src="../js/views/render-dispatch.js"></script>
+<!-- MUST load after all four game-*.js files above (see its own header
+     comment) — back-button/history handling, completely unmodified from
+     the main app. -->
+<script src="../js/navigation.js"></script>
 
 <!-- Demo-only: builds the throwaway state object, the fixed 8-question
      round, small safe overrides (saveProgress/nextQuestion), the funnel
-     telemetry taps, and the signup handoff. Loads last — see its own top
-     comment. -->
+     telemetry taps, the signup handoff, and the read-only-browse click
+     gate. Loads last — see its own top comment. -->
 <script src="demo-boot.js"></script>
 </body>
 </html>
