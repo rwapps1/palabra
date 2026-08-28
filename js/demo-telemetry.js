@@ -68,6 +68,11 @@
   // actually stopped than an earlier one that's already implied by it.
   const DEMO_TELEMETRY_MAX_PENDING = 30;
 
+  // How long a single write may hang before it's abandoned and released for
+  // retry. Generous enough for a slow connection, short enough that a
+  // stalled request doesn't outlive the page.
+  const DEMO_SEND_TIMEOUT_MS = 12000;
+
   // Used when sessionStorage is unavailable (private browsing, storage
   // disabled, some embedded webviews). The session then can't survive the
   // navigation to the real signup page, so that visitor's conversion won't
@@ -297,12 +302,29 @@
         '?documentId=' + encodeURIComponent(demoTelemetryDocId(ev)) +
         '&key=' + encodeURIComponent(DEMO_TELEMETRY_API_KEY);
 
+      // A fetch on a flaky mobile connection can hang indefinitely rather
+      // than reject. Without a timeout the in-flight flag below would stay
+      // set for the life of the page, and that event would never be
+      // retried — silently lost even though it sits in the pending queue.
+      // This is the leading suspect for the missing answer events seen in
+      // session e7xs on 2026-08-27 (unconfirmed — see the handover).
+      let abort = null;
+      let timer = null;
+      try {
+        if (typeof AbortController === 'function') {
+          abort = new AbortController();
+          timer = setTimeout(function () { try { abort.abort(); } catch (e) {} }, DEMO_SEND_TIMEOUT_MS);
+        }
+      } catch (e) { /* no AbortController: fall back to no timeout */ }
+
       fetch(url, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify({ fields: demoTelemetryFields(ev) }),
+        signal: abort ? abort.signal : undefined,
       })
         .then((res) => {
+          if (timer) clearTimeout(timer);
           demoTelemetryInFlight[ev.seq] = false;
           // 409 means this exact document already exists — a duplicate
           // send of an event that did land. Same outcome as a fresh 200,
@@ -310,7 +332,10 @@
           if (res && (res.ok || res.status === 409)) clearDemoPending(ev.seq);
         })
         .catch(() => {
-          // Left in pending; a later event's flush will retry it.
+          // Left in pending; a later event's flush will retry it. An
+          // aborted request lands here too, which is the point — the seq
+          // is released so the next flush can try again.
+          if (timer) clearTimeout(timer);
           demoTelemetryInFlight[ev.seq] = false;
         });
     } catch (e) {
@@ -353,6 +378,8 @@
       if (typeof document === 'undefined' || document.visibilityState === 'visible') {
         startDemoTelemetrySession();
         recordDemoEvent('page_load', demoVisitContext());
+        scheduleDemoDwellEvent();
+        installDemoTelemetryFlushHooks();
         return;
       }
       let started = false;
@@ -363,6 +390,8 @@
           document.removeEventListener('visibilitychange', onVisible);
           startDemoTelemetrySession();
           recordDemoEvent('page_load', demoVisitContext());
+          scheduleDemoDwellEvent();
+          installDemoTelemetryFlushHooks();
         } catch (e) { /* ignore */ }
       };
       document.addEventListener('visibilitychange', onVisible);
@@ -435,6 +464,14 @@
         }
       }
       if (/\bbot\b|crawler|spider|crawling|preview/.test(ua)) return 'bot:other';
+      // Meta's in-app browsers announce themselves: FBAN/FBAV on Facebook,
+      // "Instagram" on Instagram. A real person tapping an ad inside the
+      // Facebook app arrives here. A prefetch or a verification crawler
+      // following the destination URL generally does not, so this is the
+      // cleanest available split between "human who tapped the ad" and
+      // "something automated that loaded the same URL".
+      if (/fban|fbav|fb_iab|fbios/.test(ua)) return 'fb-app';
+      if (ua.indexOf('instagram') !== -1) return 'ig-app';
       if (ua.indexOf('android') !== -1) return 'android';
       if (/iphone|ipad|ipod/.test(ua)) return 'ios';
       if (!ua) return 'unknown';
@@ -471,6 +508,32 @@
     }
   }
 
+  // How long the page must stay open and visible before we believe a human
+  // is actually looking at it. Nothing automated — prefetch, crawler,
+  // discarded-tab reload — sticks around this long. An accidental thumb-tap
+  // on an ad usually doesn't either.
+  const DEMO_DWELL_MS = 5000;
+
+  // Fires once, five seconds in, if the page is still visible. This is the
+  // only honest bounce signal available: a session with page_load and
+  // nothing else could be someone who left instantly OR someone who read
+  // the intro card for a minute and then closed the tab, and those are
+  // completely different problems. dwell_5s separates them.
+  //
+  // Deliberately NOT part of the funnel ladder — it's a parallel signal
+  // about attention, not a step anyone progresses through, so the drop-off
+  // maths ignores it entirely.
+  function scheduleDemoDwellEvent() {
+    try {
+      setTimeout(function () {
+        try {
+          if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+          recordDemoEvent('dwell_5s');
+        } catch (e) { /* ignore */ }
+      }, DEMO_DWELL_MS);
+    } catch (e) { /* ignore */ }
+  }
+
   // Everything worth knowing about where this visit came from, gathered
   // once and attached to page_load only — it can't change mid-session.
   function demoVisitContext() {
@@ -493,6 +556,26 @@
       s.logged[key] = true;
       demoTelemetryWriteState(s);
       recordDemoEvent(key, extra);
+    } catch (e) { /* ignore */ }
+  }
+
+  // Extra retry opportunities. Events are normally flushed when the next
+  // one is recorded, which means the LAST event of a session has no
+  // follow-up to trigger its retry — if its write fails, it's stranded
+  // until the person happens to reach the signup page. Hooking pagehide
+  // and the hidden transition gives every session at least one more
+  // attempt at the moment people actually leave.
+  function installDemoTelemetryFlushHooks() {
+    try {
+      if (typeof document === 'undefined') return;
+      document.addEventListener('visibilitychange', function () {
+        try {
+          if (document.visibilityState === 'hidden') flushDemoTelemetry();
+        } catch (e) { /* ignore */ }
+      });
+      window.addEventListener('pagehide', function () {
+        try { flushDemoTelemetry(); } catch (e) { /* ignore */ }
+      });
     } catch (e) { /* ignore */ }
   }
 
