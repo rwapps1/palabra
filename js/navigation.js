@@ -73,7 +73,11 @@
   function ownNavigation(steps) {
     ownNavigationPending = true;
     ignoreNextPopstate = true;
+    let settled = false;
     const settle = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(safetyTimer);
       window.removeEventListener('popstate', settle);
       ownNavigationPending = false;
       if (queuedPushAfterSettle) {
@@ -87,6 +91,20 @@
     // listener still needs to observe the same event so ownNavigationPending
     // clears at the real moment the navigation lands, not a guessed delay.
     window.addEventListener('popstate', settle);
+    // Safety net, not the primary fix (see syncBackHistory()'s comment on
+    // the fix that keeps navDepth an accurate count of real entries - that's
+    // what actually keeps this call in-range in normal use). This backstops
+    // the case where history.go()/forward() is asked for more real steps
+    // than exist: per spec an out-of-range delta does nothing at all - no
+    // navigation, no popstate, ever - which without this would leave
+    // ownNavigationPending stuck true for the rest of the session. Every
+    // later real screen change would then see that flag, defer its own
+    // push/replace into queuedPushAfterSettle (a single slot, not a queue -
+    // each new deferral silently overwrites the last), and never actually
+    // apply it, quietly breaking hardware-back support for everything after.
+    // A real popstate always fires on (essentially) the same tick, so 500ms
+    // is generous headroom with no risk of racing a genuine one.
+    const safetyTimer = setTimeout(settle, 500);
     if (steps === 1) history.forward(); else history.go(steps);
   }
 
@@ -178,13 +196,39 @@
       queuedPushAfterSettle = true;
       return;
     }
-    navDepth += 1;
     if (timerAdvanceDepth > 0) {
       // No trusted user gesture behind this transition - see
       // runAsTimerAdvance() above. replaceState() instead of pushState() so
       // there's no untrusted entry for the browser to silently skip.
+      //
+      // Deliberately NOT incrementing navDepth here (an earlier version of
+      // this function did, unconditionally, before every push/replace).
+      // replaceState() overwrites the one real entry that's already
+      // current - it doesn't create a new one - so navDepth ("how many of
+      // our own history entries currently exist beyond the floor") has to
+      // stay exactly what it already was. Incrementing it anyway made
+      // navDepth silently drift ahead of the real, addressable stack every
+      // time a timer-driven transition ran - which is routine, since every
+      // round end passes through Celebrate then Result this way. Hardware
+      // back stayed safe throughout that drift because the popstate handler
+      // below re-derives navDepth from the landed entry's own stored state
+      // on every real back press rather than trusting this running counter -
+      // but the floor-collapse jump a few lines up trusts navDepth directly,
+      // and asking history.go() for more real steps back than exist either
+      // overshoots past this app's own first entry into whatever the
+      // browser had open before it (silently exiting the app) or, if
+      // nothing, silently no-ops with no popstate at all - which stranded
+      // ignoreNextPopstate true and swallowed the very next genuine back
+      // press with no visible effect. Confirmed live 2026-08 the moment a
+      // completed round is left via its result screen's own back arrow
+      // (`#back-btn`, wired to leaveResults(goHome) - see
+      // render-quiz.js/game-quiz.js) rather than Play again/Change settings -
+      // every mode's result screen has one, so this was reachable well
+      // beyond just the one place it was actually caught (the /new demo's
+      // own "See your progress" button routes through the same call).
       history.replaceState({ navDepth }, '');
     } else {
+      navDepth += 1;
       history.pushState({ navDepth }, '');
     }
   }
