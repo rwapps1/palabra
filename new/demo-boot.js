@@ -413,8 +413,8 @@
   // while it was showing DID correctly return to the previous screen (or,
   // from the hub, correctly exited — see navigation.js's own comments) via
   // navigation.js's generic click-#back-btn fallback, but the redirect
-  // timer kept running regardless, uncancelled — so ~1.6s later the app
-  // navigated to signup anyway, out from under whatever the person had
+  // timer kept running regardless, uncancelled — so a few seconds later the
+  // app navigated to signup anyway, out from under whatever the person had
   // backed out to look at. Worse, opened from the hub floor (navDepth 0,
   // no real entry to land back on at all) there was nothing for a back
   // press to do BUT exit for real. Fixed by making this its own real
@@ -485,10 +485,20 @@
     // shell classes (dd-modal-backdrop/dd-card/dd-ring-*, loaded via
     // daily-double.css) for the dimmed-background/centered-card look,
     // since a corner achievement-style toast read as a reward rather
-    // than what this actually is: a requirement before continuing. Only
-    // the shell and ring are reused — the eyebrow/headline/subline text
-    // and icon are this modal's own, not Daily Double's multiplier
-    // content.
+    // than what this actually is: a requirement before continuing. The
+    // shell/ring/eyebrow/headline/subline are Daily Double's classes reused
+    // (not its content); the benefits list and countdown bar below are this
+    // modal's own (`.demo-signup-*`, styled in daily-double.css alongside
+    // the dd- rules it sits next to).
+    //
+    // 2026-08-28: restored the benefits copy and 6-second countdown bar
+    // that had been agreed earlier and were missing from the zip this
+    // session built from — Rob flagged the plain version as a regression,
+    // not a new request. Copy is his own remembered wording verbatim
+    // (1,100+ words / 6 modes / spaced repetition / free & no ads); he
+    // didn't have the original file to confirm exact phrasing beyond that,
+    // so this is a fresh rewrite of those four points, not a byte-for-byte
+    // restore — flag if the wording should be closer to the original.
     const modal = document.createElement('div');
     modal.className = 'dd-modal-backdrop';
     modal.innerHTML = `
@@ -501,6 +511,13 @@
         <div class="dd-eyebrow">Almost there</div>
         <h2 class="dd-headline">Create your account</h2>
         <p class="dd-subline">to save your progress</p>
+        <ul class="demo-signup-benefits">
+          <li><span class="demo-signup-check">✓</span>1,100+ Spanish words</li>
+          <li><span class="demo-signup-check">✓</span>6 game modes</li>
+          <li><span class="demo-signup-check">✓</span>Spaced repetition — practice what you actually need</li>
+          <li><span class="demo-signup-check">✓</span>Free, no ads</li>
+        </ul>
+        <div class="demo-signup-countdown"><div class="demo-signup-countdown-fill"></div></div>
       </div>
     `;
     document.body.appendChild(modal);
@@ -516,9 +533,12 @@
     backHook.addEventListener('click', cancelDemoSignup);
     modal.appendChild(backHook);
 
+    // 6000ms to match the countdown bar's own CSS animation duration below
+    // (.demo-signup-countdown-fill in daily-double.css) — keep the two in
+    // sync if either ever changes; nothing ties them together automatically.
     demoSignupTimer = setTimeout(() => {
       window.location.href = '../index.html?signup=1';
-    }, 1600);
+    }, 6000);
   }
 
   // Back-button path off the demo-signup screen: cancels the pending
