@@ -406,10 +406,35 @@
   // so the jump to signup doesn't feel abrupt, then sends the person to
   // the real app's signup tab. Read and cleared there, once — never
   // touched by signing in to an existing account.
-  let signupHandoffStarted = false;
+  //
+  // 2026-08-28 (back-button fix): this used to be a bare DOM overlay,
+  // appended straight to <body> with its own untracked setTimeout redirect
+  // — invisible to navigation.js entirely. Confirmed live: pressing back
+  // while it was showing DID correctly return to the previous screen (or,
+  // from the hub, correctly exited — see navigation.js's own comments) via
+  // navigation.js's generic click-#back-btn fallback, but the redirect
+  // timer kept running regardless, uncancelled — so ~1.6s later the app
+  // navigated to signup anyway, out from under whatever the person had
+  // backed out to look at. Worse, opened from the hub floor (navDepth 0,
+  // no real entry to land back on at all) there was nothing for a back
+  // press to do BUT exit for real. Fixed by making this its own real
+  // screen ('demo-signup') instead of a floating overlay: entering and
+  // leaving it goes through the exact same render()/syncBackHistory() path
+  // as every other screen, so it always gets a genuine history entry —
+  // even from the floor — and back always has somewhere real to land.
+  // 'demo-signup' isn't in any of navigation.js's own floor/swallow/quit
+  // sets, so hardware back on it falls through to that file's generic
+  // fallback (click whatever #back-btn it finds) completely unmodified —
+  // see renderDemoSignupModal()'s own comment for how that's pointed at
+  // cancelDemoSignup() instead of the screen underneath's own back button.
+  let signupHandoffStarted = false; // true only while this screen is showing / mid-redirect — reset on cancel so a later gated tap can show it again
+  let demoSignupPrevScreen = null;
+  let demoSignupTimer = null;
+
   function goToSignupFromDemo() {
-    // Guards against a double-tap on the hub (still possible during the
-    // toast's own delay below) stacking a second toast and redirect.
+    // Guards against a double-tap while this screen is already showing
+    // (still possible during the redirect's own delay) stacking a second
+    // history entry/timer.
     if (signupHandoffStarted) return;
     signupHandoffStarted = true;
 
@@ -431,6 +456,30 @@
       // normally on the other end, just without the carried-over demo
       // progress.
     }
+
+    demoSignupPrevScreen = state.screen;
+    state.screen = 'demo-signup';
+    render();
+  }
+
+  // Draws the modal itself. render-dispatch.js's real render() has no
+  // 'demo-signup' branch, so calling it (from the wrapper below) leaves
+  // #app's markup exactly as it was — the screen the modal was opened over
+  // stays visible underneath, exactly as intended.
+  function renderDemoSignupModal() {
+    if (document.querySelector('.dd-modal-backdrop')) return; // already showing
+
+    // navigation.js's hardware-back fallback does
+    // `document.getElementById('back-btn').click()` on whatever it finds —
+    // and the screen underneath's own #back-btn is still sitting in the
+    // (untouched) DOM right now. Renaming it out of the way so that lookup
+    // finds OUR hook below instead is what makes back cancel this screen
+    // and land exactly back where the tap came from, rather than clicking
+    // through to that screen's own parent. Nothing needs to put the id
+    // back afterward — cancelDemoSignup() re-renders the previous screen
+    // from scratch, which draws it a brand new #back-btn of its own.
+    const underlyingBack = document.getElementById('back-btn');
+    if (underlyingBack) underlyingBack.removeAttribute('id');
 
     // A centered modal, not a toast — reuses the Daily Double popup's own
     // shell classes (dd-modal-backdrop/dd-card/dd-ring-*, loaded via
@@ -456,9 +505,36 @@
     `;
     document.body.appendChild(modal);
 
-    setTimeout(() => {
+    // Invisible on purpose — this is a hook for navigation.js's generic
+    // back-button fallback to find and click, not a visible on-screen
+    // control (Rob's own modal design has no dismiss button; only the
+    // hardware/gesture back path was reported broken).
+    const backHook = document.createElement('button');
+    backHook.id = 'back-btn';
+    backHook.type = 'button';
+    backHook.style.display = 'none';
+    backHook.addEventListener('click', cancelDemoSignup);
+    modal.appendChild(backHook);
+
+    demoSignupTimer = setTimeout(() => {
       window.location.href = '../index.html?signup=1';
     }, 1600);
+  }
+
+  // Back-button path off the demo-signup screen: cancels the pending
+  // redirect, removes the modal, and returns exactly to the screen the tap
+  // came from — letting the person keep exploring instead of either being
+  // dumped at signup a moment later regardless, or (from the hub, where
+  // there'd otherwise be no real history entry at all to land back on)
+  // exiting the app outright.
+  function cancelDemoSignup() {
+    if (demoSignupTimer) { clearTimeout(demoSignupTimer); demoSignupTimer = null; }
+    document.querySelectorAll('.dd-modal-backdrop').forEach((m) => m.remove());
+    signupHandoffStarted = false;
+    const back = demoSignupPrevScreen || 'start';
+    demoSignupPrevScreen = null;
+    state.screen = back;
+    render();
   }
 
   // Sends someone straight to the real app, letting its own normal
@@ -520,12 +596,18 @@
   // render-dispatch.js's render() itself is left completely untouched;
   // this wraps it rather than editing it, so every screen it already
   // knows how to draw (quiz/celebrate/result/start/game-modes/my-progress/
-  // achievements/etc.) keeps working exactly as in the real app. One extra
-  // pseudo-screen ('demo-intro') is handled entirely here, before ever
-  // reaching the real dispatcher — it doesn't know that screen name and
-  // would silently render nothing for it. Beyond that, two small, purely
-  // additive things happen after the real render() returns, both gated on
-  // isDemoMode:
+  // achievements/etc.) keeps working exactly as in the real app. Two extra
+  // pseudo-screens are handled here, entirely outside the real dispatcher,
+  // which doesn't know either name and would silently render nothing for
+  // them:
+  //   - 'demo-intro', handled BEFORE realRender() runs at all (it draws a
+  //     whole different screen, not an addition to one of the real ones).
+  //   - 'demo-signup' (see goToSignupFromDemo()'s own comment), handled
+  //     AFTER realRender() — which does nothing for an unrecognized screen
+  //     name, deliberately, so #app is left showing whatever screen the
+  //     modal was opened over rather than being blanked or redrawn.
+  // Beyond that, two small, purely additive things happen after the real
+  // render() returns for an ordinary screen, both gated on isDemoMode:
   //   1. quiz screen — an "Already have an account?" link under Quit.
   //   2. result screen — replace Play again/Change settings with a single
   //      "See your progress" button (agreed: only one path forward here).
@@ -540,6 +622,11 @@
     }
     realRender();
     if (!state.isDemoMode) return;
+
+    if (state.screen === 'demo-signup') {
+      renderDemoSignupModal();
+      return;
+    }
 
     // ---- Telemetry taps ----
     // Run before the cosmetic DOM tweaks below so a thrown error in any of
