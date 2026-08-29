@@ -416,9 +416,12 @@
     width: 18px; height: 18px; accent-color: var(--violet); cursor: pointer;
   }
 
+  /* Sits BELOW the session list, deliberately: selecting means scrolling
+     down through the rows, so the delete control belongs where that scroll
+     ends rather than back at the top out of view. */
   .select-bar {
     display: flex; align-items: center; gap: 8px;
-    padding: 9px 12px; margin-bottom: 10px; border-radius: 12px;
+    padding: 9px 12px; margin-top: 10px; border-radius: 12px;
     background: rgba(139,124,246,0.13); border: 1px solid rgba(139,124,246,0.28);
   }
   .select-bar .sb-count { flex: 1; font-size: 12.5px; color: var(--cream); }
@@ -695,12 +698,12 @@
       <div class="panel fade-in">
         <div class="panel-title">Sessions</div>
         <div class="panel-sub">Newest first — tap one to follow it step by step</div>
+        <div id="funnelSessions"></div>
         <div id="funnelSelectBar" class="select-bar hidden">
           <span class="sb-count" id="funnelSelectCount">—</span>
           <button class="btn btn-ghost sb-btn" id="funnelSelectAllBtn" type="button">Select all</button>
           <button class="btn btn-ghost sb-btn sb-danger" id="funnelDeleteSelectedBtn" type="button">Delete</button>
         </div>
-        <div id="funnelSessions"></div>
       </div>
 
       <div class="funnel-actions">
