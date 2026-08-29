@@ -737,7 +737,7 @@
         cta.className = 'btn-primary';
         cta.style.width = '100%';
         cta.style.marginBottom = '10px';
-        cta.textContent = 'See your progress →';
+        cta.textContent = 'Explore The Game Further →';
         cta.addEventListener('click', () => { leaveResults(goHome); });
         body.appendChild(cta);
       }
