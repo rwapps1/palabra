@@ -156,6 +156,33 @@
       `;
     }
 
+    let srsInfoHtml = '';
+    if (state.showSrsInfo) {
+      srsInfoHtml = `
+        <div class="sheet-backdrop" id="srs-info-overlay"></div>
+        <div class="settings-sheet srs-info-sheet">
+          <div class="sheet-handle"></div>
+          <div class="sheet-header">
+            <div class="sheet-title">How it works</div>
+            <button id="srs-info-close-btn" class="sheet-close" type="button" aria-label="Close">✕</button>
+          </div>
+
+          <div class="srs-info-headline">¡Así funciona la magia!</div>
+
+          <div class="sheet-card srs-info-card">
+            <p>Every word and verb form lives in one of 6 boxes. Box 1 means "still learning" — box 6 means "locked in."</p>
+            <p>Your answers intuitively move words between boxes as you go. The app quietly favours words in your lower boxes when picking questions, and matches the question type to suit — so tricky words show up more often in the format that helps most, with no scary "due" list to guilt you into practicing.</p>
+            <p class="srs-info-foot">No pressure, no due dates — just keep playing and let the game take care of the rest.</p>
+          </div>
+
+          <div class="srs-info-actions">
+            <button id="srs-info-hub-btn" class="btn-secondary" type="button">Back<br>To<br>Hub</button>
+            <button id="srs-info-progress-btn" class="btn-primary" type="button">See Your<br>Detailed<br>Progress</button>
+          </div>
+        </div>
+      `;
+    }
+
     const achIds = Object.keys(ACHIEVEMENTS);
     const achUnlockedCount = achIds.filter(id => state.progress.achievements[id] && state.progress.achievements[id].unlocked).length;
     const achTotalCount = achIds.length;
@@ -208,6 +235,8 @@
               <span class="hub-play-chip">▶</span>${playedToday ? 'Continue Stream' : 'Start Stream'}
             </button>
           </div>
+
+          <button class="srs-info-pill" id="srs-info-btn" type="button">How does it work?</button>
 
           <div class="today-panel">
             <div class="today-hero-row">
@@ -310,6 +339,7 @@
           <input type="file" id="import-file" accept="application/json" style="display:none" />
         </div>
         ${menuHtml}
+        ${srsInfoHtml}
       </div>
     `;
 
@@ -337,6 +367,22 @@
       state.showMenu = !state.showMenu;
       render();
     });
+
+    document.getElementById('srs-info-btn').addEventListener('click', () => {
+      state.showSrsInfo = true;
+      render();
+    });
+
+    if (state.showSrsInfo) {
+      document.getElementById('srs-info-overlay').addEventListener('click', () => { state.showSrsInfo = false; render(); });
+      document.getElementById('srs-info-close-btn').addEventListener('click', () => { state.showSrsInfo = false; render(); });
+      document.getElementById('srs-info-hub-btn').addEventListener('click', () => { state.showSrsInfo = false; render(); });
+      document.getElementById('srs-info-progress-btn').addEventListener('click', () => {
+        state.showSrsInfo = false;
+        state.screen = 'my-progress';
+        render();
+      });
+    }
 
     if (state.showMenu) {
       document.getElementById('menu-overlay').addEventListener('click', () => { state.showMenu = false; render(); });
