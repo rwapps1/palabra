@@ -407,6 +407,26 @@
   .sess-src { color: var(--label); }
   .sess-src.muted-src { font-style: italic; }
 
+  .sess-item { display: flex; align-items: flex-start; gap: 10px; }
+  .sess-item .sess-row { flex: 1; min-width: 0; }
+  .sess-check {
+    flex: none; padding: 20px 0 0 2px; cursor: pointer;
+  }
+  .sess-check input {
+    width: 18px; height: 18px; accent-color: var(--violet); cursor: pointer;
+  }
+
+  .select-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 12px; margin-bottom: 10px; border-radius: 12px;
+    background: rgba(139,124,246,0.13); border: 1px solid rgba(139,124,246,0.28);
+  }
+  .select-bar .sb-count { flex: 1; font-size: 12.5px; color: var(--cream); }
+  .select-bar .sb-btn {
+    margin-top: 0; padding: 6px 12px; font-size: 12px; width: auto;
+  }
+  .select-bar .sb-danger { color: var(--terracotta); border-color: rgba(255,77,109,0.4); }
+
   .funnel-actions { display: flex; gap: 10px; margin-top: 4px; }
   .funnel-actions .btn { margin-top: 0; }
 
@@ -675,6 +695,11 @@
       <div class="panel fade-in">
         <div class="panel-title">Sessions</div>
         <div class="panel-sub">Newest first — tap one to follow it step by step</div>
+        <div id="funnelSelectBar" class="select-bar hidden">
+          <span class="sb-count" id="funnelSelectCount">—</span>
+          <button class="btn btn-ghost sb-btn" id="funnelSelectAllBtn" type="button">Select all</button>
+          <button class="btn btn-ghost sb-btn sb-danger" id="funnelDeleteSelectedBtn" type="button">Delete</button>
+        </div>
         <div id="funnelSessions"></div>
       </div>
 
@@ -1295,6 +1320,11 @@
   let funnelHideBots = true;
   let funnelHideDev = true;
 
+  // Session ids ticked for deletion. Cleared whenever the filters change or
+  // the data reloads — a selection you can no longer see is a selection you
+  // can't verify before deleting, and this is an irreversible action.
+  let funnelSelected = new Set();
+
   function visibleFunnelSessions() {
     return funnelSessions.filter((s) => {
       if (funnelHideBots && s.isBot) return false;
@@ -1546,23 +1576,49 @@
         return `<div class="sess-seg" style="background:hsl(${hue} 85% 62%)"></div>`;
       }).join('');
       return `
-        <button class="sess-row" type="button" data-session="${escapeHtml(s.id)}">
-          <div class="sess-top">
-            <span class="sess-id">${escapeHtml(s.id)}</span>
-            <span class="sess-when">${s.startedAt ? fmtWhen(s.startedAt) : 'date unknown'}</span>
-            ${s.converted ? '<span class="sess-conv">Signed up</span>' : ''}
-          </div>
-          <div class="sess-strip">${strip}</div>
-          <div class="sess-meta">
-            <span class="reached">${escapeHtml(s.reachedLabel)}</span>
-            <span>·</span>
-            <span>${sessionDurationLabel(s)}</span>
-            <span>·</span>
-            <span class="sess-src${s.isBot || s.dev ? ' muted-src' : ''}">${escapeHtml(sourceLabel(s))}</span>
-          </div>
-        </button>
+        <div class="sess-item">
+          <label class="sess-check" title="Select this session">
+            <input type="checkbox" data-select="${escapeHtml(s.id)}"${funnelSelected.has(s.id) ? ' checked' : ''} />
+          </label>
+          <button class="sess-row" type="button" data-session="${escapeHtml(s.id)}">
+            <div class="sess-top">
+              <span class="sess-id">${escapeHtml(s.id)}</span>
+              <span class="sess-when">${s.startedAt ? fmtWhen(s.startedAt) : 'date unknown'}</span>
+              ${s.converted ? '<span class="sess-conv">Signed up</span>' : ''}
+            </div>
+            <div class="sess-strip">${strip}</div>
+            <div class="sess-meta">
+              <span class="reached">${escapeHtml(s.reachedLabel)}</span>
+              <span>·</span>
+              <span>${sessionDurationLabel(s)}</span>
+              <span>·</span>
+              <span class="sess-src${s.isBot || s.dev ? ' muted-src' : ''}">${escapeHtml(sourceLabel(s))}</span>
+            </div>
+          </button>
+        </div>
         ${funnelExpandedId === s.id ? renderFunnelTimeline(s) : ''}`;
     }).join('');
+
+    renderFunnelSelectionBar();
+  }
+
+  // The "n selected" bar above the list. Hidden entirely when nothing is
+  // selected, so the common case — just reading the dashboard — is
+  // undisturbed by a delete control sitting there permanently.
+  function renderFunnelSelectionBar() {
+    const bar = document.getElementById('funnelSelectBar');
+    const shown = visibleFunnelSessions();
+    const selected = shown.filter(s => funnelSelected.has(s.id));
+    if (!selected.length) {
+      bar.classList.add('hidden');
+      return;
+    }
+    const events = selected.reduce((n, s) => n + s.events.length, 0);
+    bar.classList.remove('hidden');
+    document.getElementById('funnelSelectCount').textContent =
+      `${selected.length} selected · ${events} event${events === 1 ? '' : 's'}`;
+    document.getElementById('funnelSelectAllBtn').textContent =
+      selected.length === shown.length ? 'Clear' : 'Select all';
   }
 
   function renderFunnelTimeline(s) {
@@ -1589,6 +1645,16 @@
     </div>`;
   }
 
+  document.getElementById('funnelSessions').addEventListener('change', (e) => {
+    const box = e.target.closest('input[data-select]');
+    if (!box) return;
+    if (box.checked) funnelSelected.add(box.dataset.select);
+    else funnelSelected.delete(box.dataset.select);
+    // Only the bar is redrawn, not the whole list — rebuilding the list
+    // here would collapse an expanded timeline every time a box is ticked.
+    renderFunnelSelectionBar();
+  });
+
   document.getElementById('funnelSessions').addEventListener('click', (e) => {
     const row = e.target.closest('.sess-row');
     if (!row) return;
@@ -1602,15 +1668,62 @@
     if (!funnelLoaded) loadFunnel();
   });
 
+  document.getElementById('funnelSelectAllBtn').addEventListener('click', () => {
+    const shown = visibleFunnelSessions();
+    const allSelected = shown.length && shown.every(s => funnelSelected.has(s.id));
+    if (allSelected) funnelSelected.clear();
+    else shown.forEach(s => funnelSelected.add(s.id));
+    renderFunnelSessions();
+  });
+
+  // Deletes only the ticked sessions, and every event document belonging to
+  // them. Session-level is the finest granularity offered deliberately:
+  // deleting individual events inside a session would leave a half-journey
+  // that quietly makes the drop-off maths wrong.
+  document.getElementById('funnelDeleteSelectedBtn').addEventListener('click', async () => {
+    const selected = funnelSessions.filter(s => funnelSelected.has(s.id));
+    if (!selected.length) return;
+    const events = selected.reduce((n, s) => n + s.events.length, 0);
+    const names = selected.slice(0, 6).map(s => s.id).join(', ') +
+      (selected.length > 6 ? `, and ${selected.length - 6} more` : '');
+    const ok = confirm(
+      `Delete ${selected.length} session${selected.length === 1 ? '' : 's'} ` +
+      `(${events} event${events === 1 ? '' : 's'})?\n\n${names}\n\n` +
+      `This cannot be undone. Other sessions and all user accounts are unaffected.`
+    );
+    if (!ok) return;
+
+    const btn = document.getElementById('funnelDeleteSelectedBtn');
+    btn.disabled = true;
+    btn.textContent = 'Deleting…';
+    try {
+      for (const s of selected) {
+        for (const ev of s.events) {
+          await deleteDoc(doc(db, 'demoEvents', ev.docId));
+        }
+      }
+      funnelSelected.clear();
+      funnelExpandedId = null;
+      await loadFunnel();
+    } catch (err) {
+      alert('Could not delete: ' + ((err && err.message) || 'unknown error'));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Delete';
+    }
+  });
+
   document.getElementById('funnelFilterBots').addEventListener('change', (e) => {
     funnelHideBots = e.target.checked;
     funnelExpandedId = null;
+    funnelSelected.clear();
     renderFunnel();
   });
 
   document.getElementById('funnelFilterDev').addEventListener('change', (e) => {
     funnelHideDev = e.target.checked;
     funnelExpandedId = null;
+    funnelSelected.clear();
     renderFunnel();
   });
 
@@ -1620,6 +1733,7 @@
 
   document.getElementById('funnelReloadBtn').addEventListener('click', () => {
     funnelExpandedId = null;
+    funnelSelected.clear();
     loadFunnel();
   });
 
