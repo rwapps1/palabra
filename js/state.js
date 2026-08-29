@@ -18,6 +18,7 @@
     fetchFailed: false,
     showUpload: false,
     showMenu: false,
+    showSrsInfo: false, // in-app "How it works" bottom sheet explaining the SRS box system, opened from a pill under the stream card on the hub. Same in-memory-overlay pattern as showMenu — no history entry, just a render() toggle.
     pairs: [],
     mainPool: [],
     error: '',
