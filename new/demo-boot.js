@@ -358,12 +358,25 @@
   function notifyDemoStarted() {
     if (!TELEGRAM_CHAT_ID) return;
     try {
+      // Session id, when there is one, so this ping can be matched to its
+      // row in the admin funnel view instead of guessing by timestamp —
+      // which stops working the moment two people start within a minute of
+      // each other. Same idea as the session id already appended to the
+      // account-created ping in auth.js.
+      //
+      // Guarded with typeof because demo-telemetry.js is a separate file:
+      // if it ever fails to load, the notification must still fire.
+      const sessionId = (typeof getDemoSessionId === 'function')
+        ? getDemoSessionId()
+        : null;
+      let text = '🚀 Someone started the Palabra demo\nvia /new landing page';
+      if (sessionId) text += `\nsession ${sessionId}`;
       fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: TELEGRAM_CHAT_ID,
-          text: '🚀 Someone started the Palabra demo\nvia /new landing page',
+          text: text,
         }),
       }).catch(() => {});
     } catch (e) { /* ignore — notification is best-effort only */ }
