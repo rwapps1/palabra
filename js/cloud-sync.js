@@ -103,20 +103,51 @@
 
   // Debounced so a run of quick answers doesn't fire a Firestore write per
   // answer — resets on every call, actually writes once things go quiet.
+  // Pushes with updateDoc, which REPLACES progress outright, rather than
+  // setDoc(..., { merge: true }), which deep-merges it.
+  //
+  // The difference was invisible for as long as Palabra only ever added
+  // words: a merge adds new keys happily, and no key was ever removed. The
+  // word-ID migration removes 125 records, and under a merged write those
+  // removals simply never reached Firestore - the server document ended up
+  // holding BOTH the old text-keyed records and the new id-keyed ones, about
+  // 40,200 index entries against Firestore's hard ceiling of 40,000 per
+  // document. Firestore rejected the whole write with "too many index
+  // entries for entity", the catch below swallowed it, and every reload
+  // pulled the stale cloud copy back over the migrated local one.
+  //
+  // A replacing write means the document holds exactly what the device
+  // holds, which is both correct and about half the size.
   function doCloudPush() {
     if (!state.user) return Promise.resolve();
     const ms = Date.now();
-    return window.PalabraAuth.setUserDoc(state.user.uid, {
+    const payload = {
       progress: state.progress,
       username: state.username || null,
       updatedAtMs: ms,
       updatedAt: window.PalabraAuth.serverTimestamp()
-    }).then(() => {
+    };
+    const uid = state.user.uid;
+    const write = window.PalabraAuth.updateUserDoc
+      ? window.PalabraAuth.updateUserDoc(uid, payload).catch((err) => {
+          // updateDoc requires the document to exist. A brand-new account can
+          // race its own creation, so fall back to the create path once
+          // rather than losing that first push.
+          if (err && err.code === 'not-found') return window.PalabraAuth.setUserDoc(uid, payload);
+          throw err;
+        })
+      : window.PalabraAuth.setUserDoc(uid, payload);
+
+    return write.then(() => {
       state.lastSyncedMs = ms;
       state.progressDirty = false;
-    }).catch(() => {
-      // Offline or blocked — local progress is still safe and will
-      // retry next time saveProgress() runs.
+    }).catch((err) => {
+      // Offline or blocked — local progress is still safe and will retry next
+      // time saveProgress() runs. Logged rather than silently discarded: a
+      // push that fails every time for a structural reason (as the index-entry
+      // rejection above did) is otherwise completely invisible, and the only
+      // symptom is progress quietly reverting on the next load.
+      console.warn('Palabra: progress push failed —', (err && err.code) || '', (err && err.message) || err);
     });
   }
 

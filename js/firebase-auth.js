@@ -7,7 +7,7 @@
     signOut
   } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
   import {
-    getFirestore, doc, getDoc, setDoc, serverTimestamp
+    getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -33,7 +33,15 @@
     getRedirectResult: () => getRedirectResult(auth),
     signOut: () => signOut(auth),
     getUserDoc: (uid) => getDoc(doc(db, 'users', uid)),
+    // Creates the document, or merges into it. Deep-merges nested maps, so a
+    // key REMOVED locally survives in Firestore - use this only for creating
+    // a document, never for pushing progress. See updateUserDoc below.
     setUserDoc: (uid, data) => setDoc(doc(db, 'users', uid), data, { merge: true }),
+    // Replaces each named field outright rather than merging into it, so
+    // progress.wordStats ends up holding exactly what the device holds.
+    // Requires the document to already exist - callers fall back to
+    // setUserDoc on 'not-found'.
+    updateUserDoc: (uid, data) => updateDoc(doc(db, 'users', uid), data),
     serverTimestamp
   };
 
