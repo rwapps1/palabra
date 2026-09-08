@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palabra — Assign Word IDs</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #100A1E;
+    --bg-card: rgba(255,255,255,0.07);
+    --bg-card-alt: rgba(255,255,255,0.12);
+    --ochre: #FFC163;
+    --terracotta: #FF4D6D;
+    --green: #2DD4BF;
+    --label: #C9A8FF;
+    --cream: #F7F3ED;
+    --cream-dim: #B8AFC9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--cream); font-family: 'Inter', sans-serif;
+    min-height: 100vh; padding: 24px 16px 60px;
+  }
+  .hidden { display: none !important; }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 20px; margin-bottom: 4px; }
+  .sub { font-size: 13px; color: var(--cream-dim); margin-bottom: 20px; line-height: 1.5; }
+  .card {
+    background: var(--bg-card); border-radius: 14px; padding: 18px; margin-bottom: 14px;
+  }
+  .card h2 { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 600; margin-bottom: 10px; color: var(--label); }
+  .row { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .row:last-child { border-bottom: 0; }
+  .row .v { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .v.good { color: var(--green); }
+  .v.warn { color: var(--ochre); }
+  .v.bad  { color: var(--terracotta); }
+  button {
+    font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600;
+    border: 0; border-radius: 12px; padding: 13px 20px; cursor: pointer;
+    background: var(--ochre); color: #2A1A05; width: 100%; margin-top: 6px;
+  }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.secondary { background: var(--bg-card-alt); color: var(--cream); }
+  .note {
+    font-size: 12.5px; color: var(--cream-dim); line-height: 1.6; margin-top: 10px;
+  }
+  .warnbox {
+    background: rgba(255,193,99,0.12); border: 1px solid rgba(255,193,99,0.35);
+    border-radius: 10px; padding: 12px; font-size: 13px; line-height: 1.55; margin-top: 12px;
+  }
+  .errbox {
+    background: rgba(255,77,109,0.12); border: 1px solid rgba(255,77,109,0.4);
+    border-radius: 10px; padding: 12px; font-size: 13px; line-height: 1.55;
+  }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; background: rgba(0,0,0,0.3); padding: 1px 5px; border-radius: 4px; }
+  .sample { font-size: 12.5px; color: var(--cream-dim); margin-top: 8px; line-height: 1.7; word-break: break-word; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Assign Word IDs</h1>
+  <div class="sub">
+    Every word's saved progress is keyed on its ID in column G of <code>words.xlsx</code>, so a row without one
+    will fork its progress the moment you edit its Spanish or English cell. Run this after adding rows by hand
+    to fill in any gaps. It never changes an ID that already exists, and never touches any other column or sheet.
+  </div>
+
+  <div id="viewLoading" class="card">
+    <h2>Loading</h2>
+    <div class="sub" style="margin:0;">Reading words.xlsx…</div>
+  </div>
+
+  <div id="viewError" class="card hidden">
+    <h2>Couldn't load the file</h2>
+    <div class="errbox" id="errorText"></div>
+    <button class="secondary" id="retryBtn">Try again</button>
+  </div>
+
+  <div id="viewMain" class="hidden">
+    <div class="card">
+      <h2>What's in the sheet now</h2>
+      <div class="row"><span>Rows with a word</span><span class="v" id="statRows">—</span></div>
+      <div class="row"><span>Already have an ID</span><span class="v good" id="statHave">—</span></div>
+      <div class="row"><span>Missing an ID</span><span class="v" id="statMissing">—</span></div>
+      <div class="row"><span>Duplicate IDs</span><span class="v" id="statDupes">—</span></div>
+      <div class="row"><span>Highest ID in use</span><span class="v" id="statMax">—</span></div>
+      <div id="missingSample" class="sample hidden"></div>
+      <div id="dupeWarn" class="warnbox hidden"></div>
+    </div>
+
+    <div class="card">
+      <h2>Assign</h2>
+      <div class="sub" style="margin:0;">
+        New IDs carry on from the highest one already in the sheet, so a number is never reused even if you've
+        deleted rows. Existing IDs are left exactly as they are.
+      </div>
+      <button id="assignBtn">Assign missing IDs and download</button>
+      <div class="note">
+        Downloads a new <code>words.xlsx</code>. Check it, then commit it over the one in the repo.
+        Other sheets in the workbook (Decisions Log) are carried through untouched.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // Column G, zero-indexed. data-loading.js reads the same position as
+  // row[6] — if the ID column ever moves, both have to move together.
+  const ID_COL = 6;
+  const HEADERS = ['Spanish', 'English', 'Note', 'Category', 'Sentence', 'SentenceTranslation', 'ID'];
+
+  let workbook = null;
+  let aoa = null;
+  let stats = null;
+
+  const els = {
+    loading: document.getElementById('viewLoading'),
+    error: document.getElementById('viewError'),
+    main: document.getElementById('viewMain'),
+    errorText: document.getElementById('errorText'),
+    retryBtn: document.getElementById('retryBtn'),
+    assignBtn: document.getElementById('assignBtn'),
+    statRows: document.getElementById('statRows'),
+    statHave: document.getElementById('statHave'),
+    statMissing: document.getElementById('statMissing'),
+    statDupes: document.getElementById('statDupes'),
+    statMax: document.getElementById('statMax'),
+    missingSample: document.getElementById('missingSample'),
+    dupeWarn: document.getElementById('dupeWarn'),
+  };
+
+  function showView(which) {
+    els.loading.classList.toggle('hidden', which !== 'loading');
+    els.error.classList.toggle('hidden', which !== 'error');
+    els.main.classList.toggle('hidden', which !== 'main');
+  }
+
+  function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str == null ? '' : String(str);
+    return d.innerHTML;
+  }
+
+  // A row counts as a real word row if either the Spanish or English cell
+  // has something in it - the same test the app uses when deciding what to
+  // load, so this can't hand out an ID to a row the app ignores.
+  function hasContent(row) {
+    const es = String((row && row[0]) || '').trim();
+    const en = String((row && row[1]) || '').trim();
+    return !!(es || en);
+  }
+
+  function cellId(row) {
+    return String((row && row[ID_COL]) != null ? row[ID_COL] : '').trim();
+  }
+
+  function survey() {
+    let rows = 0, have = 0, missing = 0, maxId = 0;
+    const missingWords = [];
+    const seen = Object.create(null);
+    const dupes = [];
+
+    for (let i = 1; i < aoa.length; i++) {
+      const row = aoa[i];
+      if (!hasContent(row)) continue;
+      rows++;
+      const id = cellId(row);
+      if (!id) {
+        missing++;
+        missingWords.push(String(row[0] || row[1] || '(blank)').trim());
+        continue;
+      }
+      have++;
+      if (seen[id]) dupes.push(id); else seen[id] = true;
+      const n = parseInt(id, 10);
+      if (!isNaN(n) && n > maxId) maxId = n;
+    }
+    return { rows, have, missing, maxId, missingWords, dupes };
+  }
+
+  function renderStats() {
+    els.statRows.textContent = stats.rows.toLocaleString();
+    els.statHave.textContent = stats.have.toLocaleString();
+    els.statMissing.textContent = stats.missing.toLocaleString();
+    els.statMissing.className = 'v ' + (stats.missing === 0 ? 'good' : 'warn');
+    els.statDupes.textContent = stats.dupes.length.toLocaleString();
+    els.statDupes.className = 'v ' + (stats.dupes.length === 0 ? 'good' : 'bad');
+    els.statMax.textContent = stats.maxId ? stats.maxId.toLocaleString() : '—';
+
+    if (stats.missing > 0) {
+      const shown = stats.missingWords.slice(0, 25).map(esc).join(', ');
+      els.missingSample.innerHTML = 'Missing: ' + shown + (stats.missingWords.length > 25 ? ', …' : '');
+      els.missingSample.classList.remove('hidden');
+    } else {
+      els.missingSample.classList.add('hidden');
+    }
+
+    // Duplicates can't be fixed automatically: two rows sharing an ID share
+    // one progress record, and only you know which of them should keep it.
+    if (stats.dupes.length > 0) {
+      els.dupeWarn.innerHTML =
+        '<strong>Duplicate IDs found:</strong> ' + esc(stats.dupes.join(', ')) +
+        '. Rows sharing an ID share one progress record. This tool won\'t change them — ' +
+        'clear the ID cell on whichever row should start fresh, then run this again.';
+      els.dupeWarn.classList.remove('hidden');
+    } else {
+      els.dupeWarn.classList.add('hidden');
+    }
+
+    els.assignBtn.disabled = stats.missing === 0;
+    els.assignBtn.textContent = stats.missing === 0
+      ? 'Nothing to assign — every row has an ID'
+      : `Assign ${stats.missing} missing ID${stats.missing === 1 ? '' : 's'} and download`;
+  }
+
+  async function load() {
+    showView('loading');
+    try {
+      const res = await fetch('../words.xlsx', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+      const buf = await res.arrayBuffer();
+      workbook = XLSX.read(buf, { type: 'array' });
+      if (!workbook.Sheets['Words']) {
+        throw new Error('This file has no sheet named "Words" — check the tab name matches exactly.');
+      }
+      aoa = XLSX.utils.sheet_to_json(workbook.Sheets['Words'], { header: 1, defval: '' });
+      if (aoa.length < 2) throw new Error('The Words sheet has no rows below the header.');
+      stats = survey();
+      renderStats();
+      showView('main');
+    } catch (err) {
+      els.errorText.textContent = (err && err.message) ? err.message : 'Unknown error.';
+      showView('error');
+    }
+  }
+
+  function assignAndDownload() {
+    let next = stats.maxId + 1;
+    let assigned = 0;
+
+    for (let i = 1; i < aoa.length; i++) {
+      const row = aoa[i];
+      if (!hasContent(row)) continue;
+      if (cellId(row)) continue;
+      // Pad the row out if it's shorter than column G, so the ID lands in
+      // the right column rather than wherever the row happens to end.
+      while (row.length < ID_COL) row.push('');
+      row[ID_COL] = next++;
+      assigned++;
+    }
+
+    // Header row: make sure column G is labelled, without disturbing A-F.
+    const header = aoa[0] || [];
+    while (header.length < HEADERS.length) header.push('');
+    if (!String(header[ID_COL] || '').trim()) header[ID_COL] = 'ID';
+    aoa[0] = header;
+
+    // Replace only the Words sheet on the existing workbook object, so every
+    // other sheet survives exactly as it was.
+    workbook.Sheets['Words'] = XLSX.utils.aoa_to_sheet(aoa);
+    XLSX.writeFile(workbook, 'words.xlsx');
+
+    stats = survey();
+    renderStats();
+    els.assignBtn.textContent = `Assigned ${assigned} — downloaded`;
+  }
+
+  els.retryBtn.addEventListener('click', load);
+  els.assignBtn.addEventListener('click', assignAndDownload);
+  load();
+})();
+</script>
+</body>
+</html>

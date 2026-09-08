@@ -289,6 +289,32 @@
       }
 
       const aoa = XLSX.utils.sheet_to_json(workbook.Sheets['Words'], { header: 1, defval: '' });
+
+      // SAFETY GUARD — do not remove without also fixing the read/write pair
+      // below.
+      //
+      // This tool reads exactly the six columns in COLUMNS and rebuilds the
+      // sheet from exactly those six on download. words.xlsx now carries a
+      // seventh column, ID, which every word's saved progress is keyed on.
+      // Saving through this tool as it stands would silently drop that
+      // column, and the next app load would fork every single word's
+      // progress onto a fresh record - far worse than the bug the IDs were
+      // added to fix, and invisible until the damage was done.
+      //
+      // So it refuses to open a sheet wider than it understands, rather than
+      // relying on anyone remembering not to press Download. Fixing this
+      // properly means carrying the extra columns through load, edit, add
+      // and save, and assigning an ID to each new row.
+      const widest = aoa.reduce((max, row) => Math.max(max, (row || []).length), 0);
+      if (widest > COLUMNS.length) {
+        throw new Error(
+          `This sheet has ${widest} columns but this editor only understands the first ${COLUMNS.length} ` +
+          `(${COLUMNS.join(', ')}). Saving from here would delete the extra column(s) — including the ID ` +
+          `column that all word progress is keyed on — so the editor has locked itself rather than risk it. ` +
+          `It needs updating to handle the ID column before it can be used again.`
+        );
+      }
+
       words = aoa.slice(1)
         .filter(r => (r[0] || r[1]))
         .map(r => ({ es: String(r[0] || ''), en: String(r[1] || ''), note: String(r[2] || ''), cat: String(r[3] || ''), sentence: String(r[4] || ''), translation: String(r[5] || '') }));
