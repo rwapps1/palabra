@@ -95,6 +95,16 @@
   .cat-cell { font-size: 11.5px; color: var(--label); }
   .note-cell { font-size: 11.5px; color: var(--cream-dim); }
 
+  /* The ID is shown but deliberately NOT editable — it is the key every
+     word's saved progress is stored under, so a stray keystroke here would
+     silently detach a word from its history. Change one only by clearing the
+     cell in Excel, which makes the row take a fresh ID on the next save. */
+  .id-cell {
+    padding: 4px 6px; font-size: 11px; color: var(--cream-dim);
+    font-variant-numeric: tabular-nums; user-select: text; white-space: nowrap;
+  }
+  .id-missing { color: var(--ochre); font-style: italic; }
+
   .row-actions { display: flex; gap: 5px; }
   .row-btn {
     background: none; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
@@ -206,6 +216,7 @@
         <table class="word-table">
           <thead>
             <tr>
+              <th style="width:56px;">ID</th>
               <th>Spanish</th>
               <th>English</th>
               <th>Note</th>
@@ -238,10 +249,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
   const PAGE_SIZE = 50;
-  const COLUMNS = ['Spanish', 'English', 'Note', 'Category', 'Sentence', 'SentenceTranslation'];
+  // Column G, ID, is the key every word's saved progress is stored under. It
+  // must survive a round trip through this editor untouched: drop it and the
+  // app re-forks every word's history onto a fresh record.
+  const COLUMNS = ['Spanish', 'English', 'Note', 'Category', 'Sentence', 'SentenceTranslation', 'ID'];
+  const ID_COL = 6;
 
   let workbook = null;   // full parsed workbook, kept so other sheets (Decisions Log) survive untouched
-  let words = [];        // [{es, en, note, cat, sentence, translation}, ...] — the editable "Words" sheet
+  let words = [];        // [{id, es, en, note, cat, sentence, translation}, ...] — the editable "Words" sheet
   let page = 1;
   let isDirty = false;
 
@@ -290,34 +305,31 @@
 
       const aoa = XLSX.utils.sheet_to_json(workbook.Sheets['Words'], { header: 1, defval: '' });
 
-      // SAFETY GUARD — do not remove without also fixing the read/write pair
-      // below.
-      //
-      // This tool reads exactly the six columns in COLUMNS and rebuilds the
-      // sheet from exactly those six on download. words.xlsx now carries a
-      // seventh column, ID, which every word's saved progress is keyed on.
-      // Saving through this tool as it stands would silently drop that
-      // column, and the next app load would fork every single word's
-      // progress onto a fresh record - far worse than the bug the IDs were
-      // added to fix, and invisible until the damage was done.
-      //
-      // So it refuses to open a sheet wider than it understands, rather than
-      // relying on anyone remembering not to press Download. Fixing this
-      // properly means carrying the extra columns through load, edit, add
-      // and save, and assigning an ID to each new row.
+      // SAFETY GUARD — this editor rebuilds the sheet from exactly the
+      // columns in COLUMNS, so anything beyond them would be silently
+      // deleted on download. A column it doesn't know about is therefore a
+      // refusal to open, not a warning: the ID column taught us that losing
+      // one costs every word's progress history, invisibly, and only shows
+      // up days later.
       const widest = aoa.reduce((max, row) => Math.max(max, (row || []).length), 0);
       if (widest > COLUMNS.length) {
         throw new Error(
           `This sheet has ${widest} columns but this editor only understands the first ${COLUMNS.length} ` +
-          `(${COLUMNS.join(', ')}). Saving from here would delete the extra column(s) — including the ID ` +
-          `column that all word progress is keyed on — so the editor has locked itself rather than risk it. ` +
-          `It needs updating to handle the ID column before it can be used again.`
+          `(${COLUMNS.join(', ')}). Saving from here would delete the extra column(s), so the editor has ` +
+          `locked itself rather than risk it. It needs updating to carry the new column through load, ` +
+          `edit, add and save before it can be used again.`
         );
       }
 
       words = aoa.slice(1)
         .filter(r => (r[0] || r[1]))
-        .map(r => ({ es: String(r[0] || ''), en: String(r[1] || ''), note: String(r[2] || ''), cat: String(r[3] || ''), sentence: String(r[4] || ''), translation: String(r[5] || '') }));
+        .map(r => ({
+          es: String(r[0] || ''), en: String(r[1] || ''), note: String(r[2] || ''),
+          cat: String(r[3] || ''), sentence: String(r[4] || ''), translation: String(r[5] || ''),
+          // Read as a string so a numeric cell and a text cell behave alike,
+          // matching how data-loading.js reads the same column in the app.
+          id: String(r[ID_COL] == null ? '' : r[ID_COL]).trim()
+        }));
 
       populateCategoryFilter();
       isDirty = false;
@@ -382,7 +394,7 @@
     els.nextBtn.disabled = page >= totalPages;
 
     if (pageItems.length === 0) {
-      els.tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--cream-dim);padding:24px;">No matches.</td></tr>';
+      els.tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--cream-dim);padding:24px;">No matches.</td></tr>';
       return;
     }
 
@@ -391,6 +403,7 @@
       const hasSentence = !!w.sentence.trim();
       return `
         <tr data-idx="${idx}">
+          <td><div class="id-cell">${w.id ? escapeHtml(w.id) : '<span class="id-missing">none</span>'}</div></td>
           <td><div class="cell-edit" contenteditable="true" data-field="es">${escapeHtml(w.es)}</div></td>
           <td><div class="cell-edit" contenteditable="true" data-field="en">${escapeHtml(w.en)}</div></td>
           <td><div class="cell-edit note-cell" contenteditable="true" data-field="note">${escapeHtml(w.note)}</div></td>
@@ -403,7 +416,7 @@
           </td>
         </tr>
         <tr class="detail-row hidden" data-detail-for="${idx}">
-          <td colspan="5">
+          <td colspan="6">
             <div class="detail-field">
               <label>Example sentence</label>
               <textarea data-field="sentence" data-idx="${idx}" rows="2">${escapeHtml(w.sentence)}</textarea>
@@ -464,10 +477,24 @@
 
   // --- add / search / filter / pagination ------------------------------------
 
+  // The next ID to hand out: one past the highest currently in the sheet,
+  // counting rows added earlier in this same session. Numbers are never
+  // reused, even when a row has been deleted — a retired ID may still be
+  // referenced by a progress record, and handing it to a different word
+  // would silently graft one word's history onto another.
+  function nextId() {
+    let max = 0;
+    words.forEach(w => {
+      const n = parseInt(w.id, 10);
+      if (!isNaN(n) && n > max) max = n;
+    });
+    return String(max + 1);
+  }
+
   els.addBtn.addEventListener('click', () => {
     els.searchInput.value = '';
     els.catSelect.value = '';
-    words.unshift({ es: '', en: '', note: '', cat: '', sentence: '', translation: '' });
+    words.unshift({ es: '', en: '', note: '', cat: '', sentence: '', translation: '', id: nextId() });
     setDirty();
     page = 1;
     renderTable();
@@ -511,10 +538,91 @@
     els.downloadBtn.disabled = !isDirty;
   }
 
+  // Invisible characters that survive a copy-paste out of a web page or a
+  // document and then break matching in the app without ever being visible
+  // in a cell. A non-breaking space is the one that has actually bitten:
+  // 45 of them reached the sheet, and the only symptom was the app telling
+  // you a perfectly typed answer was "close enough, small typo forgiven",
+  // because U+00A0 is not the space you typed. Zero-width characters are
+  // included because they paste in the same way and are even harder to see.
+  // Written as escapes deliberately: these characters are invisible in
+  // source too, so a literal here would be unreadable and trivially broken
+  // by a future copy-paste. U+00A0 no-break space, U+1680 ogham space,
+  // U+2000-200D en/em spaces plus zero-width space/non-joiner/joiner,
+  // U+2028-2029 line/paragraph separators, U+202F narrow no-break,
+  // U+205F medium mathematical space, U+3000 ideographic space, U+FEFF BOM.
+  const INVISIBLES = /[\u00A0\u1680\u2000-\u200D\u2028\u2029\u202F\u205F\u3000\uFEFF]/g;
+
+  function scrubInvisibles(s) {
+    return String(s).replace(INVISIBLES, ' ').replace(/[ \t]{2,}/g, ' ').trim();
+  }
+
+  function findInvisibles(list) {
+    const hits = [];
+    list.forEach(w => {
+      ['es', 'en', 'note', 'cat', 'sentence', 'translation'].forEach(f => {
+        if (INVISIBLES.test(w[f])) hits.push({ w: w, field: f });
+        INVISIBLES.lastIndex = 0; // the regex is global — reset between tests
+      });
+    });
+    return hits;
+  }
+
   els.downloadBtn.addEventListener('click', () => {
     // Drop fully-blank rows (e.g. an "Add word" row left empty) before export.
     const cleanWords = words.filter(w => w.es.trim() || w.en.trim());
-    const aoa = [COLUMNS, ...cleanWords.map(w => [w.es, w.en, w.note, w.cat, w.sentence, w.translation])];
+
+    // --- Guard 1: every row must carry an ID -------------------------------
+    // A row without one still plays in the app, but it keys on its own text
+    // again, which is the exact behaviour the ID column exists to end. Adding
+    // one here is safe and automatic; leaving without one is not.
+    const missing = cleanWords.filter(w => !w.id);
+    if (missing.length > 0) {
+      const list = missing.slice(0, 8).map(w => '"' + (w.es || w.en) + '"').join(', ');
+      const ok = window.confirm(
+        missing.length + ' row(s) have no ID: ' + list + (missing.length > 8 ? ', …' : '') + '\n\n' +
+        'Without one, a word keys on its own text and its progress will fork the next time you edit it.\n\n' +
+        'OK to assign IDs now and continue, or Cancel to go back.'
+      );
+      if (!ok) return;
+      missing.forEach(w => { w.id = nextId(); });
+      renderTable();
+    }
+
+    // --- Guard 2: no two rows may share an ID ------------------------------
+    // Two rows on one ID share a single progress record. This can't be fixed
+    // automatically — only you know which of them should keep the history.
+    const seen = Object.create(null);
+    const dupes = [];
+    cleanWords.forEach(w => {
+      if (seen[w.id]) dupes.push(w.id); else seen[w.id] = true;
+    });
+    if (dupes.length > 0) {
+      window.alert(
+        'Duplicate ID(s): ' + dupes.join(', ') + '\n\n' +
+        'Two rows sharing an ID share one progress record. Nothing has been downloaded. ' +
+        'Clear the ID cell on whichever row should start fresh, then download again — it will be given a new one.'
+      );
+      return;
+    }
+
+    // --- Guard 3: invisible characters from pasted text --------------------
+    const dirtyCells = findInvisibles(cleanWords);
+    if (dirtyCells.length > 0) {
+      const sample = dirtyCells.slice(0, 5).map(h => '"' + h.w[h.field] + '"').join(', ');
+      const ok = window.confirm(
+        dirtyCells.length + ' cell(s) contain a non-breaking or zero-width space, usually from pasted text: ' +
+        sample + (dirtyCells.length > 5 ? ', …' : '') + '\n\n' +
+        'These look identical to a normal space but do not match one, so a correctly typed answer gets ' +
+        'marked as a typo.\n\nOK to clean them and continue, or Cancel to download as-is.'
+      );
+      if (ok) {
+        dirtyCells.forEach(h => { h.w[h.field] = scrubInvisibles(h.w[h.field]); });
+        renderTable();
+      }
+    }
+
+    const aoa = [COLUMNS, ...cleanWords.map(w => [w.es, w.en, w.note, w.cat, w.sentence, w.translation, w.id])];
     const newSheet = XLSX.utils.aoa_to_sheet(aoa);
     workbook.Sheets['Words'] = newSheet;
     XLSX.writeFile(workbook, 'words.xlsx');
