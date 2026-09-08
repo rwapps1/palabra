@@ -6,9 +6,14 @@ const WORDS_FILE = './words.xlsx';
 // (Category column), so there's nothing to list here anymore - one file to
 // cache instead of 17.
 
-// Bumped for the Daily Double repeat-words fix — js/word-selection.js
-// changed content (lowestBoxWords now matches records against the live
-// word list instead of serving their own stored text). No new files.
+// Bumped for the word-ID keying change — words.xlsx gained an ID column and
+// js/utils.js, js/data-loading.js, js/progress-xp.js, js/cloud-sync.js and
+// js/game-conjugate.js all changed content. THIS BUMP IS LOAD-BEARING, not
+// housekeeping: the new code keys progress on the ID column, so a device
+// still serving the old cached words.xlsx would be running new code against
+// a word list with no IDs in it. remapProgressKeysToIds() refuses to run in
+// that state rather than wiping history, but the app would fall back to text
+// keys until the cache turned over. admin/ is still deliberately uncached.
 //
 // /new is still deliberately NOT in ASSETS_TO_CACHE below:
 // it's a one-time, no-account ad-funnel page for first-time visitors, not
@@ -20,7 +25,7 @@ const WORDS_FILE = './words.xlsx';
 // on every page view: leaving it uncached would mean an extra network
 // request on every cold start for a file that does nothing for the vast
 // majority of users.
-const CACHE_NAME = 'palabra-cache-v10';
+const CACHE_NAME = 'palabra-cache-v11';
 const ASSETS_TO_CACHE = [
   './',
   APP_HTML,
