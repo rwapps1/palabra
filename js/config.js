@@ -14,7 +14,7 @@
   // app, Firestore, or any user data. If that ever happens, message
   // @BotFather → /token → PalabraGameBot to instantly issue a new one.
   // Leave TELEGRAM_CHAT_ID blank to disable — signup itself is unaffected. ──
-  const TELEGRAM_BOT_TOKEN = '8716717559:AAHri5ubB6e7bTMNDuvD-AUSg_8KE8EXmHs';
+  const TELEGRAM_BOT_TOKEN = '8716717559:AAG-QXxMUUZ6SqGG3xAXX5L4KWxCiDDuGi8';
   const TELEGRAM_CHAT_ID = '416291117';
   // ─────────────────────────────────────────────────────────
 
