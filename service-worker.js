@@ -6,7 +6,13 @@ const WORDS_FILE = './words.xlsx';
 // (Category column), so there's nothing to list here anymore - one file to
 // cache instead of 17.
 
-// Bumped for the word-ID keying change — words.xlsx gained an ID column and
+// v12: progress now pushes with updateDoc (replace) instead of setDoc merge —
+// js/firebase-auth.js and js/cloud-sync.js changed. A merged write could not
+// remove the records the ID migration merged away, leaving the Firestore
+// document holding both key sets and breaching the 40,000 index-entry limit,
+// so every push was rejected.
+//
+// v11 was for the word-ID keying change — words.xlsx gained an ID column and
 // js/utils.js, js/data-loading.js, js/progress-xp.js, js/cloud-sync.js and
 // js/game-conjugate.js all changed content. THIS BUMP IS LOAD-BEARING, not
 // housekeeping: the new code keys progress on the ID column, so a device
@@ -25,7 +31,7 @@ const WORDS_FILE = './words.xlsx';
 // on every page view: leaving it uncached would mean an extra network
 // request on every cold start for a file that does nothing for the vast
 // majority of users.
-const CACHE_NAME = 'palabra-cache-v11';
+const CACHE_NAME = 'palabra-cache-v12';
 const ASSETS_TO_CACHE = [
   './',
   APP_HTML,
