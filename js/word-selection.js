@@ -163,28 +163,52 @@
 
   // Lowest-box entries first (what you're weakest on right now), then
   // highest wrong-count as a tiebreaker, then least-recently-seen last.
-  // Prefers stored display text, but falls back to matching against
-  // whichever word list is currently loaded (state.pairs) for older entries
-  // recorded before that field existed - so they show up immediately
-  // instead of waiting to be answered again. Only entries matching neither
-  // source (rare: a word from a list not currently loaded) are skipped -
-  // they're still fully counted in boxCounts() above regardless.
+  //
+  // Every entry must match a row in the CURRENT word list, and the question
+  // is built from that row - never from the text stored on the record
+  // itself. Both halves matter, and for different reasons:
+  //
+  //  - Matching against state.mainPool (rather than state.pairs) keeps
+  //    conjugation-only words out, exactly as every other word mode does
+  //    via activePairs(). Those words are practised in Conjugate mode,
+  //    which keeps its own separate verbStats, so they have no business
+  //    appearing in Daily Double or the "Words to review" list. This was
+  //    the only place in the app still reading the unfiltered state.pairs.
+  //
+  //  - Taking es/en from the live row is what stops the daily-repeat loop.
+  //    Serving a record's own stored text meant recordAnswer() recomputed
+  //    wordKey() from THAT text and filed the answer against a different
+  //    record - so the record being served never got written to, stayed
+  //    lowest-box, and got served again the next day, forever. That hit
+  //    two ways: records whose stored text was left behind by an old edit
+  //    to the sheet, and (systematically) any word whose Spanish cell
+  //    holds slash-separated alternatives, since recordAnswer() stores
+  //    ws.es = primaryText(current.es) - the first alternative only -
+  //    while wordKey() uses the whole raw field. Reading es/en from the
+  //    live row guarantees the key that comes back out of recordAnswer()
+  //    is the same key that went in, so the box actually moves.
+  //
+  // Records matching no live row are skipped and are simply never
+  // reachable from here. Nothing is deleted or rewritten - they stay
+  // untouched in wordStats and still count in boxCounts() as before.
+  //
+  // Entries carry the whole live pair (note, sentence, category and all),
+  // not just es/en, so a Daily Double question is identical in shape to a
+  // normal Quiz question - which is why the Note hint now shows on these
+  // questions the way it always has everywhere else.
   function lowestBoxWords(limit) {
-    const fallback = {};
-    state.pairs.forEach(pair => { fallback[wordKey(pair)] = pair; });
+    const live = {};
+    state.mainPool.forEach(pair => { live[wordKey(pair)] = pair; });
 
     const sorted = Object.entries(state.progress.wordStats)
       .sort((a, b) => (a[1].box - b[1].box) || (b[1].wrong - a[1].wrong) || (a[1].lastSeen - b[1].lastSeen));
 
     const out = [];
     for (const [key, ws] of sorted) {
-      const fb = fallback[key];
-      const es = ws.es || (fb && fb.es);
-      const en = ws.en || (fb && fb.en);
-      if (es && en) {
-        out.push({ es, en, box: ws.box, wrong: ws.wrong });
-        if (out.length >= limit) break;
-      }
+      const pair = live[key];
+      if (!pair) continue;
+      out.push({ ...pair, box: ws.box, wrong: ws.wrong });
+      if (out.length >= limit) break;
     }
     return out;
   }
