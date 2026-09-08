@@ -31,7 +31,7 @@ const WORDS_FILE = './words.xlsx';
 // on every page view: leaving it uncached would mean an extra network
 // request on every cold start for a file that does nothing for the vast
 // majority of users.
-const CACHE_NAME = 'palabra-cache-v12';
+const CACHE_NAME = 'palabra-cache-v13';
 const ASSETS_TO_CACHE = [
   './',
   APP_HTML,
