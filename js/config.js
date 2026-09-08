@@ -12,7 +12,7 @@
   // a deliberate accepted risk: if this token ever leaks, someone could only
   // ever send messages as this one bot to this one chat — no access to the
   // app, Firestore, or any user data. If that ever happens, message
-  // @BotFather → /token → PalabraGameBot to instantly issue a new one.
+  // @BotFather → /token → PalabraGameBot → "Revoke current token" to issue a new one.
   // Leave TELEGRAM_CHAT_ID blank to disable — signup itself is unaffected. ──
   const TELEGRAM_BOT_TOKEN = '8716717559:AAG-QXxMUUZ6SqGG3xAXX5L4KWxCiDDuGi8';
   const TELEGRAM_CHAT_ID = '416291117';
