@@ -9,6 +9,9 @@
     const dupes = [];
     const unknownCats = new Set();
     const badSentences = [];
+    const missingIds = [];
+    const dupeIds = [];
+    const seenIds = new Set();
     let skipped = 0;
     for (let i = startIdx; i < rows.length; i++) {
       const row = rows[i];
@@ -19,17 +22,31 @@
       const category = (row[3] ?? '').toString().trim();
       const sentence = (row[4] ?? '').toString().trim();
       const sentenceTranslation = (row[5] ?? '').toString().trim();
+      // Column G: the stable per-row ID that a word's progress is keyed on.
+      // Read as a string so a numeric cell and a text cell produce the same
+      // key - XLSX hands back a number for "74" and a string for "74a".
+      const id = (row[6] ?? '').toString().trim();
       if (!es && !en) continue; // fully blank row - not worth flagging
       if (!es || !en) { skipped++; continue; }
       const esKey = es.toLowerCase();
       if (seenEs.has(esKey)) dupes.push(es);
       seenEs.add(esKey);
+      // A row with no ID still loads and still plays - it just falls back to
+      // the old text-derived key (see wordKey() in utils.js), so it behaves
+      // exactly as every word did before IDs existed. That's deliberate: a
+      // hard failure would break the whole app over one forgotten cell on a
+      // hand-added row. But it IS the condition that lets progress fork
+      // again, so it's reported loudly rather than passed over in silence.
+      // Re-run admin/assign-ids.html to fill any gaps.
+      if (!id) missingIds.push(es);
+      else if (seenIds.has(id)) dupeIds.push(id);
+      else seenIds.add(id);
       if (category) {
         category.split(',').map(c => c.trim()).filter(Boolean).forEach(tag => {
           if (tag !== 'conjugation' && !CATEGORIES.some(c => c.id === tag)) unknownCats.add(tag);
         });
       }
-      const pair = { es, en, note, category, sentence, sentenceTranslation };
+      const pair = { es, en, note, category, sentence, sentenceTranslation, id };
       if (sentence && !findClozeBlank(pair)) {
         // A sentence that doesn't actually contain its own target word
         // (typo, wrong row, edited word without updating the sentence)
@@ -48,6 +65,8 @@
     if (dupes.length > 0) console.warn(`Palabra: duplicate Spanish word(s) in the sheet: ${dupes.join(', ')}`);
     if (unknownCats.size > 0) console.warn(`Palabra: unrecognized category tag(s): ${[...unknownCats].join(', ')}`);
     if (badSentences.length > 0) console.warn(`Palabra: sentence doesn't contain its own word, cloze disabled for: ${badSentences.join(', ')}`);
+    if (missingIds.length > 0) console.warn(`Palabra: ${missingIds.length} row(s) have no ID in column G and will key on their text instead - their progress WILL fork if you edit their Spanish or English cell. Re-run admin/assign-ids.html to fix: ${missingIds.slice(0, 20).join(', ')}${missingIds.length > 20 ? ', …' : ''}`);
+    if (dupeIds.length > 0) console.warn(`Palabra: duplicate ID(s) in column G - these rows share one progress record: ${dupeIds.join(', ')}`);
     return cleaned;
   }
 
@@ -92,6 +111,10 @@
         : '';
       state.verbsLoading = false;
     }
+    // The word list is the thing the remap maps against, so this is the
+    // first moment it can possibly run. It's a no-op on every subsequent
+    // call once progress.keyVersion is current.
+    remapProgressKeysToIds();
     render();
   }
 

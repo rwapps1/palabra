@@ -1,8 +1,13 @@
 // Conjugate mode rules and flow, including verb-combo pool/round building.
 
 
+  // Same reasoning as wordKey() in utils.js: this used to key on the verb's
+  // Spanish text, so editing that cell - fixing a typo, adding an
+  // alternative - forked all six of that verb's person records at once.
+  // Keyed on the row's stable ID now, with the same text fallback for a row
+  // that hasn't been given one yet.
   function verbComboKey(pair, personIndex) {
-    return normalize(pair.es) + '::' + personIndex;
+    return (pair.id ? 'id:' + pair.id : normalize(pair.es)) + '::' + personIndex;
   }
 
   function getVerbComboWeight(combo) {
@@ -241,27 +246,39 @@
     showQuitConfirm('conjugate');
   }
 
-  // Same idea for verb combos. The person index can always be recovered
-  // from the stats key itself (normalize(es) + '::' + personIndex), so
-  // only the display text needs the fallback.
+  // Same idea, and the same fix, as lowestBoxWords() in word-selection.js.
+  //
+  // This used to recover the verb from the stats key by splitting it and
+  // matching the first half against the word list - which only worked while
+  // keys were built out of the verb's own text. Keys are IDs now, so the
+  // record is matched against a live row by its whole key instead, and the
+  // display text comes from that row. Records matching no current verb row
+  // are skipped: nothing in the app can produce their key any more, so they
+  // are unreachable rather than merely stale. Nothing is deleted here -
+  // they stay in verbStats and still count in boxCounts().
   function lowestBoxVerbCombos(limit) {
-    const fallbackByEs = {};
-    state.verbPairs.forEach(pair => { fallbackByEs[normalize(pair.es)] = pair; });
+    const live = {};
+    state.verbPairs.forEach(pair => {
+      for (let person = 0; person < PERSON_LABELS.length; person++) {
+        live[verbComboKey(pair, person)] = { pair, person };
+      }
+    });
 
     const sorted = Object.entries(state.progress.verbStats)
       .sort((a, b) => (a[1].box - b[1].box) || (b[1].wrong - a[1].wrong) || (a[1].lastSeen - b[1].lastSeen));
 
     const out = [];
     for (const [key, vs] of sorted) {
-      const parts = key.split('::');
-      const person = typeof vs.person === 'number' ? vs.person : parseInt(parts[1], 10);
-      const fb = fallbackByEs[parts[0]];
-      const es = vs.es || (fb && fb.es);
-      const en = vs.en || (fb && fb.en) || '';
-      if (es && !isNaN(person)) {
-        out.push({ es, en, box: vs.box, wrong: vs.wrong, person });
-        if (out.length >= limit) break;
-      }
+      const match = live[key];
+      if (!match) continue;
+      out.push({
+        es: match.pair.es,
+        en: match.pair.en || '',
+        box: vs.box,
+        wrong: vs.wrong,
+        person: match.person,
+      });
+      if (out.length >= limit) break;
     }
     return out;
   }

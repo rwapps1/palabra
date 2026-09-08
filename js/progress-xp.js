@@ -28,6 +28,7 @@
       recentActiveDates: [],        // trimmed list of qualifying-activity dates (last ~14), drives the week pip strip
       todaySnapshot: { date: null, xpAtStart: 0, answeredAtStart: 0 }, // baseline computeXP()/answered-count at the start of "today", used to derive today's XP/words live
       dailyGoalCelebratedDate: null, // 'YYYY-MM-DD' of the last day the "goal reached" toast was shown, so it only fires once per day
+      keyVersion: PROGRESS_KEY_VERSION, // shape of the wordStats/verbStats keys — see remapProgressKeysToIds(). A brand-new account starts on the current scheme with nothing to migrate; data loaded from anywhere else defaults to 1 (text keys) unless it says otherwise.
     };
   }
 
@@ -99,27 +100,30 @@
     return { xp, level, xpIntoLevel, xpForNextLevel: span, pct };
   }
 
-  function normalizeWordStats(wordStats) {
-    // One-time migration: some words used to carry a disambiguator baked
-    // into the English cell, e.g. "to be (essential)" - that text now
-    // lives in a separate Note column, so the English cell (and therefore
-    // this word's key) is clean. Rename any stored key still using the old
-    // parenthetical form so existing box/streak progress carries over
-    // rather than looking reset. Harmless no-op for verbStats, whose keys
-    // are `es::personIndex` and never contain parentheses.
-    Object.keys(wordStats).forEach(oldKey => {
-      const sep = oldKey.indexOf('::');
-      if (sep === -1) return;
-      const esPart = oldKey.slice(0, sep);
-      const enPart = oldKey.slice(sep + 2);
-      const strippedEn = enPart.replace(/\s*\([^)]*\)\s*$/, '').trim();
-      if (!strippedEn || strippedEn === enPart) return;
-      const newKey = esPart + '::' + strippedEn;
-      if (newKey === oldKey || wordStats[newKey]) return;
-      wordStats[newKey] = wordStats[oldKey];
-      delete wordStats[oldKey];
-    });
+  // Bumped when the SHAPE OF THE KEYS in wordStats/verbStats changes.
+  //   1 = text-derived keys (normalize(es) + '::' + normalize(en))
+  //   2 = stable row IDs ('id:74', and 'id:74::3' for verb combos)
+  // Stored on the progress object so the one-off remap below knows whether
+  // it still has work to do, and runs exactly once per set of data rather
+  // than on every load.
+  const PROGRESS_KEY_VERSION = 2;
 
+  function normalizeWordStats(wordStats) {
+    // NOTE: this used to also carry a migration that stripped a trailing
+    // parenthetical off a stored key - "aquel::that (over there)" ->
+    // "aquel::that" - to follow along when a disambiguator moved out of the
+    // English cell into the Note column. It has been REMOVED, and it should
+    // not come back.
+    //
+    // It caused real damage. It renamed the key but left the record's stored
+    // `en` untouched, and where the renamed key already existed it returned
+    // early instead of merging, stranding the original permanently. The
+    // result was a word carrying two records - one holding the history, one
+    // sitting at box 0 - which Daily Double then served every single day.
+    // Keys are no longer derived from editable text at all (see wordKey() in
+    // utils.js), so there is nothing left for it to do, and any future
+    // rescue of orphaned records belongs in the deliberate one-off below
+    // rather than in a routine that silently rewrites data on every load.
     Object.keys(wordStats).forEach(key => {
       const ws = wordStats[key];
       if (typeof ws.box !== 'number') {
@@ -131,6 +135,261 @@
       }
     });
     return wordStats;
+  }
+
+  // --- One-off text-key -> ID-key remap ---------------------------------
+  //
+  // Progress used to be keyed on the word's own text, so every edit to a
+  // Spanish or English cell forked that word onto a fresh key and stranded
+  // its history on the old one. Keys are now the stable ID in column G of
+  // words.xlsx. This walks the existing records once and moves each one onto
+  // its word's ID key, merging the forks back together.
+  //
+  // Deliberately NOT an automatic cleanup that runs on every load. A
+  // well-meaning routine that quietly rewrote records on load is exactly
+  // what caused the damage this is repairing. It runs once, gated on
+  // progress.keyVersion, and then never again.
+  //
+  // Merge rule where several old records land on the same ID: keep the
+  // highest box, sum right and wrong, keep masteredEver if either had it,
+  // take the most recent lastSeen, and recompute nextDue from the surviving
+  // box so the schedule stays internally consistent. Display text is taken
+  // from the live row, not from either record.
+  //
+  // Records whose text matches no current row are dropped - they are
+  // unreachable by definition, since nothing in the app can ever produce
+  // their key again.
+  //
+  // Pass { dryRun: true } to get the same report back without writing
+  // anything. Worth running from the console first:
+  //     remapProgressKeysToIds({ dryRun: true })
+  function remapProgressKeysToIds(options) {
+    const dryRun = !!(options && options.dryRun);
+    const report = {
+      ran: false, reason: '', dryRun,
+      words: { before: 0, after: 0, migrated: 0, merged: 0, dropped: 0, alreadyId: 0, recoveredByAlternatives: 0, droppedKeys: [] },
+      verbs: { before: 0, after: 0, migrated: 0, merged: 0, dropped: 0, alreadyId: 0 },
+      idCollisions: [],
+    };
+
+    // Nothing to map against until the word list has actually loaded.
+    if (!state.pairs || state.pairs.length === 0) {
+      report.reason = 'word list not loaded yet';
+      return report;
+    }
+
+    // SAFETY BRAKE 1 — a word list with no IDs in it at all.
+    // This is the scenario that would do real damage: a stale service-worker
+    // copy of words.xlsx from before the ID column existed, or an old file
+    // uploaded by hand. Every record would match nothing, and "matches
+    // nothing" means "drop", so the entire history would be wiped in one
+    // pass. The word list is the untrusted input here, not the progress
+    // data, so refuse outright rather than migrate against it.
+    const withIds = state.pairs.filter(p => p.id).length;
+    if (withIds === 0) {
+      report.reason = 'the loaded word list has no IDs at all — refusing to remap';
+      console.warn('Palabra: ' + report.reason + '. The words.xlsx being used is probably an older copy without column G (a stale cache, or a manual upload). Nothing has been changed.');
+      return report;
+    }
+
+    if (!dryRun && state.progress.keyVersion >= PROGRESS_KEY_VERSION) {
+      report.reason = 'already migrated';
+      return report;
+    }
+
+    // Old text key -> live row, for every row that has an ID. Two rows can
+    // normalise to the same text key (accented and unaccented spellings of
+    // the same word, e.g. "cuál" and "cual"), in which case they shared a
+    // single record before and only one of them can inherit it - the other
+    // starts fresh. Recorded rather than hidden.
+    const byTextKey = {};
+    const byEsKey = {};
+    state.pairs.forEach(pair => {
+      if (!pair.id) return;
+      const tk = normalize(pair.es) + '::' + normalize(pair.en);
+      if (byTextKey[tk]) report.idCollisions.push(tk);
+      byTextKey[tk] = pair;
+      const ek = normalize(pair.es);
+      if (!byEsKey[ek]) byEsKey[ek] = pair;
+    });
+
+    // Second-chance lookup for records that match no row exactly.
+    //
+    // An exact match only reunites a fork when both halves of the old key
+    // still appear verbatim in the sheet - which is often not the case,
+    // because the forks were CAUSED by the text changing. The record holding
+    // the real history is usually the one whose text is now out of date.
+    // "enfermo::sick" is the clearest example: 15 correct answers and a
+    // mastery flag sitting on a key the sheet can no longer produce, because
+    // the Spanish cell has since become "enfermo / malo". Dropping it would
+    // throw away the genuine history and keep the two-answer stub.
+    //
+    // So each cell is split into its alternatives and indexed by every
+    // Spanish/English pairing it can produce. "enfermo / malo" = "sick"
+    // registers enfermo::sick and malo::sick as well as its exact key, and
+    // the orphan lands back on its own row.
+    //
+    // Only an unambiguous hit counts. If an old key could belong to two
+    // different rows, there's no evidence for choosing between them, so it
+    // is left to drop and reported rather than guessed at.
+    const byAlternative = {};
+    state.pairs.forEach(pair => {
+      if (!pair.id) return;
+      const esAlts = splitAnswers(pair.es).map(normalize);
+      const enAlts = splitAnswers(pair.en).map(normalize);
+      esAlts.forEach(a => enAlts.forEach(b => {
+        const k = a + '::' + b;
+        if (!byAlternative[k]) byAlternative[k] = new Set();
+        byAlternative[k].add(pair.id);
+      }));
+    });
+
+    const lookupAlternatives = (esPart, enPart) => {
+      const esAlts = splitAnswers(esPart).map(normalize);
+      const enAlts = splitAnswers(enPart).map(normalize);
+      const hits = new Set();
+      esAlts.forEach(a => enAlts.forEach(b => {
+        const found = byAlternative[a + '::' + b];
+        if (found) found.forEach(id => hits.add(id));
+      }));
+      if (hits.size !== 1) return null;
+      const id = hits.values().next().value;
+      return state.pairs.find(p => p.id === id) || null;
+    };
+
+    // Third and last chance: a trailing parenthetical.
+    //
+    // Some old keys carry a disambiguator that used to live in the English
+    // cell and has since moved to the Note column - "aquel::that (over
+    // there)", "ser::to be (permanent)". Those hold real history (23 correct
+    // answers apiece) and nothing else will ever match them, because the
+    // bracketed text appears nowhere in the sheet any more.
+    //
+    // Stripping the parenthetical is what the old normalizeWordStats()
+    // migration did, and it is worth being clear about why doing it here is
+    // not the same mistake. That one ran on every single load, renamed the
+    // key while leaving the record's stored text stale, and silently gave up
+    // when the destination already existed - so it created the orphans it
+    // was meant to prevent. This runs once, merges into the destination
+    // instead of bailing out, takes display text from the live row, and
+    // reports what it did. Same observation, opposite handling.
+    const findLiveRow = (key) => {
+      const sep = key.indexOf('::');
+      if (sep === -1) return null;
+      const esPart = key.slice(0, sep);
+      const enPart = key.slice(sep + 2);
+      const direct = lookupAlternatives(esPart, enPart);
+      if (direct) return direct;
+      const strip = (s) => s.replace(/\s*\([^)]*\)\s*$/, '').trim();
+      const esStripped = strip(esPart);
+      const enStripped = strip(enPart);
+      if (esStripped === esPart && enStripped === enPart) return null;
+      if (!esStripped || !enStripped) return null;
+      return lookupAlternatives(esStripped, enStripped);
+    };
+
+    const mergeInto = (target, src, pair) => {
+      if (!target) {
+        target = { box: 0, nextDue: 0, right: 0, wrong: 0, lastSeen: 0 };
+      }
+      target.box = Math.max(target.box || 0, src.box || 0);
+      target.right = (target.right || 0) + (src.right || 0);
+      target.wrong = (target.wrong || 0) + (src.wrong || 0);
+      target.lastSeen = Math.max(target.lastSeen || 0, src.lastSeen || 0);
+      if (src.masteredEver || target.masteredEver) target.masteredEver = true;
+      // Derived, not inherited: two merged records carry two unrelated
+      // nextDue values, and the only one that makes sense is the one implied
+      // by the box the merged record ends up in.
+      target.nextDue = target.lastSeen + (SRS_INTERVALS_DAYS[target.box] || 0) * 86400000;
+      if (pair) {
+        target.es = primaryText(pair.es);
+        target.en = primaryText(pair.en);
+      }
+      return target;
+    };
+
+    // --- wordStats: 'es::en' -> 'id:N' ---
+    const oldWords = state.progress.wordStats || {};
+    report.words.before = Object.keys(oldWords).length;
+    const newWords = {};
+    Object.keys(oldWords).forEach(key => {
+      const ws = oldWords[key];
+      if (key.indexOf('id:') === 0) {
+        report.words.alreadyId++;
+        newWords[key] = newWords[key] ? mergeInto(newWords[key], ws, null) : ws;
+        return;
+      }
+      let pair = byTextKey[key];
+      if (!pair) {
+        pair = findLiveRow(key);
+        if (pair) report.words.recoveredByAlternatives++;
+      }
+      if (!pair) {
+        report.words.dropped++;
+        if (report.words.droppedKeys.length < 100) report.words.droppedKeys.push(key);
+        return;
+      }
+      const newKey = 'id:' + pair.id;
+      if (newWords[newKey]) report.words.merged++; else report.words.migrated++;
+      newWords[newKey] = mergeInto(newWords[newKey], ws, pair);
+    });
+    report.words.after = Object.keys(newWords).length;
+
+    // --- verbStats: 'es::personIndex' -> 'id:N::personIndex' ---
+    const oldVerbs = state.progress.verbStats || {};
+    report.verbs.before = Object.keys(oldVerbs).length;
+    const newVerbs = {};
+    Object.keys(oldVerbs).forEach(key => {
+      const vs = oldVerbs[key];
+      if (key.indexOf('id:') === 0) {
+        report.verbs.alreadyId++;
+        newVerbs[key] = newVerbs[key] ? mergeInto(newVerbs[key], vs, null) : vs;
+        return;
+      }
+      const sep = key.lastIndexOf('::');
+      const esPart = sep === -1 ? key : key.slice(0, sep);
+      const person = sep === -1 ? '' : key.slice(sep + 2);
+      const pair = byEsKey[esPart];
+      if (!pair || person === '') { report.verbs.dropped++; return; }
+      const newKey = 'id:' + pair.id + '::' + person;
+      if (newVerbs[newKey]) report.verbs.merged++; else report.verbs.migrated++;
+      newVerbs[newKey] = mergeInto(newVerbs[newKey], vs, null);
+    });
+    report.verbs.after = Object.keys(newVerbs).length;
+
+    report.ran = true;
+
+    // SAFETY BRAKE 2 — a plausible-looking but wrong word list.
+    // Brake 1 catches a list with no IDs; this catches one whose IDs simply
+    // don't correspond to this account's history (a different list, a
+    // half-written sheet, a bad re-numbering). A handful of dropped records
+    // is expected and fine - they're the orphans this is meant to clear -
+    // but losing most of them means the input is wrong, not the data.
+    // Better to leave everything untouched and be told than to find out
+    // afterwards.
+    if (!dryRun && report.words.before > 20 && report.words.dropped > report.words.before / 2) {
+      report.ran = false;
+      report.reason = `refusing to remap: ${report.words.dropped} of ${report.words.before} records match no row in the loaded word list`;
+      console.warn('Palabra: ' + report.reason + '. Nothing has been changed. Check that words.xlsx is the current one, then run remapProgressKeysToIds({ dryRun: true }) to see the detail.');
+      return report;
+    }
+
+    if (dryRun) {
+      report.reason = 'dry run - nothing written';
+      console.log('Palabra key remap DRY RUN:', report);
+      return report;
+    }
+
+    state.progress.wordStats = newWords;
+    state.progress.verbStats = newVerbs;
+    state.progress.keyVersion = PROGRESS_KEY_VERSION;
+    // masteredWordsCount is deliberately left alone. It's a lifetime counter
+    // that by design only ever goes up (see ws.masteredEver in
+    // recordAnswer), and merging two mastered records into one would
+    // otherwise make an already-earned achievement appear to regress.
+    saveProgress();
+    console.log('Palabra: progress keys migrated to word IDs.', report);
+    return report;
   }
 
   function loadProgress() {
@@ -162,6 +421,8 @@
       merged.recentActiveDates = Array.isArray(parsed.recentActiveDates) ? parsed.recentActiveDates.slice(-14) : [];
       merged.todaySnapshot = Object.assign({}, merged.todaySnapshot, parsed.todaySnapshot || {});
       merged.dailyGoalCelebratedDate = typeof parsed.dailyGoalCelebratedDate === 'string' ? parsed.dailyGoalCelebratedDate : null;
+      // Absent means data written before IDs existed — treat as text keys so the one-off remap knows to run.
+      merged.keyVersion = typeof parsed.keyVersion === 'number' ? parsed.keyVersion : 1;
       return merged;
     } catch (e) {
       return defaultProgress();
@@ -271,6 +532,8 @@
         merged.recentActiveDates = Array.isArray(parsed.recentActiveDates) ? parsed.recentActiveDates.slice(-14) : [];
         merged.todaySnapshot = Object.assign({}, merged.todaySnapshot, parsed.todaySnapshot || {});
         merged.dailyGoalCelebratedDate = typeof parsed.dailyGoalCelebratedDate === 'string' ? parsed.dailyGoalCelebratedDate : null;
+      // Absent means data written before IDs existed — treat as text keys so the one-off remap knows to run.
+      merged.keyVersion = typeof parsed.keyVersion === 'number' ? parsed.keyVersion : 1;
         state.progress = merged;
         saveProgress();
         render();

@@ -20,8 +20,25 @@
     return a;
   }
 
+  // A word's progress key.
+  //
+  // Prefers the stable per-row ID from column G of words.xlsx. Progress used
+  // to be keyed on normalize(es) + '::' + normalize(en) - derived from text
+  // the word list is free to change - so any edit to either cell silently
+  // forked that word onto a brand new key and stranded its history on the
+  // old one. Adding an alternative ("aquel" -> "aquel / ese / esa"), removing
+  // one ("time / weather" -> "time"), moving a disambiguator out to the Note
+  // column, or fixing a typo all did it. Keying on the ID means the row can
+  // be edited freely and its progress follows it.
+  //
+  // Rows with no ID fall back to the old text key. That keeps a hand-added
+  // row playable instead of breaking the app over one empty cell - it just
+  // behaves the way everything did before IDs, no worse. data-loading.js
+  // warns loudly about any such row, and admin/assign-ids.html fills the
+  // gaps. The 'id:' prefix keeps the two namespaces from ever colliding and
+  // makes it obvious which kind of key you're looking at in Firestore.
   function wordKey(pair) {
-    return normalize(pair.es) + '::' + normalize(pair.en);
+    return pair.id ? 'id:' + pair.id : normalize(pair.es) + '::' + normalize(pair.en);
   }
 
   // Anywhere a field is being displayed as a single word - a prompt, or a

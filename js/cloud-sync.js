@@ -35,6 +35,8 @@
     merged.recentActiveDates = Array.isArray(parsed.recentActiveDates) ? parsed.recentActiveDates.slice(-14) : [];
     merged.todaySnapshot = Object.assign({}, merged.todaySnapshot, parsed.todaySnapshot || {});
     merged.dailyGoalCelebratedDate = typeof parsed.dailyGoalCelebratedDate === 'string' ? parsed.dailyGoalCelebratedDate : null;
+    // Absent means data written before IDs existed — treat as text keys so the one-off remap knows to run.
+    merged.keyVersion = typeof parsed.keyVersion === 'number' ? parsed.keyVersion : 1;
     return merged;
   }
 
@@ -64,6 +66,12 @@
         // never trigger a push right back, or two open tabs can end up
         // volleying stale writes at each other.
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.progress)); } catch (e) {}
+        // A pull replaces state.progress wholesale, so data that predates
+        // the ID keys can arrive here long after the word list loaded and
+        // the local remap already ran. Re-checked rather than assumed:
+        // it's gated on the incoming data's own keyVersion, so it does
+        // nothing unless this particular copy still needs migrating.
+        remapProgressKeysToIds();
       } else {
         // Signed-in user with no cloud doc yet — this is a genuinely new
         // account (email/password signups already write a doc in
