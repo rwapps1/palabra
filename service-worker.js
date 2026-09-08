@@ -6,9 +6,11 @@ const WORDS_FILE = './words.xlsx';
 // (Category column), so there's nothing to list here anymore - one file to
 // cache instead of 17.
 
-// Bumped for the /new demo-funnel telemetry deploy — index.html, config.js
-// and auth.js all changed content, and js/demo-telemetry.js is a new cached
-// file. /new itself is still deliberately NOT in ASSETS_TO_CACHE below:
+// Bumped for the Daily Double repeat-words fix — js/word-selection.js
+// changed content (lowestBoxWords now matches records against the live
+// word list instead of serving their own stored text). No new files.
+//
+// /new is still deliberately NOT in ASSETS_TO_CACHE below:
 // it's a one-time, no-account ad-funnel page for first-time visitors, not
 // part of the installed offline app shell, so it doesn't need precaching or
 // offline support the way the main app does. admin/ is likewise absent on
@@ -18,7 +20,7 @@ const WORDS_FILE = './words.xlsx';
 // on every page view: leaving it uncached would mean an extra network
 // request on every cold start for a file that does nothing for the vast
 // majority of users.
-const CACHE_NAME = 'palabra-cache-v9';
+const CACHE_NAME = 'palabra-cache-v10';
 const ASSETS_TO_CACHE = [
   './',
   APP_HTML,
