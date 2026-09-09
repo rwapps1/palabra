@@ -107,5 +107,23 @@
     conjugateNewBestStreak: false,
     conjugateLastWasTypo: false,
     achievementGroup: null,
+    // ---- Story Mode ----
+    storyIndex: [],           // the stories/index.json manifest, once fetched
+    storyIndexLoaded: false,
+    activeStory: null,        // the full story object currently open
+    storyReadMs: 0,           // FOREGROUND ms accumulated on the reader for activeStory. Held here, not in progress — a part-read survives leaving the reader within a session, but not an app restart, which is a deliberate simplicity trade rather than per-story state in the synced document.
+    storyReadLastTick: 0,     // Date.now() of the last tick; 0 while paused (backgrounded or off the reader)
+    storyOpenParas: {},       // { paragraphIndex: true } — which paragraphs are showing their English
+    storyAllRevealed: false,  // whole-story English toggle
+    storyTapped: {},          // { token: true } — distinct words tapped this session, for the results list and the Unaided achievement
+    storyPopover: null,       // { key, n, top, left, below } for the tapped-word popover, or null. In-memory only — never a history entry, same rule as quitConfirmMode.
+    storyQuestions: [],       // the 6 target-word questions
+    storyQIndex: 0,
+    storyResults: [],         // [{ prompt, correctAnswer, userAnswer, correct }] — the story quiz's own results, deliberately separate from state.results so nothing here can reach the SRS
+    storySelectedOption: null,
+    storyChecked: false,
+    storyWasCorrect: false,
+    storyLoading: false,
+    storyError: '',
     quitConfirmMode: null, // null | 'quiz' | 'timeattack' | 'memory-play' | 'conjugate' — which mode's in-app quit-confirm overlay is showing, if any. Replaces window.confirm(): a native dialog isn't part of the DOM/history the app controls, so a hardware back press while it's open is handled by the OS/WebView chrome itself rather than reaching this app's own popstate handling — confirmed as the cause of the "quit, cancel, quit again" back-button bug. An in-app overlay driven by this field is just another render() state change, so it participates in the same trusted-gesture history logic as everything else.
   };

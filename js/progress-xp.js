@@ -17,6 +17,16 @@
       memoryLifetime: { boardsCleared: 0, bySize: { '6': 0, '8': 0, '12': 0 } },
       memoryClearedSizes: {},
       streamLifetime: { totalAnswered: 0, totalCorrect: 0, checkpointsCompleted: 0, audioCorrect: 0 },
+      // Story Mode. storiesCompleted is a plain tally that counts re-reads —
+      // XP measures activity and re-reading is still reading, so this is
+      // deliberately NOT the size of storiesRead. Both only ever increase,
+      // which is what computeXP()'s "XP never goes down" contract requires.
+      storyLifetime: { storiesCompleted: 0, totalCorrect: 0 },
+      // Which stories have ever been finished, as { storyId: firstCompletedMs }.
+      // Drives the library's "Read" marker and the distinct-story achievements.
+      // Lives here rather than in its own Firestore document so it syncs,
+      // exports and imports with everything else for free.
+      storiesRead: {},
       masteredWordsCount: 0, // words that have EVER reached box 6 — permanent, never drops if a word later regresses (see ws.masteredEver)
       settings: { direction: 'mixed', roundLength: '10', autoSpeak: true, answerMode: 'choice', soundEffects: true, memoryGridSize: '8' },
       achievements: {},
@@ -70,6 +80,12 @@
     const totalBoards = (progress.memoryLifetime && progress.memoryLifetime.boardsCleared) || 0;
     const legacyBoards = Math.max(0, totalBoards - trackedBoards);
     xp += legacyBoards * XP_MEMORY_LEGACY;
+
+    // Story Mode. Reading itself never touches the SRS (see game-story.js) —
+    // this is purely the end-of-story word quiz plus the completion award.
+    const storyLifetime = progress.storyLifetime || { storiesCompleted: 0, totalCorrect: 0 };
+    xp += (storyLifetime.totalCorrect || 0) * XP_PER_STORY_CORRECT;
+    xp += (storyLifetime.storiesCompleted || 0) * XP_STORY_COMPLETED;
 
     xp += progress.streak.best * XP_PER_BEST_STREAK_POINT;
     xp += progress.conjugateStreak.best * XP_PER_BEST_STREAK_POINT;
@@ -410,6 +426,8 @@
       merged.memoryBest = Object.assign({}, parsed.memoryBest || {});
       merged.memoryLifetime = Object.assign(merged.memoryLifetime, parsed.memoryLifetime || {});
       merged.streamLifetime = Object.assign(merged.streamLifetime, parsed.streamLifetime || {});
+      merged.storyLifetime = Object.assign(merged.storyLifetime, parsed.storyLifetime || {});
+      merged.storiesRead = Object.assign({}, parsed.storiesRead || {});
       merged.memoryClearedSizes = Object.assign({}, parsed.memoryClearedSizes || {});
       merged.settings = Object.assign(merged.settings, parsed.settings || {});
       merged.achievements = Object.assign({}, parsed.achievements || {});
@@ -521,6 +539,8 @@
         merged.memoryBest = Object.assign({}, parsed.memoryBest || {});
         merged.memoryLifetime = Object.assign(merged.memoryLifetime, parsed.memoryLifetime || {});
         merged.streamLifetime = Object.assign(merged.streamLifetime, parsed.streamLifetime || {});
+        merged.storyLifetime = Object.assign(merged.storyLifetime, parsed.storyLifetime || {});
+        merged.storiesRead = Object.assign({}, parsed.storiesRead || {});
         merged.memoryClearedSizes = Object.assign({}, parsed.memoryClearedSizes || {});
         merged.settings = Object.assign(merged.settings, parsed.settings || {});
         merged.achievements = Object.assign({}, parsed.achievements || {});

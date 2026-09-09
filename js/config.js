@@ -146,13 +146,24 @@
     streamMarathon:         { name: 'Marathon Session',  desc: '5 checkpoints in one sitting, no stopping',                      icon: '🏕️' },
     streamTrueFalseStreak10:{ name: 'Snap Judgment',     desc: '10 correct True/False answers in a row in Stream',              icon: '🎭' },
     streamScrambleStreak10: { name: 'Word Order',        desc: '10 correct Sentence Scramble answers in a row in Stream',       icon: '🧵' },
+    storyFirst:      { name: 'First Chapter', desc: 'Read your first story',                                          icon: '📖' },
+    storyPerfect:    { name: 'Every Word',    desc: 'All six words correct after a story',                            icon: '⭐' },
+    storyNoHelp:     { name: 'Unaided',       desc: 'Finish a story without tapping a word or revealing any English', icon: '🪶' },
+    storyDistinct5:  { name: 'Well Read',     desc: 'Read 5 different stories',                                       icon: '🔖' },
+    storyDistinct15: { name: 'Bookworm',      desc: 'Read 15 different stories',                                      icon: '📕' },
+    storyCorrect50:  { name: 'Close Reader',  desc: '50 lifetime correct answers in Story Mode',                      icon: '🔍' },
   };
 
   // Groups the flat ACHIEVEMENTS registry by which game each badge belongs to,
   // using the id prefix convention already in place (timeAttack*, memory*, conjugate*).
   // Anything with no game-specific prefix belongs to Quiz (which Categories shares).
+  // NOTE on prefixes: the Quiz group is the prefix:null catch-all, and
+  // achievementIdsForGroup() excludes anything starting with another group's
+  // prefix. 'story' does not collide with 'stream' (no id starts with both),
+  // so the six Story achievements land in their own group and stay out of Quiz.
   const ACHIEVEMENT_GROUPS = [
     { id: 'stream', name: 'Stream', icon: '🌊', color: 'rgba(255,193,99,0.18)', prefix: 'stream' },
+    { id: 'story', name: 'Story Mode', icon: '📖', color: 'rgba(244,114,182,0.18)', prefix: 'story' },
     { id: 'quiz', name: 'Quiz', icon: '🔤', color: 'rgba(255,107,74,0.18)', prefix: null },
     { id: 'timeattack', name: 'Time Attack', icon: '⏱', color: 'rgba(45,212,191,0.18)', prefix: 'timeAttack' },
     { id: 'memory', name: 'Memory Match', icon: '🧩', color: 'rgba(217,70,239,0.18)', prefix: 'memory' },
@@ -175,6 +186,35 @@
   const XP_MEMORY_LEGACY = 15; // flat fallback for boards cleared before per-size tracking existed
   const XP_PER_BEST_STREAK_POINT = 2;
   const XP_PER_ACHIEVEMENT = 20;
+  // Story Mode. Per-answer XP is deliberately identical to XP_PER_QUIZ_CORRECT
+  // — a correct answer is worth the same wherever you give it. The completion
+  // award matches a 6-pair Memory board, putting a typical story (6 answers +
+  // finishing) at ~15-16 XP, about a quarter of DEFAULT_DAILY_XP_GOAL.
+  // Both are awarded again on a re-read: XP measures activity, and re-reading
+  // is still reading (see storyLifetime in progress-xp.js, which is therefore
+  // a plain tally rather than a set).
+  const XP_PER_STORY_CORRECT = 1;
+  const XP_STORY_COMPLETED = 10;
+
+  // Minimum time actually spent on the reader before a story counts as
+  // completed (XP_STORY_COMPLETED, storiesCompleted, storiesRead, and the
+  // daily-activity mark). Guards the completion award against opening a story
+  // and tapping straight through: nobody reads ~500 Spanish words in under
+  // 30 seconds. FOREGROUND time only — the timer pauses on visibilitychange,
+  // or a backgrounded TWA would accrue it for free. Per-answer XP is NOT
+  // gated by this; answering is its own evidence.
+  const MIN_STORY_READ_MS = 30000;
+
+  // Story Mode content. One JSON file per story plus this manifest; both live
+  // in the repo, deliberately NOT in words.xlsx (wrong shape, and
+  // data-loading.js parses that at boot — every user would download every
+  // story just to play Memory Match) and NOT in Firestore (static content,
+  // identical for everyone, and fetching it would break offline reading).
+  // Story files are deliberately absent from the service worker's precache
+  // list too: they cache at runtime on first read, which is what lets a new
+  // story ship without a cache bump.
+  const STORIES_INDEX = 'stories/index.json';
+  const STORIES_DIR = 'stories/';
 
   // Default daily XP goal shown on the hub's Today panel — user-adjustable
   // from the settings menu (see progress.dailyXPGoal), this is just the
@@ -216,6 +256,12 @@
     streamAudio25:       { target: 25, value: p => p.streamLifetime.audioCorrect },
     streamCorrect100:    { target: 100, value: p => p.streamLifetime.totalCorrect },
     streamCorrect500:    { target: 500, value: p => p.streamLifetime.totalCorrect },
+    // Distinct stories, not storiesCompleted — re-reads inflate that counter
+    // by design (see XP_PER_STORY_CORRECT above), so "5 different stories"
+    // has to come from the storiesRead id map instead.
+    storyDistinct5:  { target: 5,  value: p => Object.keys(p.storiesRead || {}).length },
+    storyDistinct15: { target: 15, value: p => Object.keys(p.storiesRead || {}).length },
+    storyCorrect50:  { target: 50, value: p => (p.storyLifetime && p.storyLifetime.totalCorrect) || 0 },
   };
 
   // file id (matches "categories-{id}.xlsx" in the repo) -> display name + icon
