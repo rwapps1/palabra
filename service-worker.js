@@ -6,6 +6,19 @@ const WORDS_FILE = './words.xlsx';
 // (Category column), so there's nothing to list here anymore - one file to
 // cache instead of 17.
 
+// v14: Story Mode. New files (css/story.css, js/game-story.js,
+// js/views/render-story.js) plus content changes to config.js, progress-xp.js,
+// state.js, base.css, hub.css, render-quiz.js, render-hub.js and
+// render-dispatch.js — all already-cached files, so this bump is what makes
+// the new code reachable on an installed device.
+//
+// The stories themselves (stories/index.json, stories/*.json) are
+// DELIBERATELY NOT in ASSETS_TO_CACHE. Network-first caches them on first
+// read anyway, so a story you have read stays readable offline — and adding a
+// new story later then needs no cache bump at all, only a new file and a
+// manifest line. A bump is only required if an ALREADY-PUBLISHED story's text
+// changes, since a device may be holding the old copy.
+//
 // v12: progress now pushes with updateDoc (replace) instead of setDoc merge —
 // js/firebase-auth.js and js/cloud-sync.js changed. A merged write could not
 // remove the records the ID migration merged away, leaving the Firestore
@@ -31,7 +44,7 @@ const WORDS_FILE = './words.xlsx';
 // on every page view: leaving it uncached would mean an extra network
 // request on every cold start for a file that does nothing for the vast
 // majority of users.
-const CACHE_NAME = 'palabra-cache-v13';
+const CACHE_NAME = 'palabra-cache-v14';
 const ASSETS_TO_CACHE = [
   './',
   APP_HTML,
@@ -49,6 +62,7 @@ const ASSETS_TO_CACHE = [
   './css/celebration.css',
   './css/daily-double.css',
   './css/hub.css',
+  './css/story.css',
   './js/firebase-auth.js',
   './js/config.js',
   './js/demo-telemetry.js',
@@ -66,6 +80,7 @@ const ASSETS_TO_CACHE = [
   './js/game-timeattack.js',
   './js/game-memory.js',
   './js/game-conjugate.js',
+  './js/game-story.js',
   './js/views/render-auth.js',
   './js/views/render-hub.js',
   './js/views/render-quiz.js',
@@ -73,6 +88,7 @@ const ASSETS_TO_CACHE = [
   './js/views/render-memory.js',
   './js/views/render-conjugate.js',
   './js/views/render-progress.js',
+  './js/views/render-story.js',
   './js/views/render-dispatch.js',
   './js/navigation.js',
   './js/app-boot.js',

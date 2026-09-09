@@ -43,6 +43,7 @@
 <link rel="stylesheet" href="css/celebration.css" />
 <link rel="stylesheet" href="css/daily-double.css" />
 <link rel="stylesheet" href="css/hub.css" />
+<link rel="stylesheet" href="css/story.css" />
 
 </head>
 <body>
@@ -76,6 +77,9 @@
 <script src="js/game-timeattack.js"></script>
 <script src="js/game-memory.js"></script>
 <script src="js/game-conjugate.js"></script>
+<!-- Story Mode. Must load AFTER game-quiz.js: game-story.js calls
+     showCelebration()/leaveResults() from it. -->
+<script src="js/game-story.js"></script>
 <script src="js/views/render-auth.js"></script>
 <script src="js/views/render-hub.js"></script>
 <script src="js/views/render-quiz.js"></script>
@@ -83,6 +87,7 @@
 <script src="js/views/render-memory.js"></script>
 <script src="js/views/render-conjugate.js"></script>
 <script src="js/views/render-progress.js"></script>
+<script src="js/views/render-story.js"></script>
 <script src="js/views/render-dispatch.js"></script>
 <script src="js/navigation.js"></script>
 <script src="js/app-boot.js"></script>

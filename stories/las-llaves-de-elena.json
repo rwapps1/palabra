@@ -1,0 +1,808 @@
+{
+  "id": "las-llaves-de-elena",
+  "title": {
+    "es": "Las llaves de Elena",
+    "en": "Elena's Keys"
+  },
+  "level": "easy",
+  "wordCount": 499,
+  "minutes": 4,
+  "tense": "present",
+  "targetWords": [
+    "llave",
+    "bolsa",
+    "suerte",
+    "ruido",
+    "edificio",
+    "fresa"
+  ],
+  "paragraphs": [
+    {
+      "es": "Es sábado por la mañana. Elena abre la ventana de su cocina y mira la calle. Hace sol, el cielo está azul y no hay nubes. Es un buen día para ir al mercado.",
+      "en": "It's Saturday morning. Elena opens her kitchen window and looks out at the street. It's sunny, the sky is blue and there are no clouds. It's a good day to go to the market.",
+      "dialogue": false
+    },
+    {
+      "es": "Elena vive en un piso pequeño en el centro de la ciudad. El piso tiene una cocina, un baño, un dormitorio y una sala con un sofá viejo y una lámpara. No es grande, pero es su hogar y ella está contenta.",
+      "en": "Elena lives in a small flat in the centre of the city. The flat has a kitchen, a bathroom, a bedroom and a living room with an old sofa and a lamp. It isn't big, but it's her home and she's happy.",
+      "dialogue": false
+    },
+    {
+      "es": "Elena toma su bolsa y sus llaves. Cierra la puerta y baja a la calle.",
+      "en": "Elena picks up her bag and her keys. She closes the door and goes down to the street.",
+      "dialogue": false
+    },
+    {
+      "es": "El mercado está cerca, a diez minutos a pie. Elena camina despacio. Mira las tiendas, los árboles y la gente. Un perro pequeño corre delante de ella. Un hombre bebe un café en la puerta de un bar. Todo está tranquilo.",
+      "en": "The market is close by, ten minutes on foot. Elena walks slowly. She looks at the shops, the trees and the people. A small dog runs in front of her. A man drinks a coffee in the doorway of a bar. Everything is calm.",
+      "dialogue": false
+    },
+    {
+      "es": "En el mercado hay mucho ruido. La gente habla y los hombres y las mujeres gritan los precios de la fruta y del pescado. Huele a pan y a flores.",
+      "en": "At the market there's a lot of noise. People talk, and the men and women shout the prices of the fruit and the fish. It smells of bread and flowers.",
+      "dialogue": false
+    },
+    {
+      "es": "Elena compra pan, queso, huevos y leche. Compra tomates, cebollas y patatas. Compra fruta también: manzanas, plátanos y fresas. Las fresas son rojas y dulces, y no cuestan mucho.",
+      "en": "Elena buys bread, cheese, eggs and milk. She buys tomatoes, onions and potatoes. She buys fruit too: apples, bananas and strawberries. The strawberries are red and sweet, and they don't cost much.",
+      "dialogue": false
+    },
+    {
+      "es": "Hoy su hermana viene a comer. Elena quiere preparar una ensalada, pollo con patatas y, de postre, fresas con azúcar. Su hermana come mucho y habla más.",
+      "en": "Her sister is coming for lunch today. Elena wants to make a salad, chicken with potatoes and, for pudding, strawberries with sugar. Her sister eats a lot and talks more.",
+      "dialogue": false
+    },
+    {
+      "es": "—Buenos días, Elena —dice la señora del pan—. ¿Cómo estás?",
+      "en": "“Good morning, Elena,” says the bread lady. “How are you?”",
+      "dialogue": true
+    },
+    {
+      "es": "—Muy bien, gracias. ¿Y usted?",
+      "en": "“Very well, thank you. And you?”",
+      "dialogue": true
+    },
+    {
+      "es": "—Bien. Hace mucho calor hoy, ¿verdad?",
+      "en": "“Fine. It's very hot today, isn't it?”",
+      "dialogue": true
+    },
+    {
+      "es": "—Sí, pero me gusta el verano —dice Elena, y las dos mujeres ríen.",
+      "en": "“Yes, but I like the summer,” says Elena, and the two women laugh.",
+      "dialogue": true
+    },
+    {
+      "es": "Elena paga, pone el pan en la bolsa y vuelve a casa. La bolsa está llena y pesa mucho.",
+      "en": "Elena pays, puts the bread in her bag and heads home. The bag is full and it weighs a lot.",
+      "dialogue": false
+    },
+    {
+      "es": "Delante de su edificio, Elena busca las llaves en la bolsa. No están. Busca en los pantalones. No están. Busca otra vez en la bolsa: debajo del pan, debajo de la fruta, debajo de todo. Las llaves no están.",
+      "en": "In front of her building, Elena looks for the keys in her bag. They aren't there. She looks in her trousers. They aren't there. She looks in the bag again: under the bread, under the fruit, under everything. The keys aren't there.",
+      "dialogue": false
+    },
+    {
+      "es": "Elena está nerviosa. ¿Dónde están las llaves? ¿En el mercado? ¿En la calle? Piensa en la señora del pan, en el hombre del café, en el perro pequeño. No recuerda nada.",
+      "en": "Elena is nervous. Where are the keys? At the market? In the street? She thinks about the bread lady, about the man with the coffee, about the little dog. She remembers nothing.",
+      "dialogue": false
+    },
+    {
+      "es": "Una mujer mayor abre la puerta del edificio. Es Carmen, que vive arriba.",
+      "en": "An older woman opens the door of the building. It's Carmen, who lives upstairs.",
+      "dialogue": false
+    },
+    {
+      "es": "—¿Qué pasa, hija? —pregunta Carmen—. Estás blanca.",
+      "en": "“What's the matter, love?” asks Carmen. “You're pale.”",
+      "dialogue": true
+    },
+    {
+      "es": "—No encuentro mis llaves —dice Elena—. Creo que están en el mercado.",
+      "en": "“I can't find my keys,” says Elena. “I think they're at the market.”",
+      "dialogue": true
+    },
+    {
+      "es": "—Tranquila. Subimos y miramos otra vez.",
+      "en": "“Don't worry. Let's go up and look again.”",
+      "dialogue": true
+    },
+    {
+      "es": "Las dos mujeres suben. Carmen camina despacio porque tiene ochenta años. Elena lleva la bolsa y habla del mercado, del calor y del pan.",
+      "en": "The two women go up. Carmen walks slowly because she is eighty years old. Elena carries the bag and talks about the market, the heat and the bread.",
+      "dialogue": false
+    },
+    {
+      "es": "Y entonces, delante de la puerta de su piso, Elena para. No dice nada. Carmen mira la puerta también y empieza a reír.",
+      "en": "And then, in front of the door of her flat, Elena stops. She says nothing. Carmen looks at the door too and starts to laugh.",
+      "dialogue": false
+    },
+    {
+      "es": "Las llaves están en la puerta. Están allí desde la mañana, desde las nueve, cuando Elena cierra la puerta y baja a la calle con la bolsa, el sol y las ganas de comprar fresas.",
+      "en": "The keys are in the door. They have been there since the morning, since nine o'clock, when Elena closed the door and went down to the street with her bag, the sun, and the urge to buy strawberries.",
+      "dialogue": false
+    },
+    {
+      "es": "—Bueno —dice Carmen—. Hoy tienes suerte. Hoy no roba nadie en este edificio.",
+      "en": "“Well,” says Carmen. “Today you're lucky. Nobody steals in this building today.”",
+      "dialogue": true
+    },
+    {
+      "es": "Elena abre la puerta, deja la bolsa en la cocina y se sienta. Está cansada, pero está en casa. Y hay fresas para el postre.",
+      "en": "Elena opens the door, leaves the bag in the kitchen and sits down. She's tired, but she's home. And there are strawberries for pudding.",
+      "dialogue": false
+    }
+  ],
+  "gloss": {
+    "a": {
+      "en": "to, at"
+    },
+    "abre": {
+      "en": "opens",
+      "base": "abrir – to open"
+    },
+    "al": {
+      "en": "to the"
+    },
+    "allí": {
+      "en": "there"
+    },
+    "años": {
+      "en": "years",
+      "base": "año – year"
+    },
+    "arriba": {
+      "en": "upstairs, above"
+    },
+    "azúcar": {
+      "en": "sugar"
+    },
+    "azul": {
+      "en": "blue"
+    },
+    "baja": {
+      "en": "goes down",
+      "base": "bajar – to go down"
+    },
+    "bar": {
+      "en": "bar, café"
+    },
+    "baño": {
+      "en": "bathroom"
+    },
+    "bebe": {
+      "en": "drinks",
+      "base": "beber – to drink"
+    },
+    "bien": {
+      "en": "well, fine"
+    },
+    "blanca": {
+      "en": "white; here: pale",
+      "base": "blanco – white"
+    },
+    "bolsa": {
+      "en": "bag"
+    },
+    "buen": {
+      "en": "good",
+      "base": "bueno – good"
+    },
+    "buenos": {
+      "en": "good",
+      "base": "bueno – good"
+    },
+    "busca": {
+      "en": "looks for",
+      "base": "buscar – to look for"
+    },
+    "café": {
+      "en": "coffee"
+    },
+    "calle": {
+      "en": "street"
+    },
+    "calor": {
+      "en": "heat"
+    },
+    "camina": {
+      "en": "walks",
+      "base": "caminar – to walk"
+    },
+    "cansada": {
+      "en": "tired",
+      "base": "cansado – tired"
+    },
+    "carmen": {
+      "en": "Carmen — a name"
+    },
+    "casa": {
+      "en": "house, home"
+    },
+    "cebollas": {
+      "en": "onions",
+      "base": "cebolla – onion"
+    },
+    "centro": {
+      "en": "centre"
+    },
+    "cerca": {
+      "en": "near, nearby"
+    },
+    "cierra": {
+      "en": "closes",
+      "base": "cerrar – to close"
+    },
+    "ciudad": {
+      "en": "city"
+    },
+    "cocina": {
+      "en": "kitchen"
+    },
+    "come": {
+      "en": "eats",
+      "base": "comer – to eat"
+    },
+    "comer": {
+      "en": "to eat"
+    },
+    "compra": {
+      "en": "buys",
+      "base": "comprar – to buy"
+    },
+    "comprar": {
+      "en": "to buy"
+    },
+    "con": {
+      "en": "with"
+    },
+    "contenta": {
+      "en": "happy, content",
+      "base": "contento – happy"
+    },
+    "corre": {
+      "en": "runs",
+      "base": "correr – to run"
+    },
+    "creo": {
+      "en": "I think",
+      "base": "creer – to think, believe"
+    },
+    "cuando": {
+      "en": "when"
+    },
+    "cuestan": {
+      "en": "cost",
+      "base": "costar – to cost"
+    },
+    "cómo": {
+      "en": "how"
+    },
+    "de": {
+      "en": "of, from"
+    },
+    "debajo": {
+      "en": "underneath"
+    },
+    "del": {
+      "en": "of the"
+    },
+    "deja": {
+      "en": "leaves, puts down",
+      "base": "dejar – to leave"
+    },
+    "delante": {
+      "en": "in front of"
+    },
+    "desde": {
+      "en": "since, from"
+    },
+    "despacio": {
+      "en": "slowly"
+    },
+    "dice": {
+      "en": "says",
+      "base": "decir – to say"
+    },
+    "diez": {
+      "en": "ten"
+    },
+    "dormitorio": {
+      "en": "bedroom"
+    },
+    "dos": {
+      "en": "two"
+    },
+    "dulces": {
+      "en": "sweet",
+      "base": "dulce – sweet"
+    },
+    "día": {
+      "en": "day"
+    },
+    "días": {
+      "en": "days",
+      "base": "día – day"
+    },
+    "dónde": {
+      "en": "where"
+    },
+    "edificio": {
+      "en": "building"
+    },
+    "el": {
+      "en": "the"
+    },
+    "ella": {
+      "en": "she, her"
+    },
+    "elena": {
+      "en": "Elena — a name"
+    },
+    "empieza": {
+      "en": "begins",
+      "base": "empezar – to begin"
+    },
+    "en": {
+      "en": "in, on"
+    },
+    "encuentro": {
+      "en": "I find",
+      "base": "encontrar – to find"
+    },
+    "ensalada": {
+      "en": "salad"
+    },
+    "entonces": {
+      "en": "then"
+    },
+    "es": {
+      "en": "is",
+      "base": "ser – to be (permanent)"
+    },
+    "este": {
+      "en": "this"
+    },
+    "está": {
+      "en": "is",
+      "base": "estar – to be (state, location)"
+    },
+    "están": {
+      "en": "are",
+      "base": "estar – to be (state, location)"
+    },
+    "estás": {
+      "en": "you are",
+      "base": "estar – to be"
+    },
+    "flores": {
+      "en": "flowers",
+      "base": "flor – flower"
+    },
+    "fresas": {
+      "en": "strawberries",
+      "base": "fresa – strawberry"
+    },
+    "fruta": {
+      "en": "fruit"
+    },
+    "ganas": {
+      "en": "the urge, the wish",
+      "base": "gana – desire"
+    },
+    "gente": {
+      "en": "people"
+    },
+    "gracias": {
+      "en": "thank you"
+    },
+    "grande": {
+      "en": "big"
+    },
+    "gritan": {
+      "en": "shout",
+      "base": "gritar – to shout"
+    },
+    "gusta": {
+      "en": "pleases; me gusta = I like",
+      "base": "gustar – to please"
+    },
+    "habla": {
+      "en": "talks, speaks",
+      "base": "hablar – to speak"
+    },
+    "hace": {
+      "en": "makes, does; hace sol = it's sunny",
+      "base": "hacer – to do, make"
+    },
+    "hay": {
+      "en": "there is, there are",
+      "base": "haber"
+    },
+    "hermana": {
+      "en": "sister"
+    },
+    "hija": {
+      "en": "daughter; here a warm way to address a younger woman"
+    },
+    "hogar": {
+      "en": "home"
+    },
+    "hombre": {
+      "en": "man"
+    },
+    "hombres": {
+      "en": "men",
+      "base": "hombre – man"
+    },
+    "hoy": {
+      "en": "today"
+    },
+    "huele": {
+      "en": "smells",
+      "base": "oler – to smell"
+    },
+    "huevos": {
+      "en": "eggs",
+      "base": "huevo – egg"
+    },
+    "ir": {
+      "en": "to go"
+    },
+    "la": {
+      "en": "the"
+    },
+    "las": {
+      "en": "the"
+    },
+    "leche": {
+      "en": "milk"
+    },
+    "llaves": {
+      "en": "keys",
+      "base": "llave – key"
+    },
+    "llena": {
+      "en": "full",
+      "base": "lleno – full"
+    },
+    "lleva": {
+      "en": "carries",
+      "base": "llevar – to carry, wear"
+    },
+    "los": {
+      "en": "the"
+    },
+    "lámpara": {
+      "en": "lamp"
+    },
+    "manzanas": {
+      "en": "apples",
+      "base": "manzana – apple"
+    },
+    "mayor": {
+      "en": "older, elderly"
+    },
+    "me": {
+      "en": "me, to me"
+    },
+    "mercado": {
+      "en": "market"
+    },
+    "mira": {
+      "en": "looks at",
+      "base": "mirar – to look at"
+    },
+    "miramos": {
+      "en": "we look",
+      "base": "mirar – to look"
+    },
+    "mis": {
+      "en": "my",
+      "base": "mi – my"
+    },
+    "minutos": {
+      "en": "minutes",
+      "base": "minuto – minute"
+    },
+    "mucho": {
+      "en": "a lot, much"
+    },
+    "mujer": {
+      "en": "woman"
+    },
+    "mujeres": {
+      "en": "women",
+      "base": "mujer – woman"
+    },
+    "muy": {
+      "en": "very"
+    },
+    "más": {
+      "en": "more"
+    },
+    "mañana": {
+      "en": "morning"
+    },
+    "nada": {
+      "en": "nothing"
+    },
+    "nadie": {
+      "en": "nobody"
+    },
+    "nerviosa": {
+      "en": "nervous",
+      "base": "nervioso – nervous"
+    },
+    "no": {
+      "en": "no, not"
+    },
+    "nubes": {
+      "en": "clouds",
+      "base": "nube – cloud"
+    },
+    "nueve": {
+      "en": "nine"
+    },
+    "ochenta": {
+      "en": "eighty"
+    },
+    "otra": {
+      "en": "another, other",
+      "base": "otro – other"
+    },
+    "paga": {
+      "en": "pays",
+      "base": "pagar – to pay"
+    },
+    "pan": {
+      "en": "bread"
+    },
+    "pantalones": {
+      "en": "trousers"
+    },
+    "para": {
+      "en": "for, in order to"
+    },
+    "pasa": {
+      "en": "happens",
+      "base": "pasar – to happen, pass"
+    },
+    "patatas": {
+      "en": "potatoes",
+      "base": "patata – potato"
+    },
+    "pequeño": {
+      "en": "small"
+    },
+    "pero": {
+      "en": "but"
+    },
+    "pesa": {
+      "en": "weighs",
+      "base": "pesar – to weigh"
+    },
+    "pescado": {
+      "en": "fish"
+    },
+    "pie": {
+      "en": "foot; a pie = on foot"
+    },
+    "piensa": {
+      "en": "thinks",
+      "base": "pensar – to think"
+    },
+    "piso": {
+      "en": "flat, apartment"
+    },
+    "plátanos": {
+      "en": "bananas",
+      "base": "plátano – banana"
+    },
+    "pollo": {
+      "en": "chicken"
+    },
+    "pone": {
+      "en": "puts",
+      "base": "poner – to put"
+    },
+    "por": {
+      "en": "for, through; por la mañana = in the morning"
+    },
+    "porque": {
+      "en": "because"
+    },
+    "postre": {
+      "en": "dessert, pudding"
+    },
+    "precios": {
+      "en": "prices",
+      "base": "precio – price"
+    },
+    "pregunta": {
+      "en": "asks",
+      "base": "preguntar – to ask"
+    },
+    "puerta": {
+      "en": "door"
+    },
+    "que": {
+      "en": "that, which, who"
+    },
+    "qué": {
+      "en": "what"
+    },
+    "queso": {
+      "en": "cheese"
+    },
+    "quiere": {
+      "en": "wants",
+      "base": "querer – to want"
+    },
+    "recuerda": {
+      "en": "remembers",
+      "base": "recordar – to remember"
+    },
+    "roba": {
+      "en": "steals",
+      "base": "robar – to steal"
+    },
+    "rojas": {
+      "en": "red",
+      "base": "rojo – red"
+    },
+    "ruido": {
+      "en": "noise"
+    },
+    "ríen": {
+      "en": "laugh",
+      "base": "reír – to laugh"
+    },
+    "sala": {
+      "en": "living room"
+    },
+    "se": {
+      "en": "herself"
+    },
+    "señora": {
+      "en": "lady, madam"
+    },
+    "sienta": {
+      "en": "sits; se sienta = she sits down",
+      "base": "sentarse – to sit down"
+    },
+    "sol": {
+      "en": "sun"
+    },
+    "son": {
+      "en": "are",
+      "base": "ser – to be (permanent)"
+    },
+    "sofá": {
+      "en": "sofa"
+    },
+    "su": {
+      "en": "her, his"
+    },
+    "suben": {
+      "en": "go up",
+      "base": "subir – to go up"
+    },
+    "subimos": {
+      "en": "we go up",
+      "base": "subir – to go up"
+    },
+    "suerte": {
+      "en": "luck"
+    },
+    "sus": {
+      "en": "her, his (plural)",
+      "base": "su"
+    },
+    "sábado": {
+      "en": "Saturday"
+    },
+    "sí": {
+      "en": "yes"
+    },
+    "también": {
+      "en": "also, too"
+    },
+    "tiendas": {
+      "en": "shops",
+      "base": "tienda – shop"
+    },
+    "tiene": {
+      "en": "has",
+      "base": "tener – to have"
+    },
+    "tienes": {
+      "en": "you have",
+      "base": "tener – to have"
+    },
+    "todo": {
+      "en": "everything, all"
+    },
+    "toma": {
+      "en": "takes, picks up",
+      "base": "tomar – to take"
+    },
+    "tomates": {
+      "en": "tomatoes",
+      "base": "tomate – tomato"
+    },
+    "tranquila": {
+      "en": "calm; here: don't worry",
+      "base": "tranquilo – calm"
+    },
+    "tranquilo": {
+      "en": "calm, quiet"
+    },
+    "un": {
+      "en": "a, an"
+    },
+    "una": {
+      "en": "a, an"
+    },
+    "usted": {
+      "en": "you (formal)"
+    },
+    "verano": {
+      "en": "summer"
+    },
+    "verdad": {
+      "en": "truth; ¿verdad? = right?"
+    },
+    "vez": {
+      "en": "time; otra vez = again"
+    },
+    "viejo": {
+      "en": "old"
+    },
+    "viene": {
+      "en": "comes",
+      "base": "venir – to come"
+    },
+    "vive": {
+      "en": "lives",
+      "base": "vivir – to live"
+    },
+    "vuelve": {
+      "en": "returns, goes back",
+      "base": "volver – to return"
+    },
+    "y": {
+      "en": "and"
+    },
+    "árboles": {
+      "en": "trees",
+      "base": "árbol – tree"
+    },
+    "bueno": {
+      "en": "good; here: well then"
+    },
+    "cielo": {
+      "en": "sky"
+    },
+    "perro": {
+      "en": "dog"
+    },
+    "preparar": {
+      "en": "to prepare, to make"
+    },
+    "reír": {
+      "en": "to laugh"
+    },
+    "ventana": {
+      "en": "window"
+    }
+  },
+  "glossOverrides": {
+    "para": {
+      "2": {
+        "en": "stops",
+        "base": "parar – to stop"
+      }
+    }
+  }
+}
