@@ -6,6 +6,14 @@ const WORDS_FILE = './words.xlsx';
 // (Category column), so there's nothing to list here anymore - one file to
 // cache instead of 17.
 
+// v15: Story Mode bug fix. js/cloud-sync.js changed content —
+// mergeProgressShape() is a shape gate that starts from defaultProgress() and
+// copies only the fields it names, so storyLifetime and storiesRead were reset
+// to their defaults on every cloud pull. Reading a story marked it read, then
+// the next pull silently unmarked it and took the XP back off. LOAD-BEARING:
+// without this bump a device keeps serving the v14 cloud-sync.js and the bug
+// persists even though the fix is deployed.
+//
 // v14: Story Mode. New files (css/story.css, js/game-story.js,
 // js/views/render-story.js) plus content changes to config.js, progress-xp.js,
 // state.js, base.css, hub.css, render-quiz.js, render-hub.js and
@@ -44,7 +52,7 @@ const WORDS_FILE = './words.xlsx';
 // on every page view: leaving it uncached would mean an extra network
 // request on every cold start for a file that does nothing for the vast
 // majority of users.
-const CACHE_NAME = 'palabra-cache-v14';
+const CACHE_NAME = 'palabra-cache-v15';
 const ASSETS_TO_CACHE = [
   './',
   APP_HTML,
