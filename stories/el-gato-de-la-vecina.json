@@ -1,0 +1,848 @@
+{
+  "id": "el-gato-de-la-vecina",
+  "title": {
+    "es": "El gato de la vecina",
+    "en": "The Neighbour's Cat"
+  },
+  "level": "hard",
+  "wordCount": 529,
+  "minutes": 4,
+  "tense": "present",
+  "targetWords": [
+    "gato",
+    "perro",
+    "jardín",
+    "ventana",
+    "sorprendido",
+    "asustado"
+  ],
+  "paragraphs": [
+    {
+      "es": "Carmen vive sola con su perro, Rocky, en una casa pequeña con un jardín precioso lleno de flores. Cuida el jardín con mucho cariño.",
+      "en": "Carmen lives alone with her dog, Rocky, in a small house with a lovely garden full of flowers. She looks after the garden with a lot of care.",
+      "dialogue": false
+    },
+    {
+      "es": "Su vecina es Sofía, la misma mujer que ahora conduce el autobús número doce del barrio. Sofía tiene un gato blanco que se llama Nieve.",
+      "en": "Her neighbour is Sofía, the same woman who now drives bus number twelve in the neighbourhood. Sofía has a white cat called Nieve.",
+      "dialogue": false
+    },
+    {
+      "es": "El gato de Sofía es precioso, pero también es muy travieso. Salta fácilmente entre los jardines de la calle y explora todos los rincones.",
+      "en": "Sofía's cat is beautiful, but he's also very mischievous. He jumps easily between the gardens on the street and explores every corner.",
+      "dialogue": false
+    },
+    {
+      "es": "Últimamente, Carmen nota cosas extrañas en su jardín cada mañana. Las flores están pisadas, y algunas macetas están volcadas en el suelo.",
+      "en": "Lately, Carmen notices strange things in her garden every morning. The flowers are trampled, and some plant pots are knocked over on the ground.",
+      "dialogue": false
+    },
+    {
+      "es": "Peor todavía, la ventana de la cocina siempre está abierta por la mañana, aunque Carmen recuerda cerrarla bien todas las noches antes de dormir.",
+      "en": "Worse still, the kitchen window is always open in the morning, even though Carmen remembers closing it properly every night before going to sleep.",
+      "dialogue": false
+    },
+    {
+      "es": "—Seguro que es el gato de Sofía —piensa Carmen, un poco enojada—. Entra por la ventana, camina por el jardín, y rompe todo.",
+      "en": "\"It must be Sofía's cat,\" Carmen thinks, a little annoyed. \"He gets in through the window, walks through the garden, and breaks everything.\"",
+      "dialogue": true
+    },
+    {
+      "es": "Un día, Carmen decide hablar con su vecina sobre el problema. Camina hasta la casa de Sofía y llama a la puerta.",
+      "en": "One day, Carmen decides to talk to her neighbour about the problem. She walks to Sofía's house and knocks on the door.",
+      "dialogue": false
+    },
+    {
+      "es": "—Hola, Carmen —dice Sofía, sorprendida de verla—. ¿Va todo bien?",
+      "en": "\"Hi, Carmen,\" says Sofía, surprised to see her. \"Is everything alright?\"",
+      "dialogue": true
+    },
+    {
+      "es": "—La verdad, no mucho —dice Carmen—. Creo que tu gato entra en mi jardín cada noche. Rompe las flores y deja la ventana de la cocina abierta.",
+      "en": "\"Honestly, not really,\" says Carmen. \"I think your cat is getting into my garden every night. He breaks the flowers and leaves the kitchen window open.\"",
+      "dialogue": true
+    },
+    {
+      "es": "Sofía mira a Carmen con confusión. —Es extraño —dice—. Nieve nunca sale de casa por la noche. Además, mi gato tiene mucho miedo de tu perro.",
+      "en": "Sofía looks at Carmen in confusion. \"That's strange,\" she says. \"Nieve never leaves the house at night. Besides, my cat is very scared of your dog.\"",
+      "dialogue": true
+    },
+    {
+      "es": "—¿Miedo de Rocky? —pregunta Carmen—. Rocky es un perro muy tranquilo, casi nunca ladra. No creo que un gato tenga miedo de él.",
+      "en": "\"Scared of Rocky?\" Carmen asks. \"Rocky is a very calm dog, he almost never barks. I don't think a cat would be scared of him.\"",
+      "dialogue": true
+    },
+    {
+      "es": "Sofía sonríe un poco. —Bueno, quizás no es el gato —dice—. ¿Por qué no observas tu jardín esta noche, antes de acusar a mi pobre Nieve?",
+      "en": "Sofía smiles a little. \"Well, maybe it isn't the cat,\" she says. \"Why don't you watch your garden tonight, before accusing my poor Nieve?\"",
+      "dialogue": true
+    },
+    {
+      "es": "Esa noche, Carmen se sienta cerca de la ventana de la cocina con una taza de té, decidida a descubrir la verdad sobre el misterio del jardín.",
+      "en": "That night, Carmen sits near the kitchen window with a cup of tea, determined to discover the truth about the garden mystery.",
+      "dialogue": false
+    },
+    {
+      "es": "A las once, oye un ruido extraño en el jardín. Con cuidado, mira por la ventana y ve una sombra que se mueve entre las flores.",
+      "en": "At eleven, she hears a strange noise in the garden. Carefully, she looks through the window and sees a shadow moving among the flowers.",
+      "dialogue": false
+    },
+    {
+      "es": "Carmen abre la puerta despacio y sale al jardín con una linterna. Lo que ve la deja completamente sorprendida.",
+      "en": "Carmen opens the door slowly and goes out into the garden with a torch. What she sees leaves her completely astonished.",
+      "dialogue": false
+    },
+    {
+      "es": "No es el gato de Sofía. Es Rocky, su propio perro, cavando un hoyo grande entre las flores favoritas de Carmen, con tierra por toda la cara.",
+      "en": "It isn't Sofía's cat. It's Rocky, her own dog, digging a big hole among Carmen's favourite flowers, with dirt all over his face.",
+      "dialogue": false
+    },
+    {
+      "es": "—¡Rocky! ¿Qué haces? —dice Carmen, sorprendida—. ¡Tú eres el culpable, no el pobre gato de Sofía!",
+      "en": "\"Rocky! What are you doing?\" says Carmen, astonished. \"You're the culprit, not poor Sofía's cat!\"",
+      "dialogue": true
+    },
+    {
+      "es": "Rocky la mira con ojos grandes y tristes, y dos macetas caen al suelo detrás de él con un ruido fuerte.",
+      "en": "Rocky looks at her with big, sad eyes, and two plant pots fall to the ground behind him with a loud crash.",
+      "dialogue": false
+    },
+    {
+      "es": "Entonces Carmen entiende todo: cada noche, Rocky abre la ventana de la cocina con la nariz porque le gusta dormir cerca del jardín fresco, y después excava y juega solo, sin ningún gato cerca.",
+      "en": "Then Carmen understands everything: every night, Rocky nudges open the kitchen window with his nose because he likes to sleep near the cool garden, and afterward he digs and plays alone, with no cat anywhere nearby.",
+      "dialogue": false
+    },
+    {
+      "es": "Al día siguiente, Carmen vuelve a la casa de Sofía, un poco avergonzada. —Tienes razón —dice—. El culpable es mi propio perro, no tu gato. Lo siento mucho, Nieve.",
+      "en": "The next day, Carmen goes back to Sofía's house, a little embarrassed. \"You're right,\" she says. \"The culprit is my own dog, not your cat. I'm so sorry, Nieve.\"",
+      "dialogue": true
+    },
+    {
+      "es": "Sofía se ríe y abre la puerta para que el gato asustado, que está escondido detrás de sus piernas, por fin salga y respire tranquilo.",
+      "en": "Sofía laughs and opens the door so that the scared cat, hiding behind her legs, can finally come out and breathe easy.",
+      "dialogue": false
+    },
+    {
+      "es": "Desde ese día, Carmen cierra bien la ventana de la cocina cada noche, y Rocky tiene un rincón propio en el jardín, solo para él, lejos de las flores.",
+      "en": "From that day on, Carmen closes the kitchen window properly every night, and Rocky has his own corner in the garden, just for him, away from the flowers.",
+      "dialogue": false
+    }
+  ],
+  "gloss": {
+    "a": {
+      "en": "to / at"
+    },
+    "abierta": {
+      "en": "open",
+      "base": "abierto – open"
+    },
+    "abre": {
+      "en": "opens",
+      "base": "abrir – to open"
+    },
+    "acusar": {
+      "en": "to accuse"
+    },
+    "además": {
+      "en": "besides"
+    },
+    "ahora": {
+      "en": "now"
+    },
+    "al": {
+      "en": "to the",
+      "base": "a + el"
+    },
+    "algunas": {
+      "en": "some",
+      "base": "alguno – some"
+    },
+    "antes": {
+      "en": "before"
+    },
+    "asustado": {
+      "en": "scared"
+    },
+    "aunque": {
+      "en": "even though"
+    },
+    "autobús": {
+      "en": "bus"
+    },
+    "avergonzada": {
+      "en": "embarrassed",
+      "base": "avergonzado – embarrassed"
+    },
+    "barrio": {
+      "en": "neighbourhood"
+    },
+    "bien": {
+      "en": "well / properly"
+    },
+    "blanco": {
+      "en": "white"
+    },
+    "bueno": {
+      "en": "well"
+    },
+    "cada": {
+      "en": "each / every"
+    },
+    "caen": {
+      "en": "fall",
+      "base": "caer – to fall"
+    },
+    "calle": {
+      "en": "street"
+    },
+    "camina": {
+      "en": "walks",
+      "base": "caminar – to walk"
+    },
+    "cara": {
+      "en": "face"
+    },
+    "cariño": {
+      "en": "care / affection"
+    },
+    "carmen": {
+      "en": "Carmen"
+    },
+    "casa": {
+      "en": "house"
+    },
+    "casi": {
+      "en": "almost"
+    },
+    "cavando": {
+      "en": "digging",
+      "base": "cavar – to dig"
+    },
+    "cerca": {
+      "en": "near"
+    },
+    "cerrarla": {
+      "en": "to close it",
+      "base": "cerrar – to close"
+    },
+    "cierra": {
+      "en": "closes",
+      "base": "cerrar – to close"
+    },
+    "cocina": {
+      "en": "kitchen"
+    },
+    "completamente": {
+      "en": "completely"
+    },
+    "con": {
+      "en": "with"
+    },
+    "conduce": {
+      "en": "drives",
+      "base": "conducir – to drive"
+    },
+    "confusión": {
+      "en": "confusion"
+    },
+    "cosas": {
+      "en": "things",
+      "base": "cosa – thing"
+    },
+    "creo": {
+      "en": "I think",
+      "base": "creer – to think / believe"
+    },
+    "cuida": {
+      "en": "looks after",
+      "base": "cuidar – to look after"
+    },
+    "cuidado": {
+      "en": "carefully",
+      "base": "con cuidado – carefully"
+    },
+    "culpable": {
+      "en": "culprit / guilty"
+    },
+    "de": {
+      "en": "of / from"
+    },
+    "decide": {
+      "en": "decides",
+      "base": "decidir – to decide"
+    },
+    "decidida": {
+      "en": "determined",
+      "base": "decidido – determined"
+    },
+    "deja": {
+      "en": "leaves",
+      "base": "dejar – to leave"
+    },
+    "del": {
+      "en": "of the",
+      "base": "de + el"
+    },
+    "descubrir": {
+      "en": "to discover"
+    },
+    "desde": {
+      "en": "from / since"
+    },
+    "despacio": {
+      "en": "slowly"
+    },
+    "después": {
+      "en": "afterward"
+    },
+    "detrás": {
+      "en": "behind"
+    },
+    "dice": {
+      "en": "says",
+      "base": "decir – to say"
+    },
+    "doce": {
+      "en": "twelve"
+    },
+    "dormir": {
+      "en": "to sleep"
+    },
+    "dos": {
+      "en": "two"
+    },
+    "día": {
+      "en": "day"
+    },
+    "el": {
+      "en": "the"
+    },
+    "en": {
+      "en": "in / on"
+    },
+    "enojada": {
+      "en": "annoyed",
+      "base": "enojado – annoyed"
+    },
+    "entiende": {
+      "en": "understands",
+      "base": "entender – to understand"
+    },
+    "entonces": {
+      "en": "then"
+    },
+    "entra": {
+      "en": "gets in",
+      "base": "entrar – to enter"
+    },
+    "entre": {
+      "en": "between / among"
+    },
+    "eres": {
+      "en": "you are",
+      "base": "ser – to be"
+    },
+    "es": {
+      "en": "is",
+      "base": "ser – to be"
+    },
+    "esa": {
+      "en": "that"
+    },
+    "escondido": {
+      "en": "hiding",
+      "base": "esconderse – to hide"
+    },
+    "ese": {
+      "en": "that"
+    },
+    "esta": {
+      "en": "this"
+    },
+    "está": {
+      "en": "is",
+      "base": "estar – to be"
+    },
+    "están": {
+      "en": "are",
+      "base": "estar – to be"
+    },
+    "excava": {
+      "en": "digs",
+      "base": "excavar – to dig"
+    },
+    "explora": {
+      "en": "explores",
+      "base": "explorar – to explore"
+    },
+    "extrañas": {
+      "en": "strange",
+      "base": "extraño – strange"
+    },
+    "extraño": {
+      "en": "strange"
+    },
+    "favoritas": {
+      "en": "favourite",
+      "base": "favorito – favourite"
+    },
+    "fin": {
+      "en": "end",
+      "base": "por fin – finally"
+    },
+    "flores": {
+      "en": "flowers",
+      "base": "flor – flower"
+    },
+    "fresco": {
+      "en": "cool"
+    },
+    "fuerte": {
+      "en": "loud / strong"
+    },
+    "fácilmente": {
+      "en": "easily"
+    },
+    "gato": {
+      "en": "cat"
+    },
+    "grande": {
+      "en": "big"
+    },
+    "grandes": {
+      "en": "big",
+      "base": "grande – big"
+    },
+    "gusta": {
+      "en": "likes",
+      "base": "gustar – to like"
+    },
+    "hablar": {
+      "en": "to talk"
+    },
+    "haces": {
+      "en": "you are doing",
+      "base": "hacer – to do"
+    },
+    "hasta": {
+      "en": "up to / until"
+    },
+    "hola": {
+      "en": "hi"
+    },
+    "hoyo": {
+      "en": "hole"
+    },
+    "jardines": {
+      "en": "gardens",
+      "base": "jardín – garden"
+    },
+    "jardín": {
+      "en": "garden"
+    },
+    "juega": {
+      "en": "plays",
+      "base": "jugar – to play"
+    },
+    "la": {
+      "en": "the"
+    },
+    "ladra": {
+      "en": "barks",
+      "base": "ladrar – to bark"
+    },
+    "las": {
+      "en": "the"
+    },
+    "le": {
+      "en": "to him / to her"
+    },
+    "lejos": {
+      "en": "far",
+      "base": "lejos de – away from"
+    },
+    "linterna": {
+      "en": "torch"
+    },
+    "llama": {
+      "en": "is called",
+      "base": "llamarse – to be called"
+    },
+    "lleno": {
+      "en": "full"
+    },
+    "lo": {
+      "en": "it / what",
+      "base": "lo que – what"
+    },
+    "los": {
+      "en": "the"
+    },
+    "macetas": {
+      "en": "plant pots",
+      "base": "maceta – plant pot"
+    },
+    "mañana": {
+      "en": "morning"
+    },
+    "mi": {
+      "en": "my"
+    },
+    "miedo": {
+      "en": "fear",
+      "base": "tener miedo – to be scared"
+    },
+    "mira": {
+      "en": "looks",
+      "base": "mirar – to look"
+    },
+    "misma": {
+      "en": "same",
+      "base": "mismo – same"
+    },
+    "misterio": {
+      "en": "mystery"
+    },
+    "mucho": {
+      "en": "a lot"
+    },
+    "mueve": {
+      "en": "moves",
+      "base": "moverse – to move"
+    },
+    "mujer": {
+      "en": "woman"
+    },
+    "muy": {
+      "en": "very"
+    },
+    "nariz": {
+      "en": "nose"
+    },
+    "nieve": {
+      "en": "Nieve (the cat's name)",
+      "base": "nieve – snow"
+    },
+    "ningún": {
+      "en": "no / not any",
+      "base": "ninguno – none"
+    },
+    "no": {
+      "en": "no / not"
+    },
+    "noche": {
+      "en": "night"
+    },
+    "noches": {
+      "en": "nights",
+      "base": "noche – night"
+    },
+    "nota": {
+      "en": "notices",
+      "base": "notar – to notice"
+    },
+    "nunca": {
+      "en": "never"
+    },
+    "número": {
+      "en": "number"
+    },
+    "observas": {
+      "en": "you watch",
+      "base": "observar – to watch"
+    },
+    "ojos": {
+      "en": "eyes",
+      "base": "ojo – eye"
+    },
+    "once": {
+      "en": "eleven"
+    },
+    "oye": {
+      "en": "hears",
+      "base": "oír – to hear"
+    },
+    "para": {
+      "en": "for / in order to"
+    },
+    "peor": {
+      "en": "worse"
+    },
+    "pequeña": {
+      "en": "small",
+      "base": "pequeño – small"
+    },
+    "pero": {
+      "en": "but"
+    },
+    "perro": {
+      "en": "dog"
+    },
+    "piensa": {
+      "en": "thinks",
+      "base": "pensar – to think"
+    },
+    "piernas": {
+      "en": "legs",
+      "base": "pierna – leg"
+    },
+    "pisadas": {
+      "en": "trampled",
+      "base": "pisado – trampled / stepped on"
+    },
+    "pobre": {
+      "en": "poor"
+    },
+    "poco": {
+      "en": "a little"
+    },
+    "por": {
+      "en": "through / for"
+    },
+    "porque": {
+      "en": "because"
+    },
+    "precioso": {
+      "en": "lovely"
+    },
+    "pregunta": {
+      "en": "asks",
+      "base": "preguntar – to ask"
+    },
+    "problema": {
+      "en": "problem"
+    },
+    "propio": {
+      "en": "own"
+    },
+    "puerta": {
+      "en": "door"
+    },
+    "que": {
+      "en": "that / who"
+    },
+    "quizás": {
+      "en": "maybe"
+    },
+    "qué": {
+      "en": "what"
+    },
+    "razón": {
+      "en": "right",
+      "base": "tener razón – to be right"
+    },
+    "recuerda": {
+      "en": "remembers",
+      "base": "recordar – to remember"
+    },
+    "respire": {
+      "en": "breathes",
+      "base": "respirar – to breathe"
+    },
+    "rincones": {
+      "en": "corners",
+      "base": "rincón – corner"
+    },
+    "rincón": {
+      "en": "corner"
+    },
+    "rocky": {
+      "en": "Rocky"
+    },
+    "rompe": {
+      "en": "breaks",
+      "base": "romper – to break"
+    },
+    "ruido": {
+      "en": "noise"
+    },
+    "ríe": {
+      "en": "laughs",
+      "base": "reírse – to laugh"
+    },
+    "sale": {
+      "en": "goes out",
+      "base": "salir – to go out"
+    },
+    "salga": {
+      "en": "can come out",
+      "base": "salir – to go out"
+    },
+    "salta": {
+      "en": "jumps",
+      "base": "saltar – to jump"
+    },
+    "se": {
+      "en": "(reflexive)",
+      "base": "se – reflexive pronoun"
+    },
+    "seguro": {
+      "en": "surely",
+      "base": "seguro que – it must be"
+    },
+    "siempre": {
+      "en": "always"
+    },
+    "sienta": {
+      "en": "sits",
+      "base": "sentarse – to sit"
+    },
+    "siento": {
+      "en": "sorry",
+      "base": "lo siento – I'm sorry"
+    },
+    "siguiente": {
+      "en": "next"
+    },
+    "sin": {
+      "en": "without"
+    },
+    "sobre": {
+      "en": "about"
+    },
+    "sofía": {
+      "en": "Sofía"
+    },
+    "sola": {
+      "en": "alone",
+      "base": "solo – alone"
+    },
+    "solo": {
+      "en": "alone"
+    },
+    "sombra": {
+      "en": "shadow"
+    },
+    "sonríe": {
+      "en": "smiles",
+      "base": "sonreír – to smile"
+    },
+    "sorprendida": {
+      "en": "surprised",
+      "base": "sorprendido – surprised"
+    },
+    "su": {
+      "en": "her"
+    },
+    "suelo": {
+      "en": "ground"
+    },
+    "sus": {
+      "en": "her (plural)",
+      "base": "su – her"
+    },
+    "también": {
+      "en": "also"
+    },
+    "taza": {
+      "en": "cup"
+    },
+    "tenga": {
+      "en": "would have",
+      "base": "tener – to have (subjunctive)"
+    },
+    "tiene": {
+      "en": "has",
+      "base": "tener – to have"
+    },
+    "tienes": {
+      "en": "you have / you're",
+      "base": "tener – to have"
+    },
+    "tierra": {
+      "en": "dirt"
+    },
+    "toda": {
+      "en": "all",
+      "base": "todo – all"
+    },
+    "todas": {
+      "en": "all",
+      "base": "todo – all"
+    },
+    "todavía": {
+      "en": "still"
+    },
+    "todo": {
+      "en": "everything"
+    },
+    "todos": {
+      "en": "all",
+      "base": "todo – all"
+    },
+    "tranquilo": {
+      "en": "calm"
+    },
+    "travieso": {
+      "en": "mischievous"
+    },
+    "tristes": {
+      "en": "sad",
+      "base": "triste – sad"
+    },
+    "tu": {
+      "en": "your"
+    },
+    "té": {
+      "en": "tea"
+    },
+    "tú": {
+      "en": "you"
+    },
+    "un": {
+      "en": "a"
+    },
+    "una": {
+      "en": "a"
+    },
+    "va": {
+      "en": "goes",
+      "base": "ir – to go"
+    },
+    "ve": {
+      "en": "sees",
+      "base": "ver – to see"
+    },
+    "vecina": {
+      "en": "neighbour"
+    },
+    "ventana": {
+      "en": "window"
+    },
+    "verdad": {
+      "en": "truth"
+    },
+    "verla": {
+      "en": "to see her",
+      "base": "ver – to see"
+    },
+    "vive": {
+      "en": "lives",
+      "base": "vivir – to live"
+    },
+    "volcadas": {
+      "en": "knocked over",
+      "base": "volcado – knocked over / tipped"
+    },
+    "vuelve": {
+      "en": "goes back",
+      "base": "volver – to go back"
+    },
+    "y": {
+      "en": "and"
+    },
+    "él": {
+      "en": "him"
+    },
+    "últimamente": {
+      "en": "lately"
+    }
+  },
+  "glossOverrides": {
+    "solo": {
+      "2": {
+        "en": "only"
+      }
+    }
+  }
+}

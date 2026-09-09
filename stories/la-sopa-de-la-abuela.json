@@ -1,0 +1,764 @@
+{
+  "id": "la-sopa-de-la-abuela",
+  "title": {
+    "es": "La sopa de la abuela",
+    "en": "Grandma's Soup"
+  },
+  "level": "medium",
+  "wordCount": 491,
+  "minutes": 4,
+  "tense": "present",
+  "targetWords": [
+    "abuela",
+    "sopa",
+    "cebolla",
+    "tomate",
+    "pollo",
+    "postre"
+  ],
+  "paragraphs": [
+    {
+      "es": "Es domingo por la tarde. Elena llega a la casa de su abuela para la comida familiar de cada semana.",
+      "en": "It's Sunday afternoon. Elena arrives at her grandmother's house for the weekly family meal.",
+      "dialogue": false
+    },
+    {
+      "es": "En la cocina, la abuela prepara su famosa sopa de pollo. La sopa tiene pollo, cebolla, tomate y muchas verduras.",
+      "en": "In the kitchen, grandma is making her famous chicken soup. The soup has chicken, onion, tomato, and lots of vegetables.",
+      "dialogue": false
+    },
+    {
+      "es": "—Hola, abuela —dice Elena, y le da un beso—. ¿Cómo estás? La cocina huele muy bien.",
+      "en": "\"Hi, grandma,\" says Elena, and gives her a kiss. \"How are you? The kitchen smells great.\"",
+      "dialogue": true
+    },
+    {
+      "es": "—Hola, mi vida —dice la abuela—. Estoy bien, pero un poco preocupada. Prueba la sopa y dime qué piensas.",
+      "en": "\"Hi, sweetheart,\" says grandma. \"I'm fine, but a little worried. Try the soup and tell me what you think.\"",
+      "dialogue": true
+    },
+    {
+      "es": "Elena prueba la sopa con una cuchara pequeña. La sopa está buena, pero algo no está bien. Falta algo, pero Elena no sabe qué.",
+      "en": "Elena tastes the soup with a small spoon. The soup is good, but something isn't quite right. Something is missing, but Elena doesn't know what.",
+      "dialogue": false
+    },
+    {
+      "es": "—Está muy rica, abuela —dice Elena—. Pero tienes razón, algo falta. ¿Más sal, quizás?",
+      "en": "\"It's really tasty, grandma,\" says Elena. \"But you're right, something is missing. Maybe more salt?\"",
+      "dialogue": true
+    },
+    {
+      "es": "En ese momento llega la tía Rosa con su hijo, el primo Diego. Los dos entran en la cocina y también prueban la sopa.",
+      "en": "At that moment aunt Rosa arrives with her son, cousin Diego. The two of them come into the kitchen and taste the soup too.",
+      "dialogue": false
+    },
+    {
+      "es": "—Para mí, necesita más tomate —dice la tía Rosa—. Siempre digo lo mismo, pero nunca me escuchas, mamá.",
+      "en": "\"For me, it needs more tomato,\" says aunt Rosa. \"I always say the same thing, but you never listen to me, mum.\"",
+      "dialogue": true
+    },
+    {
+      "es": "—Yo creo que necesita más cebolla —dice el primo Diego—. La cebolla siempre mejora una sopa. Es mi opinión de experto.",
+      "en": "\"I think it needs more onion,\" says cousin Diego. \"Onion always improves a soup. That's my expert opinion.\"",
+      "dialogue": true
+    },
+    {
+      "es": "La abuela añade un poco de sal, después un poco de tomate, y también un poco de cebolla. Prueba la sopa otra vez, pero no sonríe.",
+      "en": "Grandma adds a little salt, then a little tomato, and also a little onion. She tastes the soup again, but she doesn't smile.",
+      "dialogue": false
+    },
+    {
+      "es": "—No, no es eso —dice la abuela, y mira el reloj de la cocina—. Es otra cosa. Y tu abuelo todavía no está aquí.",
+      "en": "\"No, that's not it,\" says grandma, and looks at the kitchen clock. \"It's something else. And your grandfather still isn't here.\"",
+      "dialogue": true
+    },
+    {
+      "es": "La madre de Elena entra en la cocina con más familia: dos tíos y tres primos más. La cocina está llena de gente y de conversación.",
+      "en": "Elena's mother comes into the kitchen with more family: two uncles and three more cousins. The kitchen is full of people and conversation.",
+      "dialogue": false
+    },
+    {
+      "es": "—¿Dónde está papá? —pregunta la madre de Elena—. La comida está casi lista y él siempre llega tarde los domingos.",
+      "en": "\"Where's dad?\" asks Elena's mother. \"The food is almost ready and he's always late on Sundays.\"",
+      "dialogue": true
+    },
+    {
+      "es": "—Va a comprar el postre —dice la abuela, y por fin sonríe un poco—. Un buen domingo necesita un buen postre.",
+      "en": "\"He's gone to buy dessert,\" says grandma, and finally smiles a little. \"A good Sunday needs a good dessert.\"",
+      "dialogue": true
+    },
+    {
+      "es": "Toda la familia se sienta a la mesa grande del comedor. Hay catorce personas, pero solamente trece sillas. Falta una silla, y falta el abuelo.",
+      "en": "The whole family sits at the big dining table. There are fourteen people, but only thirteen chairs. A chair is missing, and grandpa is missing.",
+      "dialogue": false
+    },
+    {
+      "es": "La abuela mira la mesa, mira las trece sillas, y de repente entiende. No falta sal. No falta tomate. No falta cebolla.",
+      "en": "Grandma looks at the table, looks at the thirteen chairs, and suddenly understands. It's not missing salt. It's not missing tomato. It's not missing onion.",
+      "dialogue": false
+    },
+    {
+      "es": "—Ya sé qué falta en la sopa —dice la abuela, y se ríe—. ¡Falta tu abuelo! Sin él, nada sabe completamente bien, ni siquiera mi sopa.",
+      "en": "\"I know what's missing in the soup now,\" says grandma, and she laughs. \"Grandpa is missing! Without him, nothing tastes completely right, not even my soup.\"",
+      "dialogue": true
+    },
+    {
+      "es": "En ese momento se abre la puerta. Es el abuelo, con una caja grande de postre en las manos y una gran sonrisa en la cara.",
+      "en": "At that moment the door opens. It's grandpa, with a big box of dessert in his hands and a big smile on his face.",
+      "dialogue": false
+    },
+    {
+      "es": "—¡Perdón por el retraso! —dice el abuelo—. La pastelería tiene una cola muy larga los domingos. Pero traigo el mejor postre de la ciudad.",
+      "en": "\"Sorry for the delay!\" says grandpa. \"The bakery has a very long queue on Sundays. But I've brought the best dessert in the city.\"",
+      "dialogue": true
+    },
+    {
+      "es": "El abuelo se sienta en la única silla libre, al lado de la abuela. Ella le da un beso y por fin prueba la sopa una vez más.",
+      "en": "Grandpa sits in the only free chair, next to grandma. She gives him a kiss and finally tastes the soup one more time.",
+      "dialogue": false
+    },
+    {
+      "es": "—Ahora sí —dice la abuela, feliz—. Ahora la sopa está perfecta. Ya tenemos todo lo que necesitamos en esta mesa.",
+      "en": "\"Now, yes,\" says grandma, happy. \"Now the soup is perfect. We finally have everything we need at this table.\"",
+      "dialogue": true
+    },
+    {
+      "es": "Toda la familia come la sopa de pollo, y después el delicioso postre del abuelo. La cocina huele a cebolla, a tomate, y sobre todo, a hogar.",
+      "en": "The whole family eats the chicken soup, and afterward grandpa's delicious dessert. The kitchen smells of onion, of tomato, and above all, of home.",
+      "dialogue": false
+    }
+  ],
+  "gloss": {
+    "a": {
+      "en": "to"
+    },
+    "abre": {
+      "en": "opens",
+      "base": "abrir – to open"
+    },
+    "abuela": {
+      "en": "grandma"
+    },
+    "abuelo": {
+      "en": "grandpa"
+    },
+    "ahora": {
+      "en": "now"
+    },
+    "al": {
+      "en": "to the / next to the",
+      "base": "a + el"
+    },
+    "algo": {
+      "en": "something"
+    },
+    "aquí": {
+      "en": "here"
+    },
+    "añade": {
+      "en": "adds",
+      "base": "añadir – to add"
+    },
+    "beso": {
+      "en": "kiss"
+    },
+    "bien": {
+      "en": "well"
+    },
+    "buen": {
+      "en": "good",
+      "base": "bueno – good"
+    },
+    "buena": {
+      "en": "good",
+      "base": "bueno – good"
+    },
+    "cada": {
+      "en": "each / every"
+    },
+    "caja": {
+      "en": "box"
+    },
+    "cara": {
+      "en": "face"
+    },
+    "casa": {
+      "en": "house"
+    },
+    "casi": {
+      "en": "almost"
+    },
+    "catorce": {
+      "en": "fourteen"
+    },
+    "cebolla": {
+      "en": "onion"
+    },
+    "ciudad": {
+      "en": "city"
+    },
+    "cocina": {
+      "en": "kitchen"
+    },
+    "cola": {
+      "en": "queue"
+    },
+    "come": {
+      "en": "eats",
+      "base": "comer – to eat"
+    },
+    "comedor": {
+      "en": "dining room"
+    },
+    "comida": {
+      "en": "meal / food"
+    },
+    "completamente": {
+      "en": "completely"
+    },
+    "comprar": {
+      "en": "to buy"
+    },
+    "con": {
+      "en": "with"
+    },
+    "conversación": {
+      "en": "conversation"
+    },
+    "cosa": {
+      "en": "thing"
+    },
+    "creo": {
+      "en": "I think",
+      "base": "creer – to think / believe"
+    },
+    "cuchara": {
+      "en": "spoon"
+    },
+    "cómo": {
+      "en": "how"
+    },
+    "da": {
+      "en": "gives",
+      "base": "dar – to give"
+    },
+    "de": {
+      "en": "of / from"
+    },
+    "del": {
+      "en": "of the",
+      "base": "de + el"
+    },
+    "delicioso": {
+      "en": "delicious"
+    },
+    "después": {
+      "en": "afterward"
+    },
+    "dice": {
+      "en": "says",
+      "base": "decir – to say"
+    },
+    "diego": {
+      "en": "Diego"
+    },
+    "digo": {
+      "en": "I say",
+      "base": "decir – to say"
+    },
+    "dime": {
+      "en": "tell me",
+      "base": "decir – to say"
+    },
+    "domingo": {
+      "en": "Sunday"
+    },
+    "domingos": {
+      "en": "Sundays",
+      "base": "domingo – Sunday"
+    },
+    "dos": {
+      "en": "two"
+    },
+    "dónde": {
+      "en": "where"
+    },
+    "el": {
+      "en": "the"
+    },
+    "elena": {
+      "en": "Elena"
+    },
+    "ella": {
+      "en": "she"
+    },
+    "en": {
+      "en": "in"
+    },
+    "entiende": {
+      "en": "understands",
+      "base": "entender – to understand"
+    },
+    "entra": {
+      "en": "comes in",
+      "base": "entrar – to enter"
+    },
+    "escuchas": {
+      "en": "you listen",
+      "base": "escuchar – to listen"
+    },
+    "entran": {
+      "en": "come in",
+      "base": "entrar – to enter"
+    },
+    "es": {
+      "en": "is",
+      "base": "ser – to be"
+    },
+    "ese": {
+      "en": "that"
+    },
+    "eso": {
+      "en": "that"
+    },
+    "esta": {
+      "en": "this"
+    },
+    "estoy": {
+      "en": "I am",
+      "base": "estar – to be"
+    },
+    "está": {
+      "en": "is",
+      "base": "estar – to be"
+    },
+    "estás": {
+      "en": "you are",
+      "base": "estar – to be"
+    },
+    "experto": {
+      "en": "expert"
+    },
+    "falta": {
+      "en": "is missing",
+      "base": "faltar – to be missing"
+    },
+    "familia": {
+      "en": "family"
+    },
+    "familiar": {
+      "en": "family (adj.)"
+    },
+    "famosa": {
+      "en": "famous",
+      "base": "famoso – famous"
+    },
+    "feliz": {
+      "en": "happy"
+    },
+    "fin": {
+      "en": "end",
+      "base": "por fin – finally"
+    },
+    "gente": {
+      "en": "people"
+    },
+    "gran": {
+      "en": "big",
+      "base": "grande – big"
+    },
+    "grande": {
+      "en": "big"
+    },
+    "hay": {
+      "en": "there is / there are",
+      "base": "haber – there is/are"
+    },
+    "hijo": {
+      "en": "son"
+    },
+    "hogar": {
+      "en": "home"
+    },
+    "hola": {
+      "en": "hi"
+    },
+    "huele": {
+      "en": "smells",
+      "base": "oler – to smell"
+    },
+    "la": {
+      "en": "the"
+    },
+    "lado": {
+      "en": "side",
+      "base": "al lado de – next to"
+    },
+    "larga": {
+      "en": "long",
+      "base": "largo – long"
+    },
+    "las": {
+      "en": "the"
+    },
+    "le": {
+      "en": "to her / to him"
+    },
+    "libre": {
+      "en": "free"
+    },
+    "lista": {
+      "en": "ready",
+      "base": "listo – ready"
+    },
+    "llega": {
+      "en": "arrives",
+      "base": "llegar – to arrive"
+    },
+    "llena": {
+      "en": "full",
+      "base": "lleno – full"
+    },
+    "lo": {
+      "en": "it / what",
+      "base": "lo que – what"
+    },
+    "los": {
+      "en": "the"
+    },
+    "madre": {
+      "en": "mother"
+    },
+    "mamá": {
+      "en": "mum"
+    },
+    "manos": {
+      "en": "hands",
+      "base": "mano – hand"
+    },
+    "me": {
+      "en": "me"
+    },
+    "mejor": {
+      "en": "best"
+    },
+    "mejora": {
+      "en": "improves",
+      "base": "mejorar – to improve"
+    },
+    "mesa": {
+      "en": "table"
+    },
+    "mi": {
+      "en": "my"
+    },
+    "mira": {
+      "en": "looks",
+      "base": "mirar – to look"
+    },
+    "mismo": {
+      "en": "same"
+    },
+    "momento": {
+      "en": "moment"
+    },
+    "muchas": {
+      "en": "many",
+      "base": "mucho – many / a lot"
+    },
+    "muy": {
+      "en": "very"
+    },
+    "más": {
+      "en": "more"
+    },
+    "mí": {
+      "en": "me"
+    },
+    "nada": {
+      "en": "nothing"
+    },
+    "necesita": {
+      "en": "needs",
+      "base": "necesitar – to need"
+    },
+    "necesitamos": {
+      "en": "we need",
+      "base": "necesitar – to need"
+    },
+    "ni": {
+      "en": "not even",
+      "base": "ni siquiera – not even"
+    },
+    "no": {
+      "en": "no / not"
+    },
+    "nunca": {
+      "en": "never"
+    },
+    "opinión": {
+      "en": "opinion"
+    },
+    "otra": {
+      "en": "another"
+    },
+    "papá": {
+      "en": "dad"
+    },
+    "para": {
+      "en": "for"
+    },
+    "pastelería": {
+      "en": "bakery"
+    },
+    "pequeña": {
+      "en": "small",
+      "base": "pequeño – small"
+    },
+    "perdón": {
+      "en": "sorry"
+    },
+    "perfecta": {
+      "en": "perfect",
+      "base": "perfecto – perfect"
+    },
+    "pero": {
+      "en": "but"
+    },
+    "personas": {
+      "en": "people",
+      "base": "persona – person"
+    },
+    "piensas": {
+      "en": "you think",
+      "base": "pensar – to think"
+    },
+    "poco": {
+      "en": "a little"
+    },
+    "pollo": {
+      "en": "chicken"
+    },
+    "por": {
+      "en": "for / through"
+    },
+    "postre": {
+      "en": "dessert"
+    },
+    "pregunta": {
+      "en": "asks",
+      "base": "preguntar – to ask"
+    },
+    "preocupada": {
+      "en": "worried",
+      "base": "preocupado – worried"
+    },
+    "prepara": {
+      "en": "prepares",
+      "base": "preparar – to prepare"
+    },
+    "primo": {
+      "en": "cousin"
+    },
+    "primos": {
+      "en": "cousins",
+      "base": "primo – cousin"
+    },
+    "prueba": {
+      "en": "tastes / tries",
+      "base": "probar – to taste / try"
+    },
+    "prueban": {
+      "en": "taste / try",
+      "base": "probar – to taste / try"
+    },
+    "puerta": {
+      "en": "door"
+    },
+    "que": {
+      "en": "that / which"
+    },
+    "quizás": {
+      "en": "maybe"
+    },
+    "qué": {
+      "en": "what"
+    },
+    "razón": {
+      "en": "right",
+      "base": "tener razón – to be right"
+    },
+    "reloj": {
+      "en": "clock"
+    },
+    "repente": {
+      "en": "sudden",
+      "base": "de repente – suddenly"
+    },
+    "retraso": {
+      "en": "delay"
+    },
+    "rica": {
+      "en": "tasty",
+      "base": "rico – tasty"
+    },
+    "rosa": {
+      "en": "Rosa"
+    },
+    "ríe": {
+      "en": "laughs",
+      "base": "reírse – to laugh"
+    },
+    "sabe": {
+      "en": "tastes",
+      "base": "saber – to know / taste (of food)"
+    },
+    "sal": {
+      "en": "salt"
+    },
+    "se": {
+      "en": "(reflexive)",
+      "base": "se – reflexive pronoun"
+    },
+    "semana": {
+      "en": "week"
+    },
+    "siempre": {
+      "en": "always"
+    },
+    "sienta": {
+      "en": "sits",
+      "base": "sentarse – to sit"
+    },
+    "silla": {
+      "en": "chair"
+    },
+    "sillas": {
+      "en": "chairs",
+      "base": "silla – chair"
+    },
+    "sin": {
+      "en": "without"
+    },
+    "siquiera": {
+      "en": "even",
+      "base": "ni siquiera – not even"
+    },
+    "sobre": {
+      "en": "above",
+      "base": "sobre todo – above all"
+    },
+    "solamente": {
+      "en": "only"
+    },
+    "sonrisa": {
+      "en": "smile"
+    },
+    "sonríe": {
+      "en": "smiles",
+      "base": "sonreír – to smile"
+    },
+    "sopa": {
+      "en": "soup"
+    },
+    "su": {
+      "en": "her / his"
+    },
+    "sé": {
+      "en": "I know",
+      "base": "saber – to know"
+    },
+    "sí": {
+      "en": "yes"
+    },
+    "también": {
+      "en": "also"
+    },
+    "tarde": {
+      "en": "late"
+    },
+    "tenemos": {
+      "en": "we have",
+      "base": "tener – to have"
+    },
+    "tiene": {
+      "en": "has",
+      "base": "tener – to have"
+    },
+    "tienes": {
+      "en": "you have",
+      "base": "tener – to have"
+    },
+    "toda": {
+      "en": "all / whole",
+      "base": "todo – all"
+    },
+    "todavía": {
+      "en": "still"
+    },
+    "todo": {
+      "en": "everything"
+    },
+    "tomate": {
+      "en": "tomato"
+    },
+    "traigo": {
+      "en": "I bring",
+      "base": "traer – to bring"
+    },
+    "trece": {
+      "en": "thirteen"
+    },
+    "tres": {
+      "en": "three"
+    },
+    "tu": {
+      "en": "your"
+    },
+    "tía": {
+      "en": "aunt"
+    },
+    "tíos": {
+      "en": "uncles",
+      "base": "tío – uncle"
+    },
+    "un": {
+      "en": "a"
+    },
+    "una": {
+      "en": "a"
+    },
+    "va": {
+      "en": "is going",
+      "base": "ir – to go"
+    },
+    "verduras": {
+      "en": "vegetables",
+      "base": "verdura – vegetable"
+    },
+    "vez": {
+      "en": "time (occurrence)"
+    },
+    "vida": {
+      "en": "life",
+      "base": "mi vida – sweetheart"
+    },
+    "y": {
+      "en": "and"
+    },
+    "ya": {
+      "en": "already / now"
+    },
+    "yo": {
+      "en": "I"
+    },
+    "él": {
+      "en": "him"
+    },
+    "única": {
+      "en": "only",
+      "base": "único – only / unique"
+    }
+  },
+  "glossOverrides": {}
+}

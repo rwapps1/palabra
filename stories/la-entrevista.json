@@ -1,0 +1,840 @@
+{
+  "id": "la-entrevista",
+  "title": {
+    "es": "La entrevista",
+    "en": "The Interview"
+  },
+  "level": "medium",
+  "wordCount": 460,
+  "minutes": 4,
+  "tense": "present",
+  "targetWords": [
+    "camisa",
+    "zapatos",
+    "chaqueta",
+    "nervioso",
+    "tranquilo",
+    "contento"
+  ],
+  "paragraphs": [
+    {
+      "es": "Son las siete de la mañana. Marta está de pie delante del armario de su dormitorio, y no sabe qué ropa ponerse.",
+      "en": "It's seven in the morning. Marta is standing in front of her bedroom wardrobe, and doesn't know what clothes to put on.",
+      "dialogue": false
+    },
+    {
+      "es": "Hoy tiene una entrevista de trabajo muy importante, y está nerviosa. Es su primera entrevista en tres años.",
+      "en": "Today she has a very important job interview, and she's nervous. It's her first interview in three years.",
+      "dialogue": false
+    },
+    {
+      "es": "Marta saca una camisa blanca del armario. Después saca una camisa azul. No sabe cuál camisa es mejor para la entrevista.",
+      "en": "Marta takes out a white shirt from the wardrobe. Then she takes out a blue shirt. She doesn't know which shirt is better for the interview.",
+      "dialogue": false
+    },
+    {
+      "es": "—La camisa blanca es más formal —piensa Marta—, pero la camisa azul es mi color favorito. ¿Cuál me da más confianza?",
+      "en": "\"The white shirt is more formal,\" Marta thinks, \"but the blue shirt is my favourite colour. Which one gives me more confidence?\"",
+      "dialogue": true
+    },
+    {
+      "es": "Al final, elige la camisa azul y una chaqueta negra. También necesita zapatos elegantes, pero sus zapatos negros están muy viejos.",
+      "en": "In the end, she chooses the blue shirt and a black jacket. She also needs smart shoes, but her black shoes are very old.",
+      "dialogue": false
+    },
+    {
+      "es": "Se pone la camisa, la chaqueta y los zapatos, y se mira en el espejo del dormitorio. Respira profundamente, pero todavía está nerviosa.",
+      "en": "She puts on the shirt, the jacket and the shoes, and looks at herself in the bedroom mirror. She breathes deeply, but she's still nervous.",
+      "dialogue": false
+    },
+    {
+      "es": "Marta desayuna rápido, pero casi no come nada: los nervios no le dejan comer. A las ocho y media, sale de su casa.",
+      "en": "Marta has a quick breakfast, but barely eats anything: her nerves won't let her eat. At half past eight, she leaves her house.",
+      "dialogue": false
+    },
+    {
+      "es": "En el autobús, Marta piensa en las posibles preguntas de la entrevista. ¿Por qué quiere este trabajo? ¿Cuáles son sus puntos fuertes?",
+      "en": "On the bus, Marta thinks about the possible interview questions. Why does she want this job? What are her strengths?",
+      "dialogue": false
+    },
+    {
+      "es": "Con cada pregunta, está más nerviosa. Mira sus zapatos nuevos y piensa: \"Espero no caerme delante del entrevistador\".",
+      "en": "With every question, she gets more nervous. She looks at her new shoes and thinks: \"I hope I don't fall in front of the interviewer.\"",
+      "dialogue": false
+    },
+    {
+      "es": "Por fin llega a un edificio grande cerca de la estación de trenes. La empresa está en el quinto piso.",
+      "en": "Finally she arrives at a big building near the train station. The company is on the fifth floor.",
+      "dialogue": false
+    },
+    {
+      "es": "En la recepción, una mujer sonríe y dice: —Buenos días. ¿Tiene una cita? Puede sentarse aquí y esperar unos minutos.",
+      "en": "At reception, a woman smiles and says: \"Good morning. Do you have an appointment? You can sit here and wait a few minutes.\"",
+      "dialogue": true
+    },
+    {
+      "es": "Marta se sienta, mira sus zapatos otra vez y respira profundamente. Su corazón late muy rápido. Está muy, muy nerviosa.",
+      "en": "Marta sits down, looks at her shoes again and breathes deeply. Her heart is beating very fast. She's very, very nervous.",
+      "dialogue": false
+    },
+    {
+      "es": "En una mesa pequeña hay revistas viejas y una máquina de café. Marta piensa en tomar un café, pero sus manos ya tiemblan demasiado.",
+      "en": "On a small table there are old magazines and a coffee machine. Marta thinks about having a coffee, but her hands are already shaking too much.",
+      "dialogue": false
+    },
+    {
+      "es": "Después de diez minutos, se abre una puerta. Un hombre con traje camina hacia ella con una sonrisa muy grande.",
+      "en": "After ten minutes, a door opens. A man in a suit walks toward her with a very big smile.",
+      "dialogue": false
+    },
+    {
+      "es": "—¡Marta! ¡No puedo creerlo! —dice el hombre—. ¿Eres tú de verdad?",
+      "en": "\"Marta! I can't believe it!\" says the man. \"Is it really you?\"",
+      "dialogue": true
+    },
+    {
+      "es": "Marta mira al hombre con confusión, y de repente lo reconoce: es Mateo, su viejo amigo de la universidad. No se ven desde hace muchos años.",
+      "en": "Marta looks at the man in confusion, and suddenly recognises him: it's Mateo, her old friend from university. They haven't seen each other in many years.",
+      "dialogue": false
+    },
+    {
+      "es": "—¡Mateo! —dice Marta, y por fin sonríe—. No sabía que trabajas aquí. ¿Tú eres el entrevistador?",
+      "en": "\"Mateo!\" says Marta, and finally smiles. \"I didn't know you worked here. You're the interviewer?\"",
+      "dialogue": true
+    },
+    {
+      "es": "—Sí, ahora soy el director de este departamento —dice Mateo—. Cuando veo tu nombre en la lista de hoy, no puedo creerlo.",
+      "en": "\"Yes, I'm the head of this department now,\" says Mateo. \"When I see your name on today's list, I can't believe it.\"",
+      "dialogue": true
+    },
+    {
+      "es": "Con Mateo, la entrevista es diferente. Hablan de la universidad, de sus proyectos antiguos, y también, claro, del trabajo nuevo.",
+      "en": "With Mateo, the interview is different. They talk about university, about their old projects, and of course, about the new job.",
+      "dialogue": false
+    },
+    {
+      "es": "Marta ya no está nerviosa. Ahora está tranquila, porque habla con un viejo amigo, no con un extraño. Responde a todas las preguntas con confianza.",
+      "en": "Marta isn't nervous anymore. Now she's calm, because she's talking to an old friend, not a stranger. She answers every question with confidence.",
+      "dialogue": false
+    },
+    {
+      "es": "—Creo que tienes el puesto —dice Mateo al final—. Pero necesito hablar con mi equipo primero. Te llamamos mañana.",
+      "en": "\"I think you've got the job,\" says Mateo at the end. \"But I need to talk to my team first. We'll call you tomorrow.\"",
+      "dialogue": true
+    },
+    {
+      "es": "Marta sale del edificio muy contenta. Mira sus zapatos otra vez, pero ahora no piensa en caerse: piensa en su viejo amigo Mateo, y en el trabajo nuevo.",
+      "en": "Marta leaves the building very happy. She looks at her shoes again, but now she isn't thinking about falling: she's thinking about her old friend Mateo, and about the new job.",
+      "dialogue": false
+    }
+  ],
+  "gloss": {
+    "a": {
+      "en": "to / at"
+    },
+    "abre": {
+      "en": "opens",
+      "base": "abrir – to open"
+    },
+    "ahora": {
+      "en": "now"
+    },
+    "al": {
+      "en": "to the",
+      "base": "a + el"
+    },
+    "amigo": {
+      "en": "friend"
+    },
+    "antiguos": {
+      "en": "old / former",
+      "base": "antiguo – old / former"
+    },
+    "aquí": {
+      "en": "here"
+    },
+    "armario": {
+      "en": "wardrobe"
+    },
+    "autobús": {
+      "en": "bus"
+    },
+    "azul": {
+      "en": "blue"
+    },
+    "años": {
+      "en": "years",
+      "base": "año – year"
+    },
+    "blanca": {
+      "en": "white",
+      "base": "blanco – white"
+    },
+    "buenos": {
+      "en": "good",
+      "base": "buenos días – good morning"
+    },
+    "cada": {
+      "en": "each / every"
+    },
+    "caerme": {
+      "en": "falling",
+      "base": "caerse – to fall"
+    },
+    "caerse": {
+      "en": "to fall"
+    },
+    "café": {
+      "en": "coffee"
+    },
+    "camina": {
+      "en": "walks",
+      "base": "caminar – to walk"
+    },
+    "camisa": {
+      "en": "shirt"
+    },
+    "casa": {
+      "en": "house"
+    },
+    "casi": {
+      "en": "almost"
+    },
+    "cerca": {
+      "en": "near"
+    },
+    "chaqueta": {
+      "en": "jacket"
+    },
+    "cita": {
+      "en": "appointment"
+    },
+    "claro": {
+      "en": "of course"
+    },
+    "color": {
+      "en": "colour"
+    },
+    "come": {
+      "en": "eats",
+      "base": "comer – to eat"
+    },
+    "comer": {
+      "en": "to eat"
+    },
+    "con": {
+      "en": "with"
+    },
+    "confianza": {
+      "en": "confidence"
+    },
+    "confusión": {
+      "en": "confusion"
+    },
+    "contenta": {
+      "en": "happy",
+      "base": "contento – happy"
+    },
+    "corazón": {
+      "en": "heart"
+    },
+    "creerlo": {
+      "en": "believe it",
+      "base": "creer – to believe"
+    },
+    "creo": {
+      "en": "I think",
+      "base": "creer – to think / believe"
+    },
+    "cuando": {
+      "en": "when"
+    },
+    "cuál": {
+      "en": "which"
+    },
+    "cuáles": {
+      "en": "which (plural)",
+      "base": "cuál – which"
+    },
+    "da": {
+      "en": "gives",
+      "base": "dar – to give"
+    },
+    "de": {
+      "en": "of / from"
+    },
+    "dejan": {
+      "en": "let",
+      "base": "dejar – to let / leave"
+    },
+    "del": {
+      "en": "of the",
+      "base": "de + el"
+    },
+    "delante": {
+      "en": "in front"
+    },
+    "demasiado": {
+      "en": "too much"
+    },
+    "departamento": {
+      "en": "department"
+    },
+    "desayuna": {
+      "en": "has breakfast",
+      "base": "desayunar – to have breakfast"
+    },
+    "desde": {
+      "en": "since"
+    },
+    "después": {
+      "en": "after"
+    },
+    "dice": {
+      "en": "says",
+      "base": "decir – to say"
+    },
+    "diez": {
+      "en": "ten"
+    },
+    "diferente": {
+      "en": "different"
+    },
+    "director": {
+      "en": "head / director"
+    },
+    "dormitorio": {
+      "en": "bedroom"
+    },
+    "días": {
+      "en": "days",
+      "base": "día – day"
+    },
+    "edificio": {
+      "en": "building"
+    },
+    "el": {
+      "en": "the"
+    },
+    "elegantes": {
+      "en": "smart",
+      "base": "elegante – smart / elegant"
+    },
+    "elige": {
+      "en": "chooses",
+      "base": "elegir – to choose"
+    },
+    "ella": {
+      "en": "she"
+    },
+    "empresa": {
+      "en": "company"
+    },
+    "en": {
+      "en": "in / on"
+    },
+    "entrevista": {
+      "en": "interview"
+    },
+    "entrevistador": {
+      "en": "interviewer"
+    },
+    "equipo": {
+      "en": "team"
+    },
+    "eres": {
+      "en": "you are",
+      "base": "ser – to be"
+    },
+    "es": {
+      "en": "is",
+      "base": "ser – to be"
+    },
+    "espejo": {
+      "en": "mirror"
+    },
+    "esperar": {
+      "en": "to wait"
+    },
+    "espero": {
+      "en": "I hope",
+      "base": "esperar – to hope / wait"
+    },
+    "estación": {
+      "en": "station"
+    },
+    "este": {
+      "en": "this"
+    },
+    "está": {
+      "en": "is",
+      "base": "estar – to be"
+    },
+    "están": {
+      "en": "are",
+      "base": "estar – to be"
+    },
+    "extraño": {
+      "en": "stranger"
+    },
+    "favorito": {
+      "en": "favourite"
+    },
+    "fin": {
+      "en": "end",
+      "base": "por fin – finally"
+    },
+    "final": {
+      "en": "end",
+      "base": "al final – in the end"
+    },
+    "formal": {
+      "en": "formal"
+    },
+    "fuertes": {
+      "en": "strong",
+      "base": "fuerte – strong / puntos fuertes: strengths"
+    },
+    "grande": {
+      "en": "big"
+    },
+    "habla": {
+      "en": "talks",
+      "base": "hablar – to talk"
+    },
+    "hablan": {
+      "en": "talk",
+      "base": "hablar – to talk"
+    },
+    "hablar": {
+      "en": "to talk"
+    },
+    "hace": {
+      "en": "ago",
+      "base": "hace – hacer: ago / time expression"
+    },
+    "hacia": {
+      "en": "toward"
+    },
+    "hay": {
+      "en": "there is / there are",
+      "base": "haber – there is/are"
+    },
+    "hombre": {
+      "en": "man"
+    },
+    "hoy": {
+      "en": "today"
+    },
+    "importante": {
+      "en": "important"
+    },
+    "la": {
+      "en": "the"
+    },
+    "las": {
+      "en": "the"
+    },
+    "late": {
+      "en": "beats",
+      "base": "latir – to beat (heart)"
+    },
+    "le": {
+      "en": "to her"
+    },
+    "lista": {
+      "en": "list"
+    },
+    "llamamos": {
+      "en": "we'll call",
+      "base": "llamar – to call"
+    },
+    "llega": {
+      "en": "arrives",
+      "base": "llegar – to arrive"
+    },
+    "lo": {
+      "en": "him / it"
+    },
+    "los": {
+      "en": "the"
+    },
+    "manos": {
+      "en": "hands",
+      "base": "mano – hand"
+    },
+    "marta": {
+      "en": "Marta"
+    },
+    "mateo": {
+      "en": "Mateo"
+    },
+    "mañana": {
+      "en": "tomorrow"
+    },
+    "me": {
+      "en": "me"
+    },
+    "media": {
+      "en": "half",
+      "base": "y media – half past"
+    },
+    "mejor": {
+      "en": "better"
+    },
+    "mesa": {
+      "en": "table"
+    },
+    "mi": {
+      "en": "my"
+    },
+    "minutos": {
+      "en": "minutes",
+      "base": "minuto – minute"
+    },
+    "mira": {
+      "en": "looks",
+      "base": "mirar – to look"
+    },
+    "muchos": {
+      "en": "many"
+    },
+    "mujer": {
+      "en": "woman"
+    },
+    "muy": {
+      "en": "very"
+    },
+    "máquina": {
+      "en": "machine"
+    },
+    "más": {
+      "en": "more"
+    },
+    "nada": {
+      "en": "nothing"
+    },
+    "necesita": {
+      "en": "needs",
+      "base": "necesitar – to need"
+    },
+    "necesito": {
+      "en": "I need",
+      "base": "necesitar – to need"
+    },
+    "negra": {
+      "en": "black",
+      "base": "negro – black"
+    },
+    "negros": {
+      "en": "black",
+      "base": "negro – black"
+    },
+    "nervios": {
+      "en": "nerves",
+      "base": "nervio – nerve"
+    },
+    "nerviosa": {
+      "en": "nervous",
+      "base": "nervioso – nervous"
+    },
+    "no": {
+      "en": "no / not"
+    },
+    "nombre": {
+      "en": "name"
+    },
+    "nuevo": {
+      "en": "new"
+    },
+    "nuevos": {
+      "en": "new",
+      "base": "nuevo – new"
+    },
+    "ocho": {
+      "en": "eight"
+    },
+    "otra": {
+      "en": "another / again",
+      "base": "otra vez – again"
+    },
+    "para": {
+      "en": "for"
+    },
+    "pequeña": {
+      "en": "small",
+      "base": "pequeño – small"
+    },
+    "pero": {
+      "en": "but"
+    },
+    "pie": {
+      "en": "foot",
+      "base": "de pie – standing"
+    },
+    "piensa": {
+      "en": "thinks",
+      "base": "pensar – to think"
+    },
+    "piso": {
+      "en": "floor"
+    },
+    "pone": {
+      "en": "puts on",
+      "base": "ponerse – to put on"
+    },
+    "ponerse": {
+      "en": "to put on"
+    },
+    "por": {
+      "en": "for / through"
+    },
+    "porque": {
+      "en": "because"
+    },
+    "posibles": {
+      "en": "possible",
+      "base": "posible – possible"
+    },
+    "pregunta": {
+      "en": "question"
+    },
+    "preguntas": {
+      "en": "questions",
+      "base": "pregunta – question"
+    },
+    "primera": {
+      "en": "first",
+      "base": "primero – first"
+    },
+    "primero": {
+      "en": "first"
+    },
+    "profundamente": {
+      "en": "deeply"
+    },
+    "proyectos": {
+      "en": "projects",
+      "base": "proyecto – project"
+    },
+    "puede": {
+      "en": "can",
+      "base": "poder – to be able to"
+    },
+    "puedo": {
+      "en": "I can",
+      "base": "poder – to be able to"
+    },
+    "puerta": {
+      "en": "door"
+    },
+    "puesto": {
+      "en": "job / position"
+    },
+    "puntos": {
+      "en": "points",
+      "base": "punto – point"
+    },
+    "que": {
+      "en": "that"
+    },
+    "quiere": {
+      "en": "wants",
+      "base": "querer – to want"
+    },
+    "quinto": {
+      "en": "fifth"
+    },
+    "qué": {
+      "en": "what"
+    },
+    "recepción": {
+      "en": "reception"
+    },
+    "reconoce": {
+      "en": "recognises",
+      "base": "reconocer – to recognise"
+    },
+    "repente": {
+      "en": "sudden",
+      "base": "de repente – suddenly"
+    },
+    "respira": {
+      "en": "breathes",
+      "base": "respirar – to breathe"
+    },
+    "responde": {
+      "en": "answers",
+      "base": "responder – to answer"
+    },
+    "revistas": {
+      "en": "magazines",
+      "base": "revista – magazine"
+    },
+    "ropa": {
+      "en": "clothes"
+    },
+    "rápido": {
+      "en": "quickly"
+    },
+    "sabe": {
+      "en": "knows",
+      "base": "saber – to know"
+    },
+    "sabía": {
+      "en": "knew",
+      "base": "saber – to know"
+    },
+    "saca": {
+      "en": "takes out",
+      "base": "sacar – to take out"
+    },
+    "sale": {
+      "en": "leaves",
+      "base": "salir – to leave"
+    },
+    "se": {
+      "en": "(reflexive)",
+      "base": "se – reflexive pronoun"
+    },
+    "sentarse": {
+      "en": "to sit"
+    },
+    "sienta": {
+      "en": "sits",
+      "base": "sentarse – to sit"
+    },
+    "siete": {
+      "en": "seven"
+    },
+    "son": {
+      "en": "are",
+      "base": "ser – to be"
+    },
+    "sonrisa": {
+      "en": "smile"
+    },
+    "sonríe": {
+      "en": "smiles",
+      "base": "sonreír – to smile"
+    },
+    "soy": {
+      "en": "I am",
+      "base": "ser – to be"
+    },
+    "su": {
+      "en": "her"
+    },
+    "sus": {
+      "en": "her (plural)",
+      "base": "su – her / his"
+    },
+    "sí": {
+      "en": "yes"
+    },
+    "también": {
+      "en": "also"
+    },
+    "te": {
+      "en": "you"
+    },
+    "tiemblan": {
+      "en": "are shaking",
+      "base": "temblar – to shake / tremble"
+    },
+    "tiene": {
+      "en": "has",
+      "base": "tener – to have"
+    },
+    "tienes": {
+      "en": "you have",
+      "base": "tener – to have"
+    },
+    "todas": {
+      "en": "all",
+      "base": "todo – all"
+    },
+    "todavía": {
+      "en": "still"
+    },
+    "tomar": {
+      "en": "to have (a drink)"
+    },
+    "trabajas": {
+      "en": "you work",
+      "base": "trabajar – to work"
+    },
+    "trabajo": {
+      "en": "job"
+    },
+    "traje": {
+      "en": "suit"
+    },
+    "tranquila": {
+      "en": "calm",
+      "base": "tranquilo – calm"
+    },
+    "trenes": {
+      "en": "trains",
+      "base": "tren – train"
+    },
+    "tres": {
+      "en": "three"
+    },
+    "tu": {
+      "en": "your"
+    },
+    "tú": {
+      "en": "you"
+    },
+    "un": {
+      "en": "a"
+    },
+    "una": {
+      "en": "a"
+    },
+    "universidad": {
+      "en": "university"
+    },
+    "unos": {
+      "en": "a few"
+    },
+    "ven": {
+      "en": "they see",
+      "base": "ver – to see"
+    },
+    "veo": {
+      "en": "I see",
+      "base": "ver – to see"
+    },
+    "verdad": {
+      "en": "true",
+      "base": "de verdad – really"
+    },
+    "vez": {
+      "en": "time (occurrence)"
+    },
+    "viejas": {
+      "en": "old",
+      "base": "viejo – old"
+    },
+    "viejo": {
+      "en": "old"
+    },
+    "viejos": {
+      "en": "old",
+      "base": "viejo – old"
+    },
+    "y": {
+      "en": "and"
+    },
+    "ya": {
+      "en": "no longer / already"
+    },
+    "zapatos": {
+      "en": "shoes",
+      "base": "zapato – shoe"
+    }
+  },
+  "glossOverrides": {}
+}

@@ -1,0 +1,790 @@
+{
+  "id": "la-parada-del-autobus",
+  "title": {
+    "es": "La parada del autobús",
+    "en": "The Bus Stop"
+  },
+  "level": "easy",
+  "wordCount": 459,
+  "minutes": 4,
+  "tense": "present",
+  "targetWords": [
+    "autobús",
+    "lluvia",
+    "viento",
+    "estación",
+    "taxi",
+    "tormenta"
+  ],
+  "paragraphs": [
+    {
+      "es": "Es lunes por la mañana en Madrid. Mateo espera el autobús número doce en la parada de la calle Mayor. El cielo está muy gris y hace mucho viento.",
+      "en": "It's Monday morning in Madrid. Mateo is waiting for bus number twelve at the stop on Calle Mayor. The sky is very grey and it's very windy.",
+      "dialogue": false
+    },
+    {
+      "es": "Mateo mira su reloj. El autobús llega siempre a las ocho y diez, pero ya son las ocho y veinte. No hay nadie más en la parada.",
+      "en": "Mateo looks at his watch. The bus always arrives at ten past eight, but it's already twenty past eight. There's nobody else at the stop.",
+      "dialogue": false
+    },
+    {
+      "es": "De repente empieza a llover. Primero cae poca lluvia, pero en un minuto la lluvia es muy fuerte. Mateo no tiene paraguas.",
+      "en": "Suddenly it starts to rain. At first only a little rain falls, but within a minute the rain is very heavy. Mateo doesn't have an umbrella.",
+      "dialogue": false
+    },
+    {
+      "es": "Una mujer llega corriendo a la parada. Lleva un paraguas grande de color rojo. Se para al lado de Mateo, debajo del techo pequeño de la parada.",
+      "en": "A woman comes running to the stop. She's carrying a big red umbrella. She stops beside Mateo, under the stop's small roof.",
+      "dialogue": false
+    },
+    {
+      "es": "—Hola —dice la mujer—. ¡Qué tormenta! Mi paraguas es grande, si quieres, puedes compartirlo conmigo.",
+      "en": "\"Hi,\" the woman says. \"What a storm! My umbrella is big — if you want, you can share it with me.\"",
+      "dialogue": true
+    },
+    {
+      "es": "—Gracias —dice Mateo—. Este autobús siempre llega tarde, pero hoy es peor con esta lluvia. Me llamo Mateo.",
+      "en": "\"Thanks,\" says Mateo. \"This bus always arrives late, but today it's worse with this rain. My name is Mateo.\"",
+      "dialogue": true
+    },
+    {
+      "es": "—Yo soy Sofía —dice la mujer, y sonríe—. Tienes razón, el autobús doce no es muy puntual. ¿Vas a trabajar?",
+      "en": "\"I'm Sofía,\" the woman says, and smiles. \"You're right, bus twelve isn't very punctual. Are you going to work?\"",
+      "dialogue": true
+    },
+    {
+      "es": "—Sí, trabajo en una oficina cerca de la estación de trenes —dice Mateo—. ¿Y tú? ¿También vas a trabajar con esta tormenta?",
+      "en": "\"Yes, I work in an office near the train station,\" says Mateo. \"And you? Are you also going to work in this storm?\"",
+      "dialogue": true
+    },
+    {
+      "es": "—Sí, voy a empezar un trabajo nuevo hoy —dice Sofía—. Estoy un poco nerviosa. Vengo de la estación de autobuses, cerca de aquí.",
+      "en": "\"Yes, I'm starting a new job today,\" Sofía says. \"I'm a little nervous. I've come from the bus station, near here.\"",
+      "dialogue": true
+    },
+    {
+      "es": "El viento es cada vez más fuerte y la lluvia moja los zapatos de los dos. A lo lejos hay truenos.",
+      "en": "The wind gets stronger and stronger and the rain wets both their shoes. There's thunder in the distance.",
+      "dialogue": false
+    },
+    {
+      "es": "—Con esta tormenta, quizás es mejor tomar un taxi —dice Mateo—. Pero un taxi hasta el centro cuesta mucho dinero.",
+      "en": "\"With this storm, maybe it's better to take a taxi,\" says Mateo. \"But a taxi to the centre costs a lot of money.\"",
+      "dialogue": true
+    },
+    {
+      "es": "—Es verdad —dice Sofía—. Y hoy no veo ningún taxi libre. Todos están ocupados con esta lluvia.",
+      "en": "\"That's true,\" says Sofía. \"And today I don't see any free taxis. They're all busy because of this rain.\"",
+      "dialogue": true
+    },
+    {
+      "es": "Los dos esperan juntos debajo del paraguas rojo. Hablan del trabajo, de la ciudad y del tiempo horrible. El tiempo pasa muy despacio.",
+      "en": "The two of them wait together under the red umbrella. They talk about work, about the city, and about the terrible weather. Time passes very slowly.",
+      "dialogue": false
+    },
+    {
+      "es": "Por fin, después de treinta minutos, el autobús doce llega a la parada. Las puertas se abren con un ruido fuerte.",
+      "en": "Finally, after thirty minutes, bus twelve arrives at the stop. The doors open with a loud noise.",
+      "dialogue": false
+    },
+    {
+      "es": "—¡Por fin! —dice Mateo, y sube rápido para escapar de la lluvia—. Vamos, Sofía.",
+      "en": "\"Finally!\" says Mateo, and he climbs on quickly to escape the rain. \"Come on, Sofía.\"",
+      "dialogue": true
+    },
+    {
+      "es": "Pero Sofía no se sienta con Mateo. Camina despacio hacia la parte delantera del autobús, cerca del conductor.",
+      "en": "But Sofía doesn't sit with Mateo. She walks slowly toward the front of the bus, near the driver.",
+      "dialogue": false
+    },
+    {
+      "es": "—Perdón por el retraso —dice Sofía a los pasajeros, ahora con una voz diferente, más segura—. Es mi primer día, y hoy hay mucho tráfico y mucha lluvia.",
+      "en": "\"Sorry for the delay,\" Sofía says to the passengers, now with a different voice, more confident. \"It's my first day, and today there's a lot of traffic and a lot of rain.\"",
+      "dialogue": true
+    },
+    {
+      "es": "Mateo mira sorprendido. Sofía no espera el autobús doce: ¡Sofía conduce el autobús doce! Por eso viene de la estación de autobuses.",
+      "en": "Mateo looks surprised. Sofía isn't waiting for bus twelve: Sofía drives bus twelve! That's why she came from the bus station.",
+      "dialogue": false
+    },
+    {
+      "es": "—¡Eres la conductora! —dice Mateo, y se ríe—. Por eso el autobús llega tarde hoy: es tu primer día.",
+      "en": "\"You're the driver!\" says Mateo, and he laughs. \"That's why the bus is late today: it's your first day.\"",
+      "dialogue": true
+    },
+    {
+      "es": "—Sí —dice Sofía desde su asiento, y también se ríe—. Pero mañana, prometo llegar a la hora exacta. Gracias por esperar conmigo bajo la lluvia.",
+      "en": "\"Yes,\" says Sofía from her seat, and she laughs too. \"But tomorrow, I promise to arrive at exactly the right time. Thanks for waiting with me in the rain.\"",
+      "dialogue": true
+    },
+    {
+      "es": "El autobús sale de la parada y deja atrás la tormenta. Mateo mira por la ventana y sonríe: hoy, por una vez, llegar tarde no es un problema.",
+      "en": "The bus leaves the stop and leaves the storm behind. Mateo looks out the window and smiles: today, for once, being late isn't a problem.",
+      "dialogue": false
+    }
+  ],
+  "gloss": {
+    "a": {
+      "en": "to / at"
+    },
+    "abren": {
+      "en": "open",
+      "base": "abrir – to open"
+    },
+    "ahora": {
+      "en": "now"
+    },
+    "al": {
+      "en": "to the",
+      "base": "a + el"
+    },
+    "aquí": {
+      "en": "here"
+    },
+    "asiento": {
+      "en": "seat"
+    },
+    "atrás": {
+      "en": "behind"
+    },
+    "autobuses": {
+      "en": "buses",
+      "base": "autobús – bus"
+    },
+    "autobús": {
+      "en": "bus"
+    },
+    "bajo": {
+      "en": "under"
+    },
+    "cada": {
+      "en": "each / every"
+    },
+    "cae": {
+      "en": "falls",
+      "base": "caer – to fall"
+    },
+    "calle": {
+      "en": "street"
+    },
+    "camina": {
+      "en": "walks",
+      "base": "caminar – to walk"
+    },
+    "centro": {
+      "en": "centre"
+    },
+    "cerca": {
+      "en": "near"
+    },
+    "cielo": {
+      "en": "sky"
+    },
+    "ciudad": {
+      "en": "city"
+    },
+    "color": {
+      "en": "colour"
+    },
+    "compartirlo": {
+      "en": "share it",
+      "base": "compartir – to share"
+    },
+    "con": {
+      "en": "with"
+    },
+    "conduce": {
+      "en": "drives",
+      "base": "conducir – to drive"
+    },
+    "conductor": {
+      "en": "driver"
+    },
+    "conductora": {
+      "en": "driver (female)",
+      "base": "conductor – driver"
+    },
+    "conmigo": {
+      "en": "with me"
+    },
+    "corriendo": {
+      "en": "running",
+      "base": "correr – to run"
+    },
+    "cuesta": {
+      "en": "costs",
+      "base": "costar – to cost"
+    },
+    "de": {
+      "en": "of / from"
+    },
+    "debajo": {
+      "en": "underneath"
+    },
+    "deja": {
+      "en": "leaves",
+      "base": "dejar – to leave"
+    },
+    "del": {
+      "en": "of the",
+      "base": "de + el"
+    },
+    "delantera": {
+      "en": "front",
+      "base": "delantero – front"
+    },
+    "desde": {
+      "en": "from"
+    },
+    "despacio": {
+      "en": "slowly"
+    },
+    "después": {
+      "en": "after"
+    },
+    "dice": {
+      "en": "says",
+      "base": "decir – to say"
+    },
+    "diez": {
+      "en": "ten"
+    },
+    "diferente": {
+      "en": "different"
+    },
+    "dinero": {
+      "en": "money"
+    },
+    "doce": {
+      "en": "twelve"
+    },
+    "dos": {
+      "en": "two"
+    },
+    "día": {
+      "en": "day"
+    },
+    "el": {
+      "en": "the"
+    },
+    "empezar": {
+      "en": "to start"
+    },
+    "empieza": {
+      "en": "starts",
+      "base": "empezar – to start"
+    },
+    "en": {
+      "en": "in / at"
+    },
+    "eres": {
+      "en": "you are",
+      "base": "ser – to be"
+    },
+    "es": {
+      "en": "is",
+      "base": "ser – to be"
+    },
+    "escapar": {
+      "en": "to escape"
+    },
+    "eso": {
+      "en": "that"
+    },
+    "espera": {
+      "en": "waits",
+      "base": "esperar – to wait"
+    },
+    "esperan": {
+      "en": "wait",
+      "base": "esperar – to wait"
+    },
+    "esperar": {
+      "en": "to wait"
+    },
+    "esta": {
+      "en": "this"
+    },
+    "estación": {
+      "en": "station"
+    },
+    "este": {
+      "en": "this"
+    },
+    "estoy": {
+      "en": "I am",
+      "base": "estar – to be"
+    },
+    "está": {
+      "en": "is",
+      "base": "estar – to be"
+    },
+    "están": {
+      "en": "are",
+      "base": "estar – to be"
+    },
+    "exacta": {
+      "en": "exact",
+      "base": "exacto – exact"
+    },
+    "fin": {
+      "en": "end",
+      "base": "fin – end / por fin: finally"
+    },
+    "fuerte": {
+      "en": "strong / heavy"
+    },
+    "gracias": {
+      "en": "thanks"
+    },
+    "grande": {
+      "en": "big"
+    },
+    "gris": {
+      "en": "grey"
+    },
+    "hablan": {
+      "en": "talk",
+      "base": "hablar – to talk"
+    },
+    "hace": {
+      "en": "it is (weather)",
+      "base": "hacer – to do / make"
+    },
+    "hacia": {
+      "en": "toward"
+    },
+    "hasta": {
+      "en": "until"
+    },
+    "hay": {
+      "en": "there is / there are",
+      "base": "haber – there is/are"
+    },
+    "hola": {
+      "en": "hi"
+    },
+    "hora": {
+      "en": "time / hour"
+    },
+    "horrible": {
+      "en": "horrible"
+    },
+    "hoy": {
+      "en": "today"
+    },
+    "juntos": {
+      "en": "together"
+    },
+    "la": {
+      "en": "the"
+    },
+    "lado": {
+      "en": "side"
+    },
+    "las": {
+      "en": "the"
+    },
+    "lejos": {
+      "en": "far",
+      "base": "a lo lejos – in the distance"
+    },
+    "libre": {
+      "en": "free"
+    },
+    "llamo": {
+      "en": "I call",
+      "base": "llamarse – me llamo: my name is"
+    },
+    "llega": {
+      "en": "arrives",
+      "base": "llegar – to arrive"
+    },
+    "llegar": {
+      "en": "to arrive"
+    },
+    "lleva": {
+      "en": "is carrying",
+      "base": "llevar – to carry / wear"
+    },
+    "llover": {
+      "en": "to rain"
+    },
+    "lluvia": {
+      "en": "rain"
+    },
+    "lo": {
+      "en": "it"
+    },
+    "los": {
+      "en": "the"
+    },
+    "lunes": {
+      "en": "Monday"
+    },
+    "madrid": {
+      "en": "Madrid"
+    },
+    "mateo": {
+      "en": "Mateo"
+    },
+    "mayor": {
+      "en": "main / Mayor (street name)"
+    },
+    "mañana": {
+      "en": "morning"
+    },
+    "me": {
+      "en": "me / myself"
+    },
+    "mejor": {
+      "en": "better"
+    },
+    "mi": {
+      "en": "my"
+    },
+    "minuto": {
+      "en": "minute"
+    },
+    "minutos": {
+      "en": "minutes",
+      "base": "minuto – minute"
+    },
+    "mira": {
+      "en": "looks",
+      "base": "mirar – to look"
+    },
+    "moja": {
+      "en": "wets",
+      "base": "mojar – to wet"
+    },
+    "mucha": {
+      "en": "a lot of",
+      "base": "mucho – a lot"
+    },
+    "mucho": {
+      "en": "a lot"
+    },
+    "mujer": {
+      "en": "woman"
+    },
+    "muy": {
+      "en": "very"
+    },
+    "más": {
+      "en": "more"
+    },
+    "nadie": {
+      "en": "nobody"
+    },
+    "nerviosa": {
+      "en": "nervous",
+      "base": "nervioso – nervous"
+    },
+    "ningún": {
+      "en": "no / not any",
+      "base": "ninguno – none"
+    },
+    "no": {
+      "en": "no / not"
+    },
+    "nuevo": {
+      "en": "new"
+    },
+    "número": {
+      "en": "number"
+    },
+    "ocho": {
+      "en": "eight"
+    },
+    "ocupados": {
+      "en": "busy",
+      "base": "ocupado – busy"
+    },
+    "oficina": {
+      "en": "office"
+    },
+    "para": {
+      "en": "in order to"
+    },
+    "parada": {
+      "en": "bus stop"
+    },
+    "paraguas": {
+      "en": "umbrella"
+    },
+    "parte": {
+      "en": "part"
+    },
+    "pasa": {
+      "en": "passes",
+      "base": "pasar – to pass"
+    },
+    "pasajeros": {
+      "en": "passengers",
+      "base": "pasajero – passenger"
+    },
+    "peor": {
+      "en": "worse"
+    },
+    "pequeño": {
+      "en": "small"
+    },
+    "perdón": {
+      "en": "sorry"
+    },
+    "pero": {
+      "en": "but"
+    },
+    "poca": {
+      "en": "little",
+      "base": "poco – little"
+    },
+    "poco": {
+      "en": "little"
+    },
+    "por": {
+      "en": "for / by / through"
+    },
+    "primer": {
+      "en": "first",
+      "base": "primero – first"
+    },
+    "primero": {
+      "en": "first / at first"
+    },
+    "problema": {
+      "en": "problem"
+    },
+    "prometo": {
+      "en": "I promise",
+      "base": "prometer – to promise"
+    },
+    "puedes": {
+      "en": "you can",
+      "base": "poder – to be able to"
+    },
+    "puertas": {
+      "en": "doors",
+      "base": "puerta – door"
+    },
+    "puntual": {
+      "en": "punctual"
+    },
+    "quieres": {
+      "en": "you want",
+      "base": "querer – to want"
+    },
+    "quizás": {
+      "en": "maybe"
+    },
+    "qué": {
+      "en": "what"
+    },
+    "razón": {
+      "en": "right / reason",
+      "base": "tener razón – to be right"
+    },
+    "reloj": {
+      "en": "watch / clock"
+    },
+    "repente": {
+      "en": "sudden",
+      "base": "de repente – suddenly"
+    },
+    "retraso": {
+      "en": "delay"
+    },
+    "rojo": {
+      "en": "red"
+    },
+    "ruido": {
+      "en": "noise"
+    },
+    "rápido": {
+      "en": "quickly"
+    },
+    "ríe": {
+      "en": "laughs",
+      "base": "reírse – to laugh"
+    },
+    "sale": {
+      "en": "leaves",
+      "base": "salir – to leave"
+    },
+    "se": {
+      "en": "(reflexive)",
+      "base": "se – reflexive pronoun"
+    },
+    "segura": {
+      "en": "confident",
+      "base": "seguro – sure / confident"
+    },
+    "si": {
+      "en": "if"
+    },
+    "siempre": {
+      "en": "always"
+    },
+    "sienta": {
+      "en": "sits",
+      "base": "sentarse – to sit"
+    },
+    "sofía": {
+      "en": "Sofía"
+    },
+    "son": {
+      "en": "are",
+      "base": "ser – to be"
+    },
+    "sonríe": {
+      "en": "smiles",
+      "base": "sonreír – to smile"
+    },
+    "sorprendido": {
+      "en": "surprised"
+    },
+    "soy": {
+      "en": "I am",
+      "base": "ser – to be"
+    },
+    "su": {
+      "en": "her / his"
+    },
+    "sube": {
+      "en": "gets on",
+      "base": "subir – to get on"
+    },
+    "sí": {
+      "en": "yes"
+    },
+    "también": {
+      "en": "also"
+    },
+    "tarde": {
+      "en": "late"
+    },
+    "taxi": {
+      "en": "taxi"
+    },
+    "techo": {
+      "en": "roof"
+    },
+    "tiempo": {
+      "en": "time / weather"
+    },
+    "tiene": {
+      "en": "has",
+      "base": "tener – to have"
+    },
+    "tienes": {
+      "en": "you have",
+      "base": "tener – to have"
+    },
+    "todos": {
+      "en": "all"
+    },
+    "tomar": {
+      "en": "to take"
+    },
+    "tormenta": {
+      "en": "storm"
+    },
+    "trabajar": {
+      "en": "to work"
+    },
+    "trabajo": {
+      "en": "job / work"
+    },
+    "treinta": {
+      "en": "thirty"
+    },
+    "trenes": {
+      "en": "trains",
+      "base": "tren – train"
+    },
+    "truenos": {
+      "en": "thunder",
+      "base": "trueno – thunderclap"
+    },
+    "tráfico": {
+      "en": "traffic"
+    },
+    "tu": {
+      "en": "your"
+    },
+    "tú": {
+      "en": "you"
+    },
+    "un": {
+      "en": "a"
+    },
+    "una": {
+      "en": "a"
+    },
+    "vamos": {
+      "en": "come on / let's go",
+      "base": "ir – to go"
+    },
+    "vas": {
+      "en": "you go",
+      "base": "ir – to go"
+    },
+    "veinte": {
+      "en": "twenty"
+    },
+    "vengo": {
+      "en": "I come",
+      "base": "venir – to come"
+    },
+    "ventana": {
+      "en": "window"
+    },
+    "veo": {
+      "en": "I see",
+      "base": "ver – to see"
+    },
+    "verdad": {
+      "en": "true",
+      "base": "verdad – truth"
+    },
+    "vez": {
+      "en": "time (occurrence)"
+    },
+    "viene": {
+      "en": "comes",
+      "base": "venir – to come"
+    },
+    "viento": {
+      "en": "wind"
+    },
+    "voy": {
+      "en": "I go",
+      "base": "ir – to go"
+    },
+    "voz": {
+      "en": "voice"
+    },
+    "y": {
+      "en": "and"
+    },
+    "ya": {
+      "en": "already"
+    },
+    "yo": {
+      "en": "I"
+    },
+    "zapatos": {
+      "en": "shoes",
+      "base": "zapato – shoe"
+    }
+  },
+  "glossOverrides": {
+    "para": {
+      "1": {
+        "en": "stops",
+        "base": "pararse – to stop"
+      }
+    }
+  }
+}

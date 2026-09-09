@@ -1,9 +1,52 @@
 [
   {
     "id": "las-llaves-de-elena",
-    "title": { "es": "Las llaves de Elena", "en": "Elena's Keys" },
+    "title": {
+      "es": "Las llaves de Elena",
+      "en": "Elena's Keys"
+    },
     "level": "easy",
     "wordCount": 499,
+    "minutes": 4
+  },
+  {
+    "id": "la-parada-del-autobus",
+    "title": {
+      "es": "La parada del autobús",
+      "en": "The Bus Stop"
+    },
+    "level": "easy",
+    "wordCount": 459,
+    "minutes": 4
+  },
+  {
+    "id": "la-sopa-de-la-abuela",
+    "title": {
+      "es": "La sopa de la abuela",
+      "en": "Grandma's Soup"
+    },
+    "level": "medium",
+    "wordCount": 491,
+    "minutes": 4
+  },
+  {
+    "id": "la-entrevista",
+    "title": {
+      "es": "La entrevista",
+      "en": "The Interview"
+    },
+    "level": "medium",
+    "wordCount": 460,
+    "minutes": 4
+  },
+  {
+    "id": "el-gato-de-la-vecina",
+    "title": {
+      "es": "El gato de la vecina",
+      "en": "The Neighbour's Cat"
+    },
+    "level": "hard",
+    "wordCount": 529,
     "minutes": 4
   }
 ]
