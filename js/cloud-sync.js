@@ -10,6 +10,18 @@
   // Same defensive shape-merge as loadProgress()/importProgress() below,
   // applied to whatever's stored in Firestore so a malformed or
   // partial cloud doc can't corrupt local state.
+  //
+  // THIS IS A SHAPE GATE. It starts from defaultProgress() and copies across
+  // only the fields named below, so ANY field not explicitly listed here is
+  // silently reset to its default on the next cloud pull — even though
+  // doCloudPush() sends the whole object and Firestore holds it correctly.
+  // The data survives the round trip out and is destroyed on the way back in.
+  //
+  // Adding a field to defaultProgress() therefore means adding it in FOUR
+  // places: defaultProgress(), loadProgress(), importProgress() (all in
+  // progress-xp.js) and here. Miss this one and the symptom is progress that
+  // saves, displays correctly, and then quietly reverts a moment later —
+  // exactly how Story Mode's storiesRead/storyLifetime behaved on 2026-09-09.
   function mergeProgressShape(parsed) {
     const merged = defaultProgress();
     merged.wordStats = normalizeWordStats(parsed.wordStats || {});
@@ -24,6 +36,8 @@
     merged.memoryBest = Object.assign({}, parsed.memoryBest || {});
     merged.memoryLifetime = Object.assign(merged.memoryLifetime, parsed.memoryLifetime || {});
     merged.streamLifetime = Object.assign(merged.streamLifetime, parsed.streamLifetime || {});
+    merged.storyLifetime = Object.assign(merged.storyLifetime, parsed.storyLifetime || {});
+    merged.storiesRead = Object.assign({}, parsed.storiesRead || {});
     merged.memoryClearedSizes = Object.assign({}, parsed.memoryClearedSizes || {});
     merged.settings = Object.assign(merged.settings, parsed.settings || {});
     merged.achievements = Object.assign({}, parsed.achievements || {});
