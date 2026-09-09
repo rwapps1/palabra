@@ -685,7 +685,29 @@
     let bgClass = 'bg-quiz';
     if (state.celebrateNext === 'memory-result') bgClass = 'bg-memory';
     else if (state.celebrateNext === 'conjugate-result') bgClass = 'bg-conjugate';
-    else if (state.celebrateNext === 'result') bgClass = state.resultMode === 'timeattack' ? 'bg-timeattack' : 'bg-quiz';
+    else if (state.celebrateNext === 'result') {
+      bgClass = state.resultMode === 'timeattack' ? 'bg-timeattack'
+        : state.resultMode === 'story' ? 'bg-story'
+        : 'bg-quiz';
+    }
+
+    // Story Mode reuses this whole screen rather than having its own. Only
+    // the badge glyph and the copy differ; the ring/swirl/tick treatment,
+    // the timing, the confetti and the sounds below are all shared. The
+    // Spanish flourish line is new HERE (a normal round has headline +
+    // subline only) but not new to the app — renderStreamCheckpoint() and
+    // renderLevelUp() already carry one in exactly this position.
+    const isStory = state.resultMode === 'story';
+    const badgeGlyph = isStory ? (isPerfect ? '⭐' : '📖') : (isPerfect ? '💯' : '🙌');
+    const headlineText = isStory
+      ? (isPerfect ? '¡Perfecto!' : '¡Historia completa!')
+      : (isPerfect ? '¡Perfecto!' : '¡Ronda completa!');
+    const sublineText = isStory
+      ? (isPerfect ? 'Not a single word missed.' : 'Story complete.')
+      : (isPerfect ? 'Not a single mistake.' : 'Round complete.');
+    const flourishHtml = isStory
+      ? `<p class="celebrate-flourish">${isPerfect ? '¡Has entendido todas las palabras!' : '¡Has leído una historia entera!'}</p>`
+      : '';
 
     // Perfect gets the warm swirl; a plain finish gets the cooler neutral
     // swirl plus a ring of "impact" ticks that flick outward on entry,
@@ -706,10 +728,11 @@
         <div class="celebrate-wrap">
           <div class="celebrate-badge-ring ${isPerfect ? 'perfect' : 'neutral'}">
             ${swirlHtml}
-            <div class="celebrate-badge-disc">${isPerfect ? '💯' : '🙌'}</div>
+            <div class="celebrate-badge-disc">${badgeGlyph}</div>
           </div>
-          <div class="celebrate-headline ${isPerfect ? 'perfect' : 'finished'}">${isPerfect ? '¡Perfecto!' : '¡Ronda completa!'}</div>
-          <p class="celebrate-subline">${isPerfect ? 'Not a single mistake.' : 'Round complete.'}</p>
+          <div class="celebrate-headline ${isPerfect ? 'perfect' : 'finished'}">${headlineText}</div>
+          ${flourishHtml}
+          <p class="celebrate-subline">${sublineText}</p>
         </div>
         <div class="tap-hint">Tap to continue</div>
       </div>

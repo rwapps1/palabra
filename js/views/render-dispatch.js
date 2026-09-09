@@ -27,11 +27,15 @@
     else if (state.screen === 'memory-setup') renderMemorySetup();
     else if (state.screen === 'memory-play') renderMemoryPlay();
     else if (state.screen === 'memory-result') renderMemoryResult();
+    else if (state.screen === 'story-library') renderStoryLibrary();
+    else if (state.screen === 'story-read') renderStoryRead();
+    else if (state.screen === 'story-quiz') renderStoryQuiz();
     else if (state.screen === 'celebrate') renderCelebrate();
     else if (state.screen === 'stream-checkpoint') renderStreamCheckpoint();
     else if (state.screen === 'level-up') renderLevelUp();
     else if (state.screen === 'result') {
       if (state.resultMode === 'timeattack') renderTimeAttackResult();
+      else if (state.resultMode === 'story') renderStoryResult();
       else renderResult();
     }
     else if (state.screen === 'achievements') renderAchievements();

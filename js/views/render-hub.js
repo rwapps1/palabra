@@ -300,6 +300,15 @@
             </div>
           </button>
 
+          <button class="story-tile" data-tile="story" type="button">
+            <div class="story-icon">📖</div>
+            <div class="story-text">
+              <h3>Story Mode</h3>
+              <div class="story-meta">Read a story in Spanish. Tap any word you don't know.</div>
+            </div>
+            <div class="hub-play-chip story-tile-chip">▶</div>
+          </button>
+
           <button class="progress-card" data-tile="myprogress" type="button" aria-label="View full progress breakdown">
             <div class="ring-wrap">
               <svg width="76" height="76" viewBox="0 0 76 76">
@@ -471,6 +480,9 @@
 
     const modeTile = document.querySelector('.mode-tile');
     if (modeTile) modeTile.addEventListener('click', () => { state.screen = 'game-modes'; render(); });
+
+    const storyTile = document.querySelector('.story-tile');
+    if (storyTile) storyTile.addEventListener('click', openStoryLibrary);
 
     const progressCard = document.querySelector('.progress-card');
     if (progressCard) progressCard.addEventListener('click', () => { state.screen = 'my-progress'; render(); });
