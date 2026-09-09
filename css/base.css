@@ -78,6 +78,19 @@
       radial-gradient(circle at 85% 75%, rgba(247,243,237,0.14), transparent 50%),
       linear-gradient(160deg, #1A1530 0%, #140F26 60%, #100A1E 100%);
   }
+  /* Story Mode — rose over violet. Chosen from four candidates rendered on
+     the actual reader screen; the others (warm ochre lamplight, deep indigo,
+     dim sepia) were too close to bg-achievements, too cold to read on, and
+     too quiet respectively. Note the wrong-answer red sits on this ground
+     during the end-of-story quiz: checked, and the red border reads clearly.
+     If it ever grates, put the quiz screen on a plainer ground rather than
+     changing this. */
+  .bg-story {
+    background:
+      radial-gradient(circle at 24% 16%, rgba(244,114,182,0.24), transparent 46%),
+      radial-gradient(circle at 84% 78%, rgba(139,92,246,0.30), transparent 50%),
+      linear-gradient(160deg, #241436 0%, #1A0E28 60%, #100A1E 100%);
+  }
   .bg-login {
     background:
       radial-gradient(circle at 50% 12%, rgba(198,11,30,0.38), transparent 45%),

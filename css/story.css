@@ -1,0 +1,190 @@
+/* Story Mode: library cards, the reader (tappable words, gloss popover,
+   per-paragraph reveal), the end-of-story quiz and its results.
+   Depends on tokens from base.css and on shared blocks from components.css
+   (.card, .btn-primary, .btn-secondary, .option-btn, .feedback, .review-*,
+   .screen-header, .eyebrow, .spinner, .msg-error) — nothing here restyles
+   those, it only adds story-specific pieces. */
+
+  /* ---- Library ---- */
+  .story-intro {
+    font-size: 13px; line-height: 1.5; color: var(--cream-dim);
+    margin: 0 0 16px;
+  }
+  .story-card {
+    display: block; width: 100%; text-align: left;
+    background: var(--bg-card); border: 1px solid var(--outline);
+    border-radius: 18px; padding: 14px 15px; margin-bottom: 10px;
+    color: var(--cream); font-family: 'Inter', sans-serif; cursor: pointer;
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    transition: transform 0.15s ease;
+  }
+  .story-card:active { transform: scale(0.985); }
+  .story-card-title { font-family: 'Sora', sans-serif; font-size: 16.5px; font-weight: 600; letter-spacing: -0.01em; }
+  .story-card-en { font-size: 12.5px; color: var(--cream-dim); font-style: italic; margin-top: 2px; }
+  .story-card-meta { display: flex; align-items: center; gap: 7px; margin-top: 10px; flex-wrap: wrap; }
+  .story-card-dur { font-size: 11.5px; color: var(--cream-dim); font-variant-numeric: tabular-nums; margin-left: auto; }
+
+  /* Difficulty maps onto tokens the app already has, so the three levels read
+     the same way correct/warning/wrong do everywhere else. */
+  .story-pill { font-size: 11px; font-weight: 700; padding: 3.5px 9px; border-radius: 999px; letter-spacing: 0.02em; }
+  .story-pill.easy { background: rgba(45,212,191,0.16); color: var(--green); }
+  .story-pill.med  { background: rgba(255,193,99,0.16); color: var(--ochre); }
+  .story-pill.hard { background: rgba(255,77,109,0.16); color: var(--terracotta); }
+  /* Read stories stay fully available and are NOT dimmed — the marker is a
+     record, not a lock. */
+  .story-pill.read { background: transparent; border: 1px solid var(--outline); color: var(--cream-dim); }
+
+  /* ---- Reader ---- */
+  .story-head-title {
+    font-family: 'Sora', sans-serif; font-weight: 600; font-size: 16px;
+    letter-spacing: -0.01em; color: var(--cream);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  /* position:relative anchors the gloss popover, which is positioned against
+     this box in positionStoryPopover(). */
+  .story-body { position: relative; width: 100%; }
+  .story-title {
+    font-family: 'Sora', sans-serif; font-size: 25px; font-weight: 700;
+    line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 6px;
+    text-wrap: balance; color: var(--cream); text-align: left;
+  }
+  .story-sub {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 12.5px; color: var(--cream-dim); margin-bottom: 20px;
+  }
+
+  .story-para { position: relative; padding-left: 26px; margin-bottom: 16px; }
+  .story-para p {
+    margin: 0; font-size: 17px; line-height: 1.65; color: var(--cream);
+  }
+  .story-para.dlg p { color: var(--cream-dim); }
+
+  /* Paragraph reveal lives on this margin marker, NOT on the paragraph body.
+     If tapping the prose meant both "what is this word" and "translate this
+     paragraph", every word tap would also be a paragraph tap — the two
+     gestures would be indistinguishable. Keeping them on separate targets is
+     the whole reason this control exists. */
+  .story-tr {
+    position: absolute; left: -2px; top: 3px;
+    width: 22px; height: 22px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg-card); color: var(--cream-dim);
+    font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.02em; border: none; cursor: pointer;
+  }
+  .story-para.open .story-tr { background: var(--ochre); color: #241608; }
+  .story-en {
+    display: none; margin-top: 9px; padding: 10px 12px;
+    border-left: 2px solid var(--ochre); border-radius: 0 8px 8px 0;
+    background: var(--bg-card);
+    font-size: 14px; line-height: 1.5; color: var(--cream-dim);
+  }
+  .story-para.open .story-en { display: block; }
+
+  /* Every word is tappable, including el/del/y — "tap any word" has to mean
+     any word, or the one you don't know is the one that isn't tappable. */
+  .sw { cursor: pointer; border-radius: 3px; padding: 0 0.5px; transition: background 0.12s; }
+  .sw.tapped { background: rgba(255,193,99,0.3); box-shadow: inset 0 0 0 1px var(--ochre); }
+  /* Target words — the six the story is written around, which the quiz will
+     ask about. A quiet underline, not a highlight: it shouldn't pull the eye
+     while reading. */
+  .sw.target { box-shadow: 0 1.5px 0 rgba(201,168,255,0.75); }
+
+  .story-pop {
+    position: absolute; z-index: 30; min-width: 132px; max-width: 230px;
+    background: #2A1E42; border: 1px solid var(--outline); color: var(--cream);
+    border-radius: 11px; padding: 9px 12px 10px;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.55);
+  }
+  .story-pop-es { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--label); font-weight: 700; }
+  .story-pop-en { font-size: 15px; font-weight: 600; line-height: 1.3; margin-top: 2px; }
+  .story-pop-base {
+    font-size: 12px; color: var(--cream-dim); margin-top: 5px;
+    padding-top: 5px; border-top: 1px solid var(--outline); line-height: 1.35;
+  }
+  .story-pop-arrow {
+    position: absolute; width: 10px; height: 10px; bottom: -6px;
+    background: #2A1E42;
+    border-right: 1px solid var(--outline); border-bottom: 1px solid var(--outline);
+    transform: rotate(45deg);
+  }
+  .story-pop.below .story-pop-arrow { bottom: auto; top: -6px; transform: rotate(225deg); }
+
+  .story-tools {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--outline);
+    width: 100%;
+  }
+  .story-tool {
+    flex: 1; padding: 10px 8px; border-radius: 12px;
+    background: rgba(255,255,255,0.06); border: 1px solid var(--outline);
+    color: var(--cream-dim); font-family: 'Inter', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .story-tool[aria-pressed="true"] { background: var(--ochre); border-color: var(--ochre); color: #241608; }
+  .story-tapcount { font-size: 11.5px; color: var(--cream-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* ---- End-of-story quiz ---- */
+  .story-quiz-head {
+    display: flex; justify-content: space-between;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.03em;
+    color: var(--cream-dim); font-variant-numeric: tabular-nums;
+  }
+  .story-dots { display: flex; gap: 4px; margin: 10px 0 26px; }
+  .story-dot { height: 3px; border-radius: 2px; flex: 1; background: rgba(255,255,255,0.1); }
+  .story-dot.done { background: var(--green); }
+  .story-dot.missed { background: var(--red); }
+  .story-dot.now { background: var(--cream); }
+  .story-qword {
+    font-family: 'Sora', sans-serif; font-size: 32px; font-weight: 700;
+    letter-spacing: -0.02em; text-align: center; margin: 14px 0 6px; color: var(--cream);
+  }
+  .story-qnote { font-size: 13px; color: var(--cream-dim); text-align: center; margin-bottom: 20px; font-style: italic; }
+
+  /* ---- Results ---- */
+  .story-res-xp {
+    font-family: 'Sora', sans-serif; font-size: 52px; font-weight: 700;
+    letter-spacing: -0.03em; color: var(--ochre); line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .story-res-xp small { font-size: 19px; letter-spacing: 0; }
+  .story-res-title { font-family: 'Sora', sans-serif; font-size: 19px; font-weight: 700; letter-spacing: -0.01em; margin-top: 12px; }
+  .story-res-sub { font-size: 13.5px; color: var(--cream-dim); margin-top: 5px; line-height: 1.5; }
+
+  .story-breakdown {
+    width: 100%; margin: 24px 0 0;
+    border: 1px solid var(--outline); border-radius: 16px; overflow: hidden;
+  }
+  .story-brow {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 15px; font-size: 13.5px; text-align: left; gap: 12px;
+  }
+  .story-brow + .story-brow { border-top: 1px solid var(--outline); }
+  .story-brow b { font-variant-numeric: tabular-nums; font-weight: 700; flex-shrink: 0; }
+  .story-brow.total { background: var(--bg-card); font-weight: 700; }
+
+  /* Says out loud what the mode guarantees. Reading can never demote a word,
+     and someone who taps twenty words should be able to see that stated
+     rather than have to trust it. */
+  .story-srs-note {
+    margin-top: 16px; padding: 13px 14px; border-radius: 12px;
+    background: var(--bg-card); font-size: 12.5px; line-height: 1.5;
+    color: var(--cream-dim); text-align: left;
+  }
+
+  .story-tapped { margin-top: 22px; width: 100%; }
+  .story-tapped-label {
+    font-size: 11px; letter-spacing: 0.11em; text-transform: uppercase;
+    color: var(--label); font-weight: 700; margin-bottom: 9px; text-align: left;
+  }
+  .story-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .story-chip {
+    font-size: 12.5px; padding: 5px 10px; border-radius: 8px;
+    background: var(--bg-card); color: var(--cream-dim); font-weight: 500;
+  }
+  .story-chip b { font-weight: 700; color: var(--cream); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .story-card, .story-tile { transition: none; }
+  }
